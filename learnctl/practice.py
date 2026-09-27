@@ -1085,7 +1085,7 @@ _CODE_VALIDATORS["D08-write"] = _direct_run_validator({
 _CODE_VALIDATORS["D11-file"] = _direct_run_validator({
     "file": "main.py",
     "runs": [
-        (["-c", "import os; os.makedirs('logs', exist_ok=True); import main; logger = main.setup_file_logger('logs/app.log'); logger.info('写入日志'); print(open('logs/app.log', encoding='utf-8').read())"],
+        (["-c", "import os; os.makedirs('logs', exist_ok=True); import main; logger = main.configure_file_logger('logs/app.log'); logger.info('写入日志'); [handler.close() for handler in logger.handlers]; print(open('logs/app.log', encoding='utf-8').read())"],
          "文件日志写入", lambda p: "INFO" in p["stdout"] and "写入日志" in p["stdout"], lambda p: _tail(p["stdout"] or p["stderr"])),
     ],
 })
@@ -1132,7 +1132,23 @@ _CODE_VALIDATORS["D17-timeout"] = _function_validator({
     ],
 })
 
-_CODE_VALIDATORS["D12-request"] = _v_d12_request
+_CODE_VALIDATORS["D12-request"] = _function_validator({
+    "file": "main.py", "module": "main",
+    "setup": """from urllib.request import Request
+seen = []
+class Response:
+    def __enter__(self): return self
+    def __exit__(self, *args): return None
+    def read(self): return '你好，Python'.encode('utf-8')
+def opener(request):
+    seen.append(request)
+    return Response()
+""",
+    "checks": [
+        ("GET 读取 UTF-8 文本", "M.fetch_text('https://example.test/hello', opener) == '你好，Python'"),
+        ("使用 GET Request", "len(seen) == 1 and isinstance(seen[0], Request) and seen[0].get_method() == 'GET'"),
+    ],
+})
 _CODE_VALIDATORS["D12-post"] = _v_d12_post
 _CODE_VALIDATORS["D25-chat"] = _v_d25_chat
 _CODE_VALIDATORS["D25-errors"] = _v_d25_errors
@@ -1238,6 +1254,22 @@ _register_v3_code("D02-names", ("观察 type/isinstance", lambda t: _has_call(t,
 _register_v3_code("D02-numbers", ("包含算术和比较", lambda t: _has_node(t, ast.BinOp) and _has_node(t, ast.Compare)))
 _register_v3_code("D02-bool-none", ("区分条件与 None", lambda t: _has_node(t, ast.If) and _has_node(t, ast.Constant)))
 _register_v3_code("D02-strings", ("包含索引或切片", lambda t: _has_node(t, ast.Subscript) and _has_node(t, ast.Slice)))
+_register("D02-numbers", {
+    "file": "main.py", "module": "main",
+    "checks": [
+        ("商与余数正确", "M.divide_parts(17, 5) == (3, 2)"),
+        ("除数为零被拒绝", "_raises(ValueError, M.divide_parts, 17, 0)"),
+    ],
+})
+_register("D02-bool-none", {
+    "file": "main.py", "module": "main",
+    "checks": [
+        ("None 是缺失", "M.describe_value(None) == 'missing'"),
+        ("空文本单独处理", "M.describe_value('') == 'empty text'"),
+        ("零不是缺失", "M.describe_value(0) == 'present'"),
+        ("非空列表不是缺失", "M.describe_value([0]) == 'present'"),
+    ],
+})
 _register_v3_code("D02-string-methods", ("使用文本方法或 f-string", lambda t: _has_node(t, ast.JoinedStr) or any(_has_call(t, n) for n in ("strip", "split", "join"))))
 _register_v3_code("D03-if", ("包含 if 分支", lambda t: _has_node(t, ast.If)))
 _register_v3_code("D03-match", ("包含 match/case", lambda t: _has_node(t, ast.Match)))
@@ -1384,7 +1416,17 @@ _register("D07-dataclass", {
 # 仍由自己的 workspace_deps 和 project_file 决定，绝不把缺失依赖静默脚手架化。
 _CODE_VALIDATORS["D19-package"] = _v3_code_validator([("包含包初始化代码", lambda t: _has_node(t, ast.Assign, ast.Expr))])
 _CODE_VALIDATORS["D20-connection"] = _CODE_VALIDATORS["D20-init"]
-_CODE_VALIDATORS["D20-create-list"] = _CODE_VALIDATORS["D20-crud"]
+# 分步项目只检查本节承诺的能力；完整 CRUD 留给后续验收。
+_register("D20-create-list", {
+    "file": "taskproj/db.py", "module": "taskproj.db", "scaffold": _TASKPROJ_PACKAGE,
+    "setup": _D20_CRUD_SETUP,
+    "checks": [
+        ("add_task 返回自增 id", "(lambda i: isinstance(i, int) and i > 0)(M.add_task(conn, '任务一'))"),
+        ("list_tasks 返回新增任务", "(lambda r: bool(r) and r[0]['title'] == '任务一' and r[0]['done'] is False)(M.list_tasks(conn))"),
+        ("空白标题被拒绝", "_raises(ValueError, M.add_task, conn, '   ')"),
+        ("标题含引号安全", "M.add_task(conn, \"它's 的\") is not None"),
+    ],
+})
 _CODE_VALIDATORS["D20-update-delete"] = _CODE_VALIDATORS["D20-crud"]
 _CODE_VALIDATORS["D20-db-tests"] = _pytest_validator("test_project.py", [])
 _CODE_VALIDATORS["D21-app"] = _CODE_VALIDATORS["D13-app"]
@@ -1401,7 +1443,16 @@ _CODE_VALIDATORS["D22-db-fixtures"] = _pytest_validator("tests/test_project.py",
 _CODE_VALIDATORS["D22-api-tests"] = _CODE_VALIDATORS["D22-api"]
 _CODE_VALIDATORS["D22-api-errors"] = _CODE_VALIDATORS["D22-api"]
 _CODE_VALIDATORS["D22-acceptance"] = _CODE_VALIDATORS["D22-api"]
-_CODE_VALIDATORS["D23-cli-parser"] = _CODE_VALIDATORS["D23-cli"]
+_CODE_VALIDATORS["D23-cli-parser"] = _direct_run_validator({
+    "file": "taskproj/cli.py",
+    "env": {"TASKPROJ_DB": "_cli.db"},
+    "runs": [
+        (["-c", "from taskproj.cli import build_parser; p = build_parser(); print(p.parse_args(['add', 'x']).command, p.parse_args(['list']).command)"],
+         "build_parser 声明 add/list", lambda p: p["stdout"].strip() == "add list", lambda p: _tail(p["stderr"] or p["stdout"])),
+        (["-m", "taskproj.cli", "add", "买牛奶"], "CLI add 成功", lambda p: p["exit_code"] == 0, lambda p: _tail(p["stderr"] or p["stdout"])),
+        (["-m", "taskproj.cli", "list"], "CLI list 可见任务", lambda p: "买牛奶" in p["stdout"], lambda p: _tail(p["stdout"] or p["stderr"])),
+    ],
+})
 _CODE_VALIDATORS["D23-cli-mutate"] = _CODE_VALIDATORS["D23-cli"]
 
 
@@ -1487,7 +1538,7 @@ def validate_json(section: dict[str, Any], submission: str) -> dict[str, Any]:
 
 
 TEXT_RULES: dict[str, dict[str, Any]] = {
-    "D01-onboarding": {"min_chars": 20, "keywords": ["解释器", "虚拟环境", "venv", "pip", "pytest", "环境"], "min_matches": 2},
+    "D01-onboarding": {"min_chars": 8, "keywords": [], "min_matches": 0},
     "D18-scope": {"min_chars": 50, "keywords": ["用户故事", "任务", "SQLite", "CLI", "网页", "非目标"], "min_matches": 4},
     "D18-acceptance": {"min_chars": 50, "keywords": ["验收", "成功", "失败", "状态码", "空标题", "未知 ID"], "min_matches": 4},
     "D19-package": {"min_chars": 12, "keywords": ["__init__", "包", "版本"], "min_matches": 2},

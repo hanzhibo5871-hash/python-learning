@@ -3375,7 +3375,51 @@ def _example_contract(section_id: str, syntax: str) -> dict[str, Any]:
     return {"source_kind": source_kind, "runnable": False, "target_path": target_path}
 
 
+# AI 阶段的两个离线示例逐节对应请求、解析、组合与测试，不调用真实模型。
+AI_EXAMPLES = {
+    "D25-chat": [
+        ("import json\nbody = {'model': 'deepseek-chat', 'messages': [{'role': 'user', 'content': '你好'}], 'stream': False}\nprint(json.dumps(body, ensure_ascii=False))", "{\"model\": \"deepseek-chat\", \"messages\": [{\"role\": \"user\", \"content\": \"你好\"}], \"stream\": false}", "先看清请求体的 model、messages 和 stream；真实调用还需要 URL、Bearer 鉴权与超时。"),
+        ("response = {'choices': [{'message': {'content': '你好！'}}]}\nprint(response['choices'][0]['message']['content'])", "你好！", "从模拟响应提取 content；这一步不用联网。"),
+    ],
+    "D25-errors": [
+        ("from urllib.error import HTTPError\ntry:\n    raise HTTPError('https://example.test', 401, 'unauthorized', {}, None)\nexcept HTTPError as error:\n    print(error.code)", "401", "状态码来自 HTTPError.code，应保留在 ApiError 中供调用者判断。"),
+        ("import json\ntry:\n    json.loads('not json')\nexcept json.JSONDecodeError:\n    print('响应不是 JSON')", "响应不是 JSON", "响应格式错误与 HTTP 状态错误是两类失败，分别处理。"),
+    ],
+    "D26-prompt": [
+        ("titles = ['Python 函数', 'HTTP 请求']\ngoal = '调用接口'\nprint(f'知识范围标题：{\"、\".join(titles)}\\n目标：{goal}')", "知识范围标题：Python 函数、HTTP 请求\n目标：调用接口", "只传标题范围和学习目标，不把索引标题说成视频正文。"),
+        ("completed = False\nprint(f'已完成：{completed}\\n要求：请指出下一步练习')", "已完成：False\n要求：请指出下一步练习", "提示词需要说明任务要求和完成状态，模型才知道给什么反馈。"),
+    ],
+    "D26-parse": [
+        ("import json\ntext = '前缀 {\"summary\": \"可继续\"} 后缀'\nprint(json.loads(text[text.find('{'):text.rfind('}') + 1]))", "{'summary': '可继续'}", "先截取 JSON 片段，再调用 json.loads；提交时还要处理找不到花括号的情况。"),
+        ("import json\ntry:\n    json.loads('{bad}')\nexcept json.JSONDecodeError:\n    print('解析失败')", "解析失败", "错误格式必须明确失败，不能用空 dict 假装成功。"),
+    ],
+    "D27-client": [
+        ("messages = [{'role': 'user', 'content': '给我反馈'}]\nresponse = {'choices': [{'message': {'content': '{\"ok\": true}'}}]}\nprint(messages[0]['role'], response['choices'][0]['message']['content'])", "user {\"ok\": true}", "先封装消息，再从响应中取出待解析的文本。"),
+        ("import json\ncontent = '{\"ok\": true}'\nprint(json.loads(content)['ok'])", "True", "send_message 最终返回结构化 dict，不能把原始文本直接交给业务层。"),
+    ],
+    "D27-flow": [
+        ("result = {'summary': '已完成', 'strengths': [], 'issues': [], 'next_steps': ['继续练习']}\nrequired = {'summary', 'strengths', 'issues', 'next_steps'}\nprint(required <= result.keys())", "True", "评审流程返回前检查四个必需字段。"),
+        ("result = {'summary': '缺字段'}\nrequired = {'summary', 'strengths', 'issues', 'next_steps'}\nprint(sorted(required - result.keys()))", "['issues', 'next_steps', 'strengths']", "缺字段时明确指出问题，而不是填空默认值。"),
+    ],
+    "D28-test": [
+        ("from unittest.mock import Mock\nresponse = Mock()\nresponse.read.return_value = b'{\"choices\": []}'\nprint(response.read().decode('utf-8'))", "{\"choices\": []}", "用 mock 提供确定的响应，测试不连接真实 API。"),
+        ("from urllib.error import HTTPError\nerror = HTTPError('https://example.test', 401, 'bad key', {}, None)\nprint(error.code)", "401", "失败测试需要检查错误类型与状态码。"),
+    ],
+    "D28-review": [
+        ("完成了哪些功能：请求、解析、评审。\n验证证据：本地 mock 测试通过。", "一份有证据的复盘", "写清做了什么及如何验证。"),
+        ("下一次改进：增加无效 JSON 与 HTTP 401 的测试。", "一条具体的下一步", "复盘指出可执行的改进点，不使用空泛的“继续优化”。"),
+    ],
+}
+
+
 def example_for(section_id: str, title: str, syntax: str, index: int) -> dict[str, str]:
+    if section_id in AI_EXAMPLES:
+        code, output, explanation = AI_EXAMPLES[section_id][index % 2]
+        is_review = section_id == "D28-review"
+        return {"language": "text" if is_review else "python", "code": code, "output": output,
+                "explanation": explanation + "请对照这一段的具体输入和输出再做自己的练习；遇到边界输入时，应先确认本节要求的结果。",
+                "source_kind": "file_fragment" if is_review else "python",
+                "runnable": not is_review, **({"target_path": "D28 复盘文本框"} if is_review else {})}
     if section_id in CORE_EXAMPLES:
         code, output, _ = CORE_EXAMPLES[section_id][index % 2]
         explanation = CORE_EXAMPLE_EXPLANATIONS[section_id][index % 2]
@@ -3551,29 +3595,29 @@ def enrich_existing(section: dict[str, Any], index: int) -> dict[str, Any]:
 # produced by the fixed backend actions instead of a code-editor exercise.
 D01_TEACHING: dict[str, dict[str, Any]] = {
     "D01-onboarding": {
-        "title": "今天要做什么，以及工具之间的关系",
-        "objective": "先建立一张环境地图：解释器负责运行 Python，项目目录决定文件边界，.venv 隔离依赖，pip 安装包，pytest 运行测试。完成后能用自己的话说明四步配置顺序和每一步的证据。",
-        "syntax": "Windows PowerShell 命令（本节只阅读命令，不在 Python 编辑器中输入）",
+        "title": "先写下你的学习目标",
+        "objective": "D01 只有一个目标：让这台电脑能够运行后面的 Python 练习。现在先写一句你想用 Python 做什么，随后按页面顺序准备环境。",
+        "syntax": "本节不用写 Python 程序，也不用背解释器、pip、pytest 等术语。",
         "explanation": [
-            "Python 解释器是实际读取并执行 .py 文件的程序；`python --version` 和 `python -c \"import sys; print(sys.executable)\"` 能告诉你版本与真实可执行文件。项目目录则是命令的工作边界，后续 `.venv`、配置和测试都应该从项目根目录解释。",
-            "`.venv` 是项目自己的隔离环境，它保存一套不污染系统 Python 的解释器和第三方包。pip 是安装包的工具，pytest 是发现并运行测试的工具；它们都必须由同一个 `.venv` Python 调用，不能把裸 `pip` 的来源当成证据。",
-            "今天的顺序是检测、创建、安装、验证：先知道当前机器是什么，再创建隔离环境，再用可编辑方式安装项目和 pytest，最后运行固定 smoke 与测试。每一步都要留下版本、路径、退出码或测试报告，失败时根据具体 stderr 修复，不能只看到命令返回就算完成。",
+            "你现在只需要写一句具体目标，例如“我想查询业务数据，逐步开发 AI 助手”。这句话用于记录方向，不作为环境是否可用的证明。",
+            "提交目标后依次点击检测环境、创建项目专用环境、安装学习工具、最终检查。页面会告诉你每步的结果，安装时可能需要联网。",
+            "所有环境步骤通过后，在页面底部填写实际完成证据并标记 D01 完成，然后进入 D02。",
         ],
-        "js_bridge": "Node.js 的 node/npm/npx 与 Python 的解释器/pip/pytest 作用相近，但它们不是同一套工具；本课完整使用 Windows Python 命令，JS 类比只帮助你理解“运行时、包管理器、测试运行器”的分工。",
+        "js_bridge": "有前端经验可以把 Python 看作新的运行环境；今天先让它能运行，不需要先记住每个工具的定义。",
         "examples": [
-            {"language": "powershell", "code": "# 在项目根目录运行\nGet-Location\nwhere.exe python\npython --version", "output": "项目根路径；一个或多个 Python 候选路径；Python 3.11+ 版本", "explanation": "Get-Location 先确认命令作用的项目目录，where.exe python 再列出 PATH 中的候选解释器，最后 python --version 报告当前 launcher 选中的版本。这里的输出会因电脑安装位置不同而变化，所以要记录真实路径和版本，不要照抄示例文字。", "source_kind": "command", "runnable": False, "target_path": "Windows PowerShell"},
-            {"language": "powershell", "code": "# 仍在项目根目录，使用显式 .venv Python\npython -m venv .venv\n.\\.venv\\Scripts\\python.exe -m pip --version\n.\\.venv\\Scripts\\python.exe -m pytest --version", "output": "创建 .venv；pip 版本来自项目 .venv；pytest 版本可被导入/调用", "explanation": "python -m venv .venv 用检测到的解释器创建隔离目录，后两条命令用 `.venv\\Scripts\\python.exe -m` 明确指定同一环境。路径和版本是证据；如果 pytest 尚未安装，最后一条应明确失败，而不是改用系统 pytest 假装成功。", "source_kind": "command", "runnable": False, "target_path": "Windows PowerShell"},
+            {"language": "text", "code": "我想用 Python 查询业务数据。", "output": "一条具体的学习目标", "explanation": "这句话只记录你想用 Python 完成的具体事情，不要求出现任何工具名称。它保存的是学习方向；电脑是否准备好，要由后面的固定动作实际检查。", "source_kind": "file_fragment", "runnable": False, "target_path": "D01 学习目标输入框"},
+            {"language": "text", "code": "我想用 Python 做一个能调用 AI 的小工具。", "output": "一条具体的学习目标", "explanation": "这句话说明你想做一个什么工具，足以开始今天的学习。以后可以修改目标；D01 能否完成仍取决于环境动作的真实结果。", "source_kind": "file_fragment", "runnable": False, "target_path": "D01 学习目标输入框"},
         ],
         "common_errors": [
-            {"error": "把系统 Python、.venv Python 和 pip 混为一个环境", "symptom": "python --version、pip --version、pytest --version 指向不同目录，安装后项目仍提示缺包。", "cause": "裸 pip 由 PATH 选择，未确认它属于当前项目的解释器。", "fix": "在项目根使用 ` .\\.venv\\Scripts\\python.exe -m pip ...`，并查看 `python -c \"import sys; print(sys.executable)\"` 的路径。", "example": {"code": "pip install pytest\npython -c \"import sys; print(sys.executable)\"", "symptom": "pytest 被装到系统目录或权限错误。", "fix": "改用 .venv Python -m pip，并重新检测路径。"}},
-            {"error": "没有确认当前 PowerShell 目录", "symptom": "命令找不到 pyproject.toml，或在错误目录创建了 .venv。", "cause": "终端启动目录不是项目根，Get-Location 的结果没有被检查。", "fix": "先运行 `Get-Location`，再用 `Set-Location D:\\CODEX\\MY-工作台` 或在应用动作中让后端固定项目根。", "example": {"code": "Get-Location\npython -m venv .venv", "symptom": ".venv 出现在用户目录或其他项目。", "fix": "返回项目根后重新执行，确认 Test-Path pyproject.toml。"}},
+            {"error": "还没开始就被术语卡住", "symptom": "不知道该输入命令还是写代码。", "cause": "把后面的环境操作和本节目标混在了一起。", "fix": "本节只写一句目标，下一节再点击固定检测按钮。", "example": {"code": "我想用 Python 做什么？", "symptom": "不需要专业词", "fix": "用自己的话写一句目标"}},
+            {"error": "把目标当成环境验证", "symptom": "写完目标后以为 D01 已经全部完成。", "cause": "目标记录不检查本机 Python、.venv 和依赖。", "fix": "继续依次运行后面的四个固定动作，以实际报告作为完成证据。", "example": {"code": "我想用 Python 查询数据", "symptom": "只记录了目标", "fix": "继续进行环境检测"}},
         ],
-        "guided_practice": {"goal": "用一张命令—工具—证据表解释 D01 的顺序，不编写 Python 代码模拟环境。", "starter": "项目根：________\n解释器路径：________\n.venv 的作用：________\npip 的作用：________\npytest 的作用：________", "steps": [{"action": "在真实项目根打开 PowerShell，运行 Get-Location、where.exe python、python --version，并把三类结果分别记下来。", "expected": "能指出当前目录、PATH 候选解释器和版本；如果版本低于 3.11，先记录失败原因。"}, {"action": "用一句话连接解释器、.venv、pip、pytest，并把顺序写成检测 → 创建 → 安装 → 验证。", "expected": "回答同时说明工具角色和先后原因，而不是只罗列四个名词。"}, {"action": "点击本节之后的固定动作按钮，不在文本框输入命令；观察后端返回的 checks、stdout、stderr、exit_code。", "expected": "知道每个动作的完成证据来自后端实际执行，而不是输入框里的文字。"}], "check": "回答至少包含解释器、.venv、pip、pytest，并能根据真实路径/版本和动作报告说明下一步。"},
-        "practice": {"kind": "text", "scenario": "给第一次配置 Python 的自己写一张环境地图。", "instructions": "用 4-6 句话说明解释器、项目目录、.venv、pip、pytest 的关系，并写出检测→创建→安装→验证的顺序；本节文本框只填写解释，不填写或模拟 PowerShell 命令。", "expected_behavior": "回答能解释每个工具的职责、顺序原因和至少一种可观察证据（路径、版本、退出码或 pytest 报告）。", "hints": "不要写“安装好就行”；说明哪个 Python 执行哪个 pip，以及最后如何知道环境真的可用。", "starter_content": "", "input_examples": [{"label": "角色关系", "value": "解释器负责运行 Python；.venv 隔离项目依赖；pip 安装包；pytest 运行测试。", "expected": "能指出四者不是同一个工具，并说明它们如何串联。"}, {"label": "配置顺序", "value": "检测 → 创建 .venv → 使用 .venv Python -m pip 安装 → 运行验证。", "expected": "能解释每一步为什么在下一步之前，并指出成功证据。"}]},
-        "steps": ["确认今天配置的目标和四个工具角色", "在 Windows PowerShell 读懂命令与预期证据", "用自己的话提交关系和顺序说明"],
+        "guided_practice": {"goal": "写一句你想用 Python 做的事。", "starter": "我想用 Python ________。", "steps": [{"action": "在下面的文本框写一句学习目标。", "expected": "目标能说明你打算做什么。"}, {"action": "点击“运行并验证”。", "expected": "目标保存成功后，进入“检测当前环境”。"}], "check": "只检查是否写下目标；真正的环境准备由后面四个动作验证。"},
+        "practice": {"kind": "text", "scenario": "在开始配置前记录自己的学习目标。", "instructions": "写一句你想用 Python 做什么，例如“我想查询业务数据，逐步开发 AI 助手”。", "expected_behavior": "保存一句具体目标，随后可以进入环境检测。", "hints": "不用解释术语，也不用输入 PowerShell 命令。", "starter_content": "", "input_examples": [{"label": "学习目标", "value": "我想用 Python 查询业务数据。", "expected": "记录目标并进入下一节。"}, {"label": "另一种目标", "value": "我想用 Python 做一个 AI 小工具。", "expected": "记录目标并进入下一节。"}]},
+        "steps": ["写一句想用 Python 做的事", "点击运行并验证", "进入环境检测"],
     },
     "D01-detect": {
-        "title": "检测当前 Windows 环境",
+        "title": "检测我的环境",
         "objective": "用真实 PowerShell 命令查清当前 Python launcher、多版本 PATH、版本、可执行文件和项目根；点击“重新检测”后对照后端报告，不靠猜测继续。",
         "syntax": "where.exe python；python --version；python -c；Get-Location（固定检测命令）",
         "explanation": [
@@ -3595,7 +3639,7 @@ D01_TEACHING: dict[str, dict[str, Any]] = {
         "steps": ["阅读 Windows launcher、PATH 与 cwd 的区别", "点击重新检测并查看后端证据", "根据版本/路径失败原因修复后复测"],
     },
     "D01-create-venv": {
-        "title": "创建 .venv，并理解 PowerShell 激活",
+        "title": "创建项目专用环境（.venv）",
         "objective": "用当前合格解释器创建项目根下的 .venv；理解激活只是改变当前终端 PATH，也能用 .venv\\Scripts\\python.exe 的显式路径工作。",
         "syntax": "python -m venv .venv；.\\.venv\\Scripts\\Activate.ps1；.\\.venv\\Scripts\\python.exe",
         "explanation": [
@@ -3617,7 +3661,7 @@ D01_TEACHING: dict[str, dict[str, Any]] = {
         "steps": ["执行固定 venv 创建并检查 Scripts\\python.exe", "理解激活与显式路径两种调用方式", "识别 ExecutionPolicy/已有环境边界"],
     },
     "D01-install": {
-        "title": "用 .venv 的 Python 安装工具与测试依赖",
+        "title": "安装学习工具与测试依赖",
         "objective": "只用项目 .venv 的 Python 调用 pip，以 editable 方式安装当前项目和 dev 依赖；理解安装动作需要联网确认，成功证据是同一解释器能导入 pytest 与 learnctl。",
         "syntax": ".\\.venv\\Scripts\\python.exe -m pip install -e \".[dev]\"",
         "explanation": [
@@ -3639,7 +3683,7 @@ D01_TEACHING: dict[str, dict[str, Any]] = {
         "steps": ["确认 .venv pip 的来源", "确认联网后执行固定 editable 安装", "阅读导入和安装证据，失败则按 stderr 修复"],
     },
     "D01-verify": {
-        "title": "运行环境验证并读懂报告",
+        "title": "检查环境是否准备完成",
         "objective": "运行最后的固定验证：.venv 版本、固定 Python smoke、pytest 导入、learnctl editable 路径全部通过，才把 D01 视为可复现环境。",
         "syntax": "固定 python -c smoke + pytest import + editable path + exit_code/checks",
         "explanation": [
@@ -3715,6 +3759,7 @@ def build() -> None:
         if task_id in artifact_map:
             task["artifacts"] = artifact_map[task_id]
         if task_id == "D01":
+            task["learning_goal"] = "先写下学习目标，再按页面顺序准备并检查这台电脑的 Python 环境。"
             task["lesson"] = [enrich_d01(section) for section in task["lesson"]]
         elif task_id in core:
             task["lesson"] = [make_section(spec, old_catalog_refs[task_id], i) for i, spec in enumerate(core[task_id])]
@@ -3728,6 +3773,28 @@ def build() -> None:
     for index, task_id in enumerate(order):
         task = old_tasks[task_id]
         task["prerequisites"] = [] if index == 0 else [order[index - 1]]
+    # 入门阶段的指引和选修安排与生成数据同源，重建课程时不会丢失。
+    sections = {section["id"]: section for task in data["tasks"] for section in task["lesson"]}
+    sections["D02-numbers"]["practice"]["starter_content"] = (
+        "def divide_parts(total, size):\n"
+        "    # 这里只需计算商和余数；除数为零时抛 ValueError\n"
+        "    pass\n"
+    )
+    sections["D02-bool-none"]["practice"]["starter_content"] = (
+        "def describe_value(value):\n"
+        "    # 分别判断 None、空字符串和其他值\n"
+        "    pass\n"
+    )
+    sections["D03-comprehension"]["explanation"].insert(
+        0, "列表用 [] 按顺序存值，字典用 {键: 值} 查找值，集合用 {} 保存不重复元素；本节先借用这三种容器，D05 会系统学习。"
+    )
+    sections["D04-varargs"]["explanation"].insert(
+        0, "*args 在函数里是 tuple，**kwargs 是 dict；现在只需按模板读取它们，容器的增删改会在 D05 学习。"
+    )
+    for section_id in ("D03-match", "D04-global-nonlocal", "D04-lambda",
+                       "D05-iterators-generators", "D07-inheritance", "D10-dotenv"):
+        sections[section_id]["optional"] = True
+
     data["schema_version"] = 3
     data["curriculum_version"] = "3.0.0"
     data["meta"]["curriculum_rebuild"] = "v3: Python syntax first, common development second, real project third, AI last"

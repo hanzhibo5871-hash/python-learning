@@ -134,9 +134,10 @@ def test_d01_has_specific_windows_environment_teaching(curriculum_data: dict) ->
         assert all(example.get("target_path") == "Windows PowerShell" for example in section["examples"])
     onboarding = sections["D01-onboarding"]
     assert onboarding["practice"]["kind"] == "text"
-    assert all(example["source_kind"] == "command" and not example["runnable"] for example in onboarding["examples"])
-    assert all(example.get("target_path") == "Windows PowerShell" for example in onboarding["examples"])
-    assert all("解释器" in paragraph or "venv" in paragraph or "pip" in paragraph or "pytest" in paragraph for paragraph in onboarding["explanation"])
+    assert all(example["source_kind"] == "file_fragment" and not example["runnable"] for example in onboarding["examples"])
+    assert all(example.get("target_path") == "D01 学习目标输入框" for example in onboarding["examples"])
+    assert "写一句" in onboarding["practice"]["instructions"]
+    assert "环境" in onboarding["objective"]
 
 
 def test_schema_and_dag_invariants(curriculum_data: dict) -> None:
@@ -539,3 +540,15 @@ def test_broken_json_is_rejected(project: Path) -> None:
     payload = json.loads(result.stdout)
     assert payload["ok"] is False
     assert "JSON 无效" in payload["error"]
+
+
+def test_advanced_sections_are_optional_in_first_pass(curriculum_data: dict) -> None:
+    from learnctl.workflow import required_sections
+
+    optional_ids = {"D03-match", "D04-global-nonlocal", "D04-lambda",
+                    "D05-iterators-generators", "D07-inheritance", "D10-dotenv"}
+    sections = {s["id"]: (task, s) for task in curriculum_data["tasks"] for s in task["lesson"]}
+    assert {section_id for section_id, (_, section) in sections.items() if section.get("optional")} == optional_ids
+    for section_id in optional_ids:
+        task, _ = sections[section_id]
+        assert section_id not in required_sections(task)

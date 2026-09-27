@@ -260,6 +260,9 @@ async function renderTask(taskId) {
     <div class="row"><button data-route="dashboard">← 仪表盘</button></div>
     <h1>${escapeHtml(task.id)} ${escapeHtml(task.title)} ${statusBadge(task.status)}</h1>
     <p class="muted">${escapeHtml(task.learning_goal)}</p>
+    <div class="notice info">${task.id === "D01"
+      ? "<strong>今天只做一件事：</strong>让这台电脑能运行后面的练习。先写一句学习目标，再按顺序检测环境、创建项目专用环境、安装工具、最终检查。每步完成后继续下一节；全部通过后在页面底部填写证据。"
+      : "<strong>本任务怎样做：</strong>选中小节，先读目标和示例，再在本页的实践区输入并运行验证。保存草稿只保留输入；验证通过才完成小节；全部必修小节通过后，在页面底部填写证据并标记任务完成。"}</div>
     ${task.modules.length ? `<p class="small">知识模块：${task.modules.map((m) => `${escapeHtml(m.id)} [${escapeHtml(m.status)}]${m.supplemental ? " ⚡补充" : ""}`).join("，")}</p>` : ""}
     ${blockedHtml}
     ${navHtml}
@@ -291,6 +294,14 @@ function renderSection(section) {
   const practice = section.practice;
   const kind = practice.kind;
   const locked = Boolean(section.locked);
+  const actionFirst = section.id.startsWith("D01-");
+  const d01Action = {
+    "D01-onboarding": "写一句你想用 Python 做的事，然后点击“保存目标并验证”。通过后点“下一节”。",
+    "D01-detect": "点击“检测我的环境”。先看当前状态；此时有工具尚未安装是正常的。",
+    "D01-create-venv": "点击“创建项目专用环境（.venv）”。成功后点“下一节”。",
+    "D01-install": "点击“安装学习工具与测试依赖”，确认后等待结果。这一步可能需要联网。",
+    "D01-verify": "点击“检查环境是否准备完成”。全部通过后，在页面底部填写证据并标记 D01 完成。",
+  }[section.id];
   const storedResult = state.lastValidation?.section_id === section.id ? state.lastValidation : null;
   let editorHtml = "";
   if (kind === "env_action") {
@@ -306,10 +317,10 @@ function renderSection(section) {
       ${control}
       <div class="row" style="margin-top:8px">
         <button id="save-draft" data-save-draft ${locked ? "disabled" : ""}>保存草稿</button>
-        <button id="run-validate" class="primary" data-validate ${locked ? "disabled" : ""}>运行并验证</button>
+        <button id="run-validate" class="primary" data-validate ${locked ? "disabled" : ""}>${section.id === "D01-onboarding" ? "保存目标并验证" : "运行并验证"}</button>
         <button id="reset-content" data-reset ${locked ? "disabled" : ""}>重置为起始内容</button>
       </div>
-      <p class="small muted" style="margin-top:6px">本地验证在本机执行你的代码（仅 127.0.0.1），不会对外发送；失败会保留草稿，验证通过才会完成本节。</p>`;
+      <p class="small muted" style="margin-top:6px">${section.id === "D01-onboarding" ? "这一步只记录目标；电脑是否准备好由后面四个环境动作检查。" : "本地验证在本机执行你的代码（仅 127.0.0.1），不会对外发送；失败会保留草稿，验证通过才会完成本节。"}</p>`;
   }
 
   const examples = (practice.input_examples || [])
@@ -319,6 +330,8 @@ function renderSection(section) {
   return `
     <h2>${escapeHtml(section.title)}</h2>
     ${locked ? `<div class="notice warn"><strong>本节已锁定：</strong>${escapeHtml(section.lock_reason || "请先完成前置必修小节")}</div>` : ""}
+    ${actionFirst ? `<div class="notice info"><strong>现在做什么：</strong>${escapeHtml(d01Action)}</div><div id="practice-editor" data-practice-kind="${kind}">${editorHtml}</div><div id="validation-result">${renderValidationResult(storedResult, kind)}</div><details><summary>查看详细说明与出错时的处理办法</summary>` : ""}
+    ${section.optional ? '<span class="badge">选修巩固 · 不阻塞主线</span>' : ""}
     ${section.supplemental ? `<span class="badge supplemental">真实开发补充</span> <p class="small muted">${escapeHtml(section.supplemental_note || "")}</p>` : ""}
     ${(section.catalog_refs || []).length ? `<p class="small muted">知识范围标题：${section.catalog_refs.map((r) => escapeHtml(r)).join("、")}</p>` : ""}
     <div class="lesson-objective"><h3>本节目标</h3><p>${escapeHtml(section.objective || "")}</p></div>
@@ -341,14 +354,12 @@ function renderSection(section) {
     <h3>实践任务</h3>
     <p><strong>场景：</strong>${escapeHtml(practice.scenario)}</p>
     <p><strong>要求：</strong>${escapeHtml(practice.instructions)}</p>
-    <div id="practice-editor" data-practice-kind="${kind}">
-      ${editorHtml}
-    </div>
+    ${actionFirst ? "" : `<div id="practice-editor" data-practice-kind="${kind}">${editorHtml}</div>`}
     ${projectArtifactNote(section)}
     <p><strong>独立练习的预期行为：</strong>${escapeHtml(practice.expected_behavior)}</p>
     ${examples ? `<p><strong>可运行输入示例：</strong></p>${(practice.input_examples || []).map((e) => `<div class="catalog-item small"><strong>${escapeHtml(e.label)}</strong><pre>${escapeHtml(e.value)}</pre><p><strong>预期：</strong>${escapeHtml(e.expected || "")}</p></div>`).join("")}` : ""}
     ${practice.hints ? `<div class="notice info">💡 提示：${escapeHtml(practice.hints)}</div>` : ""}
-     <div id="validation-result">${renderValidationResult(storedResult, kind)}</div>`;
+    ${actionFirst ? "</details>" : `<div id="validation-result">${renderValidationResult(storedResult, kind)}</div>`}`;
 }
 
 function renderValidationResult(result, kind = "code") {
@@ -387,16 +398,16 @@ function renderEnvActions(practice, locked = false) {
   // Windows path reference: .venv\Scripts\python.exe
   const action = practice.action;
   const labels = {
-    detect: "重新检测",
-    create_venv: "创建 .venv",
+    detect: "检测我的环境",
+    create_venv: "创建项目专用环境（.venv）",
     install: "安装学习工具与测试依赖",
-    verify: "运行环境验证",
+    verify: "检查环境是否准备完成",
   };
   const notes = {
-    detect: "Windows 固定探测：where.exe python、python --version、python -c 读取 sys.executable、Get-Location。",
-    create_venv: "固定执行当前解释器 -m venv .venv；Windows 显式路径是 .\\.venv\\Scripts\\python.exe（即 .venv\\Scripts\\python.exe）。已有环境不删除重建；若 Activate.ps1 被 ExecutionPolicy 拦截，可继续使用显式路径。",
-    install: "确认后固定执行 .venv\\Scripts\\python.exe -m pip install -e \".[dev]\"；不使用裸 pip。",
-    verify: "在 .venv Python 中运行固定 smoke、pytest 导入和 editable 路径检查；返回 checks/stdout/stderr/exit_code。",
+    detect: "查看本机 Python 和项目位置；部分工具尚未安装是正常的。",
+    create_venv: "为本项目准备独立的 Python 环境；已有环境会复用。",
+    install: "安装课程和测试所需工具；这一步可能需要联网。",
+    verify: "检查 Python、课程工具和测试入口是否都已准备好。",
   };
   const commandHints = {
     detect: "where.exe python\npython --version\npython -c \"import sys; print(sys.executable)\"\nGet-Location",
@@ -408,12 +419,13 @@ function renderEnvActions(practice, locked = false) {
     <div class="panel env-wizard">
       <h3>${escapeHtml(labels[action] || action)}</h3>
       <p class="small muted">${escapeHtml(notes[action] || "")}</p>
-      <p class="small"><strong>固定命令参考（按钮会在服务端执行，不读取文本框命令）：</strong></p>
-      <pre class="env-command mono">${escapeHtml(commandHints[action] || "")}</pre>
       <div class="row">
         <button class="primary" data-env-action="${escapeHtml(action)}" ${locked ? "disabled" : ""}>${escapeHtml(labels[action] || action)}</button>
       </div>
-      <p class="small muted" style="margin-top:6px">结果会显示后端 checks、stdout、stderr、exit_code；只有固定动作通过才推进本节。</p>
+      <details><summary>查看执行的命令</summary><pre class="env-command mono">${escapeHtml(commandHints[action] || "")}</pre>
+        ${action === "create_venv" ? '<p class="small muted">如果 PowerShell 的 ExecutionPolicy 阻止激活脚本，仍可直接使用 .venv\\Scripts\\python.exe；无需更改系统策略。</p>' : ""}
+      </details>
+      <p class="small muted" style="margin-top:6px">完成后查看页面中的通过或失败结果；失败时可展开详细报告。</p>
     </div>`;
 }
 

@@ -141,20 +141,11 @@ def test_invalid_indentation_is_rejected_as_python_syntax(tmp_path: Path) -> Non
 def test_mock_server_validators_succeed(curriculum_data: dict) -> None:
     curriculum = _curriculum()
     d12 = (
-        "import json\nimport urllib.request\nfrom urllib.error import HTTPError, URLError\n\n"
-        "def get_json(url):\n"
-        "    try:\n"
-        "        with urllib.request.urlopen(url, timeout=10) as r:\n"
-        "            return json.loads(r.read())\n"
-        "    except HTTPError as e:\n"
-        "        raise RuntimeError(f'HTTP 状态码: {e.code}')\n"
-        "    except URLError as e:\n"
-        "        raise RuntimeError(f'网络错误: {e.reason}')\n\n"
-        "def safe_get_json(url):\n"
-        "    try:\n"
-        "        return get_json(url)\n"
-        "    except RuntimeError:\n"
-        "        return None\n"
+        "from urllib.request import Request\n\n"
+        "def fetch_text(url, opener):\n"
+        "    request = Request(url, method='GET')\n"
+        "    with opener(request) as response:\n"
+        "        return response.read().decode('utf-8')\n"
     )
     d12_post = (
         "import json\nimport urllib.request\n\n"
@@ -678,6 +669,7 @@ _GOOD_DB = (
     "    conn.execute('CREATE TABLE IF NOT EXISTS tasks (id INTEGER PRIMARY KEY AUTOINCREMENT, title TEXT NOT NULL, done INTEGER NOT NULL DEFAULT 0)')\n"
     "    conn.commit()\n\n"
     "def add_task(conn, title):\n"
+    "    if not title.strip(): raise ValueError('标题为空')\n"
     "    cur = conn.execute('INSERT INTO tasks (title) VALUES (?)', (title,))\n"
     "    conn.commit()\n"
     "    return cur.lastrowid\n\n"
@@ -738,7 +730,7 @@ _GOOD_CLI = (
     "import argparse\n"
     "from taskproj.db import add_task, complete_task, create_connection, delete_task, init_db, list_tasks\n"
     "from taskproj.config import get_db_path\n\n"
-    "def main(argv=None):\n"
+    "def build_parser():\n"
     "    parser = argparse.ArgumentParser()\n"
     "    sub = parser.add_subparsers(dest='command', required=True)\n"
     "    add = sub.add_parser('add')\n"
@@ -748,7 +740,9 @@ _GOOD_CLI = (
     "    done.add_argument('task_id', type=int)\n"
     "    rm = sub.add_parser('rm')\n"
     "    rm.add_argument('task_id', type=int)\n"
-    "    args = parser.parse_args(argv)\n"
+    "    return parser\n\n"
+    "def main(argv=None):\n"
+    "    args = build_parser().parse_args(argv)\n"
     "    conn = create_connection(get_db_path())\n"
     "    if args.command == 'add':\n"
     "        add_task(conn, args.title)\n"
@@ -995,3 +989,100 @@ def test_d22_api_fails_when_workspace_config_corrupted(tmp_path: Path, curriculu
     _write_workspace_project(tmp_path, api=_GOOD_API, db=_GOOD_DB, config="def broken(")
     result = run_validation(curriculum, "D22", "D22-api-tests", _TEST_API, tmp_path)
     assert result["passed"] is False, "损坏的 config.py 应使 D22-api 校验失败"
+
+
+def test_beginner_goal_and_first_functions_use_actual_contract(tmp_path: Path) -> None:
+    from learnctl.practice import validate_text
+
+    curriculum = _curriculum()
+    goal = _section(curriculum, "D01", "D01-onboarding")
+    assert validate_text(goal, "我想用 Python 查询业务数据。")["passed"]
+    assert not validate_text(goal, "")["passed"]
+
+    cases = {
+        "D02-numbers": (
+            "def divide_parts(total, size):\n"
+            "    if size == 0: raise ValueError('除数为零')\n"
+            "    return total // size, total % size\n",
+            "def divide_parts(total, size):\n"
+            "    if size == 0: raise ValueError('除数为零')\n"
+            "    return 0, 0\n",
+        ),
+        "D02-bool-none": (
+            "def describe_value(value):\n"
+            "    if value is None: return 'missing'\n"
+            "    if value == '': return 'empty text'\n"
+            "    return 'present'\n",
+            "def describe_value(value):\n"
+            "    return 'missing' if not value else 'present'\n",
+        ),
+    }
+    for section_id, (good, bad) in cases.items():
+        section = _section(curriculum, "D02", section_id)
+        assert validate_code(section, good, tmp_path)["passed"], section_id
+        assert not validate_code(section, bad, tmp_path)["passed"], section_id
+
+
+def test_d20_create_list_does_not_require_update_delete(tmp_path: Path) -> None:
+    section = _section(_curriculum(), "D20", "D20-create-list")
+    _write_workspace_project(tmp_path, db="")
+    code = (
+        "import sqlite3\n"
+        "def add_task(conn, title):\n"
+        "    if not title.strip(): raise ValueError('标题为空')\n"
+        "    cur = conn.execute('INSERT INTO tasks(title) VALUES (?)', (title,))\n"
+        "    conn.commit()\n"
+        "    return cur.lastrowid\n"
+        "def list_tasks(conn):\n"
+        "    rows = conn.execute('SELECT id, title, done FROM tasks ORDER BY id').fetchall()\n"
+        "    return [{'id': row[0], 'title': row[1], 'done': bool(row[2])} for row in rows]\n"
+    )
+    assert validate_code(section, code, tmp_path)["passed"]
+    later = _section(_curriculum(), "D20", "D20-update-delete")
+    assert not validate_code(later, code, tmp_path)["passed"]
+
+
+def test_d23_parser_only_requires_add_and_list(tmp_path: Path) -> None:
+    curriculum = _curriculum()
+    _write_workspace_project(tmp_path, db=_GOOD_DB, config=_GOOD_CONFIG)
+    code = (
+        "import argparse\n"
+        "from taskproj.db import add_task, create_connection, list_tasks\n"
+        "from taskproj.config import get_db_path\n"
+        "def build_parser():\n"
+        "    parser = argparse.ArgumentParser()\n"
+        "    sub = parser.add_subparsers(dest='command', required=True)\n"
+        "    add = sub.add_parser('add')\n"
+        "    add.add_argument('title')\n"
+        "    sub.add_parser('list')\n"
+        "    return parser\n"
+        "def main(argv=None):\n"
+        "    args = build_parser().parse_args(argv)\n"
+        "    conn = create_connection(get_db_path())\n"
+        "    if args.command == 'add': add_task(conn, args.title)\n"
+        "    if args.command == 'list':\n"
+        "        for item in list_tasks(conn): print(item['title'])\n"
+        "    return 0\n"
+        "if __name__ == '__main__': raise SystemExit(main())\n"
+    )
+    assert run_validation(curriculum, "D23", "D23-cli-parser", code, tmp_path)["passed"]
+    assert not run_validation(curriculum, "D23", "D23-cli-mutate", code, tmp_path)["passed"]
+
+
+def test_d11_file_uses_course_function_name(tmp_path: Path) -> None:
+    section = _section(_curriculum(), "D11", "D11-file")
+    good = (
+        "import logging\n"
+        "def configure_file_logger(path):\n"
+        "    logger = logging.getLogger('learning-file')\n"
+        "    logger.setLevel(logging.INFO)\n"
+        "    for handler in logger.handlers[:]:\n"
+        "        logger.removeHandler(handler)\n"
+        "        handler.close()\n"
+        "    handler = logging.FileHandler(path, encoding='utf-8')\n"
+        "    handler.setFormatter(logging.Formatter('%(levelname)s %(message)s'))\n"
+        "    logger.addHandler(handler)\n"
+        "    return logger\n"
+    )
+    assert validate_code(section, good, tmp_path)["passed"]
+    assert not validate_code(section, good.replace("configure_file_logger", "setup_file_logger"), tmp_path)["passed"]

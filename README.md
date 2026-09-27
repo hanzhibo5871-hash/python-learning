@@ -1,21 +1,18 @@
 # learnctl
 
-`learnctl` 是一个离线、本地的 Python / API / AI 学习工作台。它读取 `data/curriculum.json`（curriculum 3.0.0、schema 3），提供 4 阶段、28 任务、122 个教学小节的**输入型实践路线**（没有任何选择题）：先完整学习 D02-D07 Python 语法，再学习 D08-D17 常用开发，随后从零制作 D18-D24 的 task-manager，最后进入 D25-D28 AI。路线包含本地确定性验证、草稿保存、断点恢复、可选 D0-D5 诊断，以及可选 DeepSeek AI 助教。
+`learnctl` 是一个离线、本地的 Python / API / AI 学习工作台。它读取 `data/curriculum.json`（curriculum 3.0.0、schema 3），提供 4 阶段、28 任务、122 个教学小节的**输入型实践路线**（没有任何选择题）：先学习 D02-D07 Python 基础语法（进阶小节可选修巩固），再学习 D08-D17 常用开发，随后从零制作 D18-D24 的 task-manager，最后进入 D25-D28 AI。路线包含本地确定性验证、草稿保存、断点恢复、可选 D0-D5 诊断，以及可选 DeepSeek AI 助教。
 
 原始 131 个来源条目只保存在 `source_catalog` 中，作为知识范围标题索引；工具不会下载、抓取或播放来源，也不把打开来源作为完成条件。FastAPI、SQLite、asyncio、测试、配置/日志/CLI、JSON 工程实践与 DeepSeek API 等索引缺口以 `supplemental` 标记为真实开发补充，索引标题只作知识范围，不代表视频正文。
 
 ## 最短启动
 
-需要 Python 3.11 或更高版本。
+需要 Python 3.11 或更高版本。在 Windows 中双击仓库根目录的 `start_learning.bat`；也可以在项目根目录运行：
 
 ```powershell
-python -m venv .venv
-.\.venv\Scripts\Activate.ps1
-python -m pip install -e ".[dev]"
 python -m learnctl serve --open
 ```
 
-D01 会引导你完成环境检测、创建 `.venv`、安装依赖与环境验证；全部真实检查通过后才算环境就绪。
+打开 D01 后，先写一句你想用 Python 做什么，再按顺序点击“检测我的环境”“创建项目专用环境（.venv）”“安装学习工具与测试依赖”“检查环境是否准备完成”。每步查看页面报告，全部通过后在底部填写证据并标记 D01 完成。安装依赖可能需要联网。
 
 ## 常用命令
 
@@ -41,7 +38,7 @@ python -m learnctl serve --open
 - `json`：配置/API 契约，确定性解析校验。
 - `text`：onboarding / 需求 / 复盘。
 - `command`：只理解命令文本，绝不执行你输入的命令。
-- `env_action`：D01 固定动作（重新检测 / 创建 `.venv` / 安装依赖 / 运行环境验证）。
+- `env_action`：D01 固定动作（检测环境 / 创建项目专用环境 / 安装依赖 / 最终检查）。
 
 任务页提供 **保存草稿 / 运行并验证 / 重置为起始内容** 三个按钮。草稿原子保存到 `.learn/lesson-submissions/`；验证失败保留草稿，重复通过幂等。本地验证只在本机执行代码，服务仅绑定 `127.0.0.1`，不会对外发送。
 
