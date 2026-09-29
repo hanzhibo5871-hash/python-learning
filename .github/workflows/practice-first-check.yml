@@ -1,0 +1,31 @@
+name: Practice-first curriculum checks
+
+on:
+  push:
+    branches: [fix/practice-first-curriculum]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Package exact source for review
+        run: git archive --format=zip HEAD -o /tmp/repository-source.zip
+      - uses: actions/upload-artifact@v4
+        with:
+          name: repository-source
+          path: /tmp/repository-source.zip
+          retention-days: 3
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install development dependencies
+        run: python -m pip install -e '.[dev]'
+      - name: Run repository regression tests
+        run: python -m pytest -q tool_tests
