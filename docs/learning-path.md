@@ -1,89 +1,44 @@
-# Python / API / AI 学习路径（可视化工具版）
+# Python / API / AI 学习路径（实践优先）
 
-## 1. 使用方式
+D01–D28 是任务编号，不是固定天数。每节先看短规则和缺失知识卡，再改代码、比较结果、完成独立作业；补全练习不替代作业验收。
 
-这是一条面向有前端基础学习者的**产物驱动**路径。原始 131 个来源条目只作为 `source_catalog` 知识范围标题索引；主线按阶段、任务和小节推进，不要求打开来源内容，也不下载或抓取来源。
-
-每个小节都是**输入型实践**（没有选择题）：编码（code）、配置/契约（json）、复盘（text）、命令（command）或环境固定动作（env_action）。任务页默认显示课程与实践输入区，提供**保存草稿 / 运行并验证 / 重置为起始内容**三个按钮。本地验证只在本机执行，验证通过才完成小节；失败保留草稿，不自动把任务标记为完成。
-
-启动工作台：
-
-```powershell
-python -m learnctl serve --open
-```
-
-D01 首先让你写一句学习目标，再依次点击检测、创建、安装、最终检查四个固定动作。每步以页面中的实际报告为准。
-
-## 2. 阶段总览
-
-| 阶段 | 目标 | 任务 | 主要产物 |
-| --- | --- | --- | --- |
-| S1 真实环境与基础语法 | 配置可验证的本地环境，掌握基础语法并完成第一个业务程序 | D01-D07 | `.venv` 环境、商品表单清洗程序 |
-| S2 常用开发能力 | 掌握路径/JSON、CLI、配置/日志、HTTP/FastAPI、测试、SQLite、asyncio | D08-D17 | 一套可独立验证的开发能力 |
-| S3 真实普通项目 | 从需求、契约、目录、配置、数据层、接口、测试、演示到重建交付 | D18-D24 | 可运行、可测试、可重建的本地任务管理项目 |
-| S4 AI 应用 | 掌握 DeepSeek 官方 API 调用与提示词工程，完成一个可运行 AI 应用 | D25-D28 | 带 mock 测试的 AI 学习助手 |
-
-S2 依赖 S1；S3 依赖 S2；S4 依赖 S3。LangChain 云模型是显式选修，默认关闭，不进入主线。
-
-## 3. 任务清单
-
-### S1 真实环境与基础语法（D01-D07）
-
-| 任务 | 主题 | 核心产物 |
+| 任务 | 目标与实践节奏 | 已声明的复习入口 |
 | --- | --- | --- |
-| D01 | 配置并验证你的 Python 开发环境 | 实时检测 + `.venv` + 可编辑安装验证 |
-| D02 | 执行、类型、数字与字符串 | 从最小程序开始观察输入与输出 |
-| D03 | 分支与循环 | 评分等级、求和、倒计时与查找 |
-| D04 | 函数、参数与作用域 | 参数与返回值；闭包为选修巩固 |
-| D05 | 数据容器 | 切片、计数、去重、合并 |
-| D06 | 异常处理 | 安全除法、自定义异常 |
-| D07 | 模块与包 | 导入自定义模块、`__main__` 守卫 |
+| D01 | 依次点击环境按钮；以实际检测通过为准，不必背术语。 | 无需前置 |
+| D02 | 先改变量或表达式，运行看变化。函数外壳由起始代码提供，D04 再从头编写。 | D01-verify |
+| D03 | 先运行条件表，再补分支或循环。and 是同时成立，or 是至少一个成立，not 是取反。 | D02-names、D02-numbers、D02-bool-none |
+| D04 | 先写返回值，再打印观察；参数、默认值、作用域分开练，不把输入校验混进第一题。 | D03-if、D02-string-methods |
+| D05 | 打印容器修改前后，再写函数处理新数据。空容器用 []、{}、set() 区分。 | D03-for、D04-def-return |
+| D06 | 先制造一次错误，再处理它。预期要求抛异常时，正确抛出也会显示为通过。 | D03-if、D04-def-return |
+| D07 | 先调用一个模块，再创建一个小对象。平台提供的辅助文件会明确列出。 | D04-def-return、D06-try-except |
+| D08 | 每次写文件后立即读回，观察真实内容；实验在临时目录进行，不改你的项目文件。 | D07-import、D06-with、D05-traversal |
+| D09 | 先传一组 argv，再传错误参数；分别观察正常输出、错误输出和退出码。 | D04-default-keyword、D07-main、D06-try-except |
+| D10 | 使用一份小字典模拟环境，逐项读取和转换；不要打印真实密钥。 | D07-import、D05-dict-set、D06-raise、D07-dataclass |
+| D11 | 只发一条日志，比较级别、输出位置和重复次数，再增加处理器。 | D07-import、D06-with |
+| D12 | 先构造请求，再用本页提供的假响应观察结果；不需要联网或自己编写 mock 框架。 | D08-json-read、D06-with、D06-raise |
+| D13 | 先让一个 GET 接口返回 JSON，再改路径和参数；复杂异步生命周期放到 D17 后复练。 | D04-def-return、D04-type-hints、D12-response |
+| D14 | 依次练模型、业务函数、错误映射和依赖；不要求提前安装数据库。 | D13-app、D07-class-instance、D06-raise |
+| D15 | 先运行一个成功测试，再故意改错一次，阅读差异；不是只有 assert 就算通过。 | D04-def-return、D08-pathlib、D13-app |
+| D16 | 用内存数据库练连接、建表、增删改查；每一步查询表内容，不只看“执行成功”。 | D04-def-return、D06-try-except、D15-assert |
+| D17 | 先 await 一个结果，再并发两个任务，最后观察超时和取消；先不接真实网络。 | D04-def-return、D06-try-except |
+| D18 | 先完成数据字段，再增加接口；这一节不要求实现后续路由或项目文件。 | D08-json-read、D13-route、D14-errors |
+| D19 | 一次只生成一个真实文件。说明中的函数名、路径和验证器保持一致。 | D07-package、D07-main、D10-env、D15-assert |
+| D20 | 先连接和建表，再新增查询，最后完成删除；不提前检查下一节功能。 | D16-schema、D16-crud、D19-config |
+| D21 | 先健康接口和模型，再 CRUD，最后首页路径；完整 HTML 在 D23 才生成。 | D14-model、D14-deps、D17-coroutine、D20-update-delete |
+| D22 | 只测试当前已经生成的文件。15 个交付文件的完整核对放在 D24。 | D15-fixture、D15-api、D21-crud-routes |
+| D23 | 先 add/list，再 done/rm；网页先结构，再逐次接入 GET/POST/PATCH/DELETE。 | D09-subcommands、D20-update-delete、D21-crud-routes |
+| D24 | 用现有真实文件演示一次重建、测试和三种入口，不用另写一篇长报告。 | D19-readme、D22-api-errors、D23-html-fetch |
+| D25 | 先模拟请求体和响应，再写客户端；真实调用需自行配置 Key，本地验证不用 Key。 | D12-post、D12-timeout、D06-custom、D24-review |
+| D26 | 提示词只组织已授权内容；解析后检查形状，不把坏 JSON 当成功。 | D08-json-read、D02-string-methods、D25-chat |
+| D27 | 把请求、解析和字段检查接起来；平台提供的模块只是本地测试夹具，不冒充你的交付物。 | D25-errors、D26-parse、D26-prompt |
+| D28 | 写正常、401 和非 JSON 三个真实测试；最后用简短文字记录证据。 | D15-mock、D27-flow |
 
-### S2 常用开发能力（D08-D17）
+## 验收与进度
 
-| 任务 | 主题 | 核心产物 |
-| --- | --- | --- |
-| D08 | 路径、UTF-8 与 JSON | 读取/统计/写回 JSON 报告 |
-| D09 | 命令行工具 | argparse 参数与错误退出码 |
-| D10 | 配置与环境变量 | `os.environ` 与 `.env` 解析 |
-| D11 | 日志 | 控制台与文件日志 |
-| D12 | HTTP 客户端 | GET/POST + 错误处理（本地 mock 校验） |
-| D13 | FastAPI 基础 | `/health`、路径/查询参数（补充） |
-| D14 | FastAPI 参数与错误处理 | pydantic 模型与 HTTPException（补充） |
-| D15 | 单元测试与 API 测试 | pytest 单测与 mock 测试（补充） |
-| D16 | SQLite 标准库 | 建表与参数化 CRUD（补充） |
-| D17 | asyncio 基础 | gather 与 wait_for 超时（补充） |
+S1（D01–D07）完成环境和基础语法，S2（D08–D17）完成常用开发，S3（D18–D24）完成真实任务管理器，S4（D25–D28）组合 AI API 应用。S4 依赖 S3，不跳过普通项目。
 
-### S3 真实普通项目：本地任务管理（D18-D24）
+示例/补全题运行只显示结果，正式作业验证通过才完成小节；任务全部必修通过后仍需在页面底部填写证据并标记完成。原有选修保留，D13 生命周期额外标为 D17 后选修；必修所需的最小 yield/装饰器用法由前置卡提供。
 
-| 任务 | 主题 | 核心产物 |
-| --- | --- | --- |
-| D18 | 需求与契约设计 | 需求说明与 JSON 契约（补充） |
-| D19 | 项目骨架与配置 | `taskproj/config.py` 与入口 |
-| D20 | SQLite 数据层 | `taskproj/db.py` 参数化 CRUD |
-| D21 | API 与业务层 | `taskproj/api.py` FastAPI 路由 |
-| D22 | 测试与验收 | 数据层单测与接口 mock 测试 |
-| D23 | CLI 与网页演示 | `taskproj/cli.py` 子命令 |
-| D24 | 重建交付与复盘 | 重建命令序列与复盘 |
+D01 不用编程：写一句目标 → 检测 → 创建 .venv → 安装依赖 → 最终检查。安装可能联网。Windows 启动脚本优先使用项目 .venv 的解释器，避免装好了依赖却用另一个 Python 启动。
 
-### S4 AI 应用（D25-D28）
-
-| 任务 | 主题 | 核心产物 |
-| --- | --- | --- |
-| D25 | DeepSeek API 调用 | `call_chat` + `ApiError`（本地 mock 校验） |
-| D26 | 提示词与索引驱动 | `build_prompt` + `parse_ai_json` |
-| D27 | AI 应用项目 | `send_message` + `review_submission` 流程 |
-| D28 | 测试与交付复盘 | AI 客户端 mock 测试与复盘 |
-
-## 4. 完成定义
-
-- 小节完成：本地 validator 全部检查通过（`code` / `json` / `text` / `command` / `env_action` 各自确定性校验）。
-- 任务完成：手动填写证据并 `progress mark <TASK> --status done`（不自动完成）。
-- 练习（可选）：`python -m learnctl test <exercise_id>` 运行课程声明的 `learner_tests/*.py`。
-- 阶段完成：阶段内任务全部完成；最终验收以重建演示为准。
-
-## 5. 安全与边界
-
-- 本地验证只绑定 `127.0.0.1`；代码在本机执行，UI 明确这不是假装安全的沙箱。
-- 除 AI 助教按钮外，工具不联网；AI 调用只发送当前可见练习内容与相关索引标题。
-- FastAPI、SQLite、asyncio、测试、配置/日志/CLI、JSON 工程实践与 DeepSeek API 均为 `supplemental` 真实开发补充，索引标题只作知识范围，不代表视频正文。
+工具测试 `python -m pytest -q tool_tests` 与学员练习测试 `python -m learnctl test <exercise_id>` 不混用。更多说明见 [实践优先版维护说明](practice-first.md)。

@@ -546,7 +546,7 @@ def test_advanced_sections_are_optional_in_first_pass(curriculum_data: dict) -> 
     from learnctl.workflow import required_sections
 
     optional_ids = {"D03-match", "D04-global-nonlocal", "D04-lambda",
-                    "D05-iterators-generators", "D07-inheritance", "D10-dotenv"}
+                    "D05-iterators-generators", "D07-inheritance", "D10-dotenv", "D13-lifecycle"}
     sections = {s["id"]: (task, s) for task in curriculum_data["tasks"] for s in task["lesson"]}
     assert {section_id for section_id, (_, section) in sections.items() if section.get("optional")} == optional_ids
     for section_id in optional_ids:

@@ -79,8 +79,8 @@ def test_representative_validators_succeed(curriculum_data: dict, tmp_path: Path
     curriculum = _curriculum()
     cases = {
         "D03-for": "def sum_even(numbers):\n    return sum(number for number in numbers if number % 2 == 0)\n",
-        "D08-json-read": "import json\n\ndata = json.loads('{\"ok\": true}')\nprint(data['ok'])\n",
-        "D17-coroutine": "import asyncio\n\nasync def main():\n    await asyncio.sleep(0)\n\nasyncio.run(main())\n",
+        "D08-json-read": "import json\ndef read_task(text):\n    data=json.loads(text)\n    if not isinstance(data,dict) or not isinstance(data.get('title'),str) or not data['title'].strip(): raise ValueError('bad task')\n    return data\n",
+        "D17-coroutine": "import asyncio\nasync def fetch_value(value):\n    await asyncio.sleep(0)\n    return value\n",
         "D19-config": "import os\nfrom pathlib import Path\n\ndef get_db_path():\n    return Path(os.environ.get('TASKPROJ_DB', 'taskproj.db'))\n\ndef get_int_env(name, default):\n    try:\n        return int(os.environ.get(name))\n    except (TypeError, ValueError):\n        return default\n",
     }
     for section_id, solution in cases.items():
@@ -149,9 +149,9 @@ def test_mock_server_validators_succeed(curriculum_data: dict) -> None:
     )
     d12_post = (
         "import json\nimport urllib.request\n\n"
-        "def post_json(url, payload):\n"
+        "def post_json(url, payload, opener):\n"
         "    req = urllib.request.Request(url, data=json.dumps(payload).encode('utf-8'), headers={'Content-Type': 'application/json'}, method='POST')\n"
-        "    with urllib.request.urlopen(req, timeout=10) as r:\n"
+        "    with opener(req) as r:\n"
         "        return json.loads(r.read())\n"
     )
     d25 = (
@@ -171,7 +171,7 @@ def test_mock_server_validators_succeed(curriculum_data: dict) -> None:
 def test_pytest_validator_succeeds(curriculum_data: dict) -> None:
     curriculum = _curriculum()
     section = _section(curriculum, "D15", "D15-assert")
-    test_file = "assert 1 + 1 == 2\n"
+    test_file = "def add_tax(price): return round(price*1.13,2)\ndef test_normal(): assert add_tax(100)==113\ndef test_zero(): assert add_tax(0)==0\n"
     result = validate_code(section, test_file, Path("."))
     assert result["passed"] is True, result["stdout"]
 
@@ -473,17 +473,10 @@ def test_d10_dotenv_missing_file_returns_empty(curriculum_data: dict) -> None:
 def test_d17_timeout_correct_solution_passes(curriculum_data: dict) -> None:
     curriculum = _curriculum()
     section = _section(curriculum, "D17", "D17-timeout")
-    # run(3, 2.0) 应返回 3（2s 超时足够完成约0.5s的操作）
-    # run(3, 0.1) 应抛 TimeoutError（0.1s 太短）
+    # The published task is an async run_with_timeout(seconds), not legacy run(n,t).
     solution = (
-        "import asyncio\n\n"
-        "async def _slow(n):\n"
-        "    await asyncio.sleep(0.5)\n"
-        "    return n\n\n"
-        "def run(n, timeout):\n"
-        "    async def _inner():\n"
-        "        return await asyncio.wait_for(_slow(n), timeout=timeout)\n"
-        "    return asyncio.run(_inner())\n"
+        "import asyncio\nasync def slow():\n    await asyncio.sleep(0.05)\n    return 'done'\n"
+        "async def run_with_timeout(seconds):\n    return await asyncio.wait_for(slow(), timeout=seconds)\n"
     )
     result = validate_code(section, solution, Path("."))
     assert result["passed"] is True, f"D17-timeout 正确解未通过：{result['checks']}"
@@ -492,14 +485,9 @@ def test_d17_timeout_correct_solution_passes(curriculum_data: dict) -> None:
 def test_d17_timeout_wrong_no_timeout_fails(curriculum_data: dict) -> None:
     curriculum = _curriculum()
     section = _section(curriculum, "D17", "D17-timeout")
-    # 不调用 asyncio.wait_for → 不会超时
     solution = (
-        "import asyncio\n\n"
-        "async def _slow(n):\n"
-        "    await asyncio.sleep(0)\n"
-        "    return n\n\n"
-        "def run(n, timeout):\n"
-        "    return asyncio.run(_slow(n))\n"
+        "import asyncio\nasync def slow():\n    await asyncio.sleep(0.05)\n    return 'done'\n"
+        "async def run_with_timeout(seconds):\n    return await slow()\n"
     )
     result = validate_code(section, solution, Path("."))
     assert result["passed"] is False, "忽略 timeout 的实现不应通过"

@@ -1506,6 +1506,9 @@ def validate_code(section: dict[str, Any], submission: str, project_root: Path) 
 
 
 def validate_json(section: dict[str, Any], submission: str) -> dict[str, Any]:
+    if section.get("id") in {"D18-data-contract", "D18-api-contract"}:
+        from .contract_checks import validate_contract
+        return validate_contract(section, submission)
     checks: list[dict[str, Any]] = []
     try:
         data = json.loads(submission)
@@ -2026,3 +2029,8 @@ def validate_project_acceptance(project_root: Path) -> dict[str, Any]:
         checks.extend(cli_checks)
 
     return _finalize(checks, {"timeout": False, "stdout": "", "stderr": "", "exit_code": None})
+
+
+# Authoritative practice-first contracts supersede incompatible legacy aliases.
+from .contract_checks import register as _register_practice_first
+_register_practice_first(_CODE_VALIDATORS)
