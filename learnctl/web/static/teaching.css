@@ -1,0 +1,18 @@
+/* Short teaching remains visible. Only additional depth stays collapsed. */
+.lesson-intro {
+  border-left: 4px solid var(--brand);
+  border-radius: 6px;
+  padding: 12px 16px;
+  margin: 14px 0;
+  background: var(--code-bg);
+  line-height: 1.75;
+  overflow-wrap: anywhere;
+}
+.lesson-intro h3 { margin: 0 0 8px; }
+.lesson-intro p { margin: 6px 0; }
+.lesson-intro strong { margin-right: 4px; }
+.examples-reference[open] { margin: 14px 0; }
+.examples-reference > summary { font-weight: 600; }
+@media (max-width: 600px) {
+  .lesson-intro { padding: 10px 12px; }
+}
