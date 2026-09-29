@@ -29,7 +29,7 @@ def main() -> None:
     parser.add_argument('--executable')
     parser.add_argument('--screenshots', type=Path)
     args = parser.parse_args()
-    from playwright.sync_api import sync_playwright
+    from playwright.sync_api import expect, sync_playwright
     with tempfile.TemporaryDirectory(prefix='learnctl-browser-test-') as directory:
         root = Path(directory)
         (root / 'data').mkdir()
@@ -89,11 +89,11 @@ def main() -> None:
                 wrong = 'def rectangle_area(width, height):\n    return 0\n'
                 page.locator('#editor').fill(wrong)
                 page.locator('[data-validate]').click()
-                page.wait_for_function("document.querySelector('#validation-result').innerText.includes('验证未通过')")
+                expect(page.locator("#validation-result")).to_contain_text("验证未通过", timeout=30000)
                 assert '12' in page.locator('#validation-result').inner_text()
                 assert page.locator('#editor').input_value() == wrong
                 page.locator('[data-run-experiment]').first.click()
-                page.wait_for_function("document.querySelector('[data-experiment-result]').innerText.includes('输出符合预期')")
+                expect(page.locator("[data-experiment-result]").first).to_contain_text("输出符合预期", timeout=30000)
                 assert page.locator('#editor').input_value() == wrong
                 if args.screenshots:
                     args.screenshots.mkdir(parents=True, exist_ok=True)
@@ -102,12 +102,12 @@ def main() -> None:
                 correct = 'def rectangle_area(width, height):\n    return width * height\n'
                 page.locator('#editor').fill(correct)
                 page.locator('[data-validate]').click()
-                page.wait_for_function("document.querySelector('#validation-result').innerText.includes('验证通过')")
+                expect(page.locator("#validation-result")).to_contain_text("验证通过", timeout=30000)
                 # Refresh task data from the server without changing the code buffer.
                 page.evaluate('async () => { await refreshTaskState(); await renderTask("D04"); }')
                 assert page.locator('#editor').input_value() == correct
                 page.set_viewport_size({'width': 390, 'height': 844})
-                assert page.evaluate('document.documentElement.scrollWidth <= window.innerWidth + 2')
+                assert page.evaluate('() => document.documentElement.scrollWidth <= window.innerWidth + 2')
                 if args.screenshots:
                     page.screenshot(path=str(args.screenshots / 'mobile.png'), full_page=True)
                 assert not errors, errors
