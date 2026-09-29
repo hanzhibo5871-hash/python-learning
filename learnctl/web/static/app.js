@@ -21,12 +21,28 @@ const state = {
   catalogSeries: "",
   catalogQuery: "",
   workspace: null,
+  lessonView: "learn",
+  editorDirty: false,
+  busy: false,
+  renderVersion: 0,
 };
 
 const $ = (sel) => document.querySelector(sel);
 const app = () => $("#app");
 const AI_DRAWER_FOCUS_DELAY_MS = 220;
 let aiDrawerFocusTimer = null;
+let draftTimer = null;
+let draftSave = null;
+
+function showError(error) {
+  const box = $("#page-feedback");
+  box.textContent = error.message;
+  box.hidden = false;
+}
+
+function clearError() {
+  $("#page-feedback").hidden = true;
+}
 
 async function api(method, path, body) {
   const options = { method, headers: {} };
@@ -35,15 +51,8 @@ async function api(method, path, body) {
     options.body = JSON.stringify(body);
   }
   const res = await fetch(path, options);
-  let data = {};
-  try {
-    data = await res.json();
-  } catch (_e) {
-    data = {};
-  }
-  if (!res.ok && !data.ok) {
-    throw new Error(data.error || `请求失败（HTTP ${res.status}）`);
-  }
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error);
   return data;
 }
 
@@ -56,8 +65,8 @@ function escapeHtml(value) {
 }
 
 function statusBadge(status) {
-  const map = { todo: "未开始", in_progress: "进行中", done: "已完成" };
-  return `<span class="badge ${status}">${map[status] || status}</span>`;
+  const map = { todo: "未开始", in_progress: "进行中", done: "已完成", blocked: "前置未完成", learn: "学习中", practice: "练习中", mastered: "已掌握" };
+  return `<span class="badge ${escapeHtml(status)}">${escapeHtml(map[status] || status)}</span>`;
 }
 
 // ---------------------------------------------------------------- 路由
@@ -79,23 +88,39 @@ function normaliseRoute(hash) {
   return "#/dashboard";
 }
 
-function navigate(hash) {
+async function navigate(hash) {
   const target = normaliseRoute(hash);
   // hashchange 是唯一的异步渲染入口；这样按钮导航与 back/forward 共用一条路径。
   if (window.location.hash === target) return;
-  window.location.hash = target;
+  if (state.busy) return;
+  try {
+    await persistDraft();
+    window.location.hash = target;
+  } catch (error) { showError(error); }
 }
 
-window.addEventListener("hashchange", () => {
+window.addEventListener("hashchange", async () => {
+  if (state.busy) {
+    history.replaceState(null, "", state.route);
+    return;
+  }
   const target = normaliseRoute(window.location.hash);
   if (window.location.hash !== target) {
     history.replaceState(null, "", "#/dashboard");
   }
-  state.route = target;
-  render();
+  try {
+    await persistDraft();
+    state.route = target;
+    await render();
+  } catch (error) {
+    history.replaceState(null, "", state.route);
+    showError(error);
+  }
 });
 
 async function render() {
+  const version = ++state.renderVersion;
+  clearError();
   const route = state.route;
   const parts = route.replace(/^#\//, "").split("/");
   const name = parts[0] || "dashboard";
@@ -108,13 +133,14 @@ async function render() {
   }
   try {
     if (!state.bootstrap) state.bootstrap = await api("GET", "/api/bootstrap");
+    if (version !== state.renderVersion) return;
     if (name === "dashboard") return renderDashboard();
-    if (name === "task") return renderTask(parts[1]);
-    if (name === "catalog") return renderCatalog();
-    if (name === "diagnostic") return renderDiagnostic();
+    if (name === "task") return await renderTask(parts[1], version);
+    if (name === "catalog") return await renderCatalog();
+    if (name === "diagnostic") return await renderDiagnostic();
     renderDashboard();
   } catch (error) {
-    app().innerHTML = `<div class="notice warn">${escapeHtml(error.message)}</div>`;
+    if (version === state.renderVersion) showError(error);
   }
 }
 
@@ -134,40 +160,43 @@ function renderDashboard() {
           ? `<div class="notice warn">当前任务被前置条件阻塞：${escapeHtml((current.missing_prerequisites || []).join("、"))}</div>
              <button data-goto-task="${escapeHtml(current.task.id)}">查看任务详情</button>`
           : `<p>${escapeHtml(current.task.learning_goal)}</p>
-             <div class="row"><button class="primary" data-goto-task="${escapeHtml(current.task.id)}">继续学习</button></div>`}
+             <p>必修练习 ${current.task.lesson.required_completed}/${current.task.lesson.required_sections} 已通过</p>
+             <progress value="${current.task.lesson.required_completed}" max="${current.task.lesson.required_sections}" aria-label="当前任务必修练习进度"></progress>
+             <div class="row"><button class="primary" data-goto-task="${escapeHtml(current.task.id)}">继续课程</button></div>`}
       </div>`;
 
   const stagesHtml = b.stages
     .map(
-      (stage) => `<div class="card">
-        <h3>${escapeHtml(stage.id)} ${escapeHtml(stage.title)} <span class="muted small">${stage.done}/${stage.total}</span></h3>
+      (stage) => `<details class="card stage-card" ${current.task?.stage_id === stage.id ? "open" : ""}>
+        <summary>${escapeHtml(stage.id)} ${escapeHtml(stage.title)} <span class="muted small">${stage.done}/${stage.total} 个任务完成</span></summary>
         <p class="small muted">${escapeHtml(stage.goal)}</p>
-        <div class="row">
+        <div class="task-list">
           ${stage.tasks
             .map(
               (task) =>
-                `<button data-goto-task="${escapeHtml(task.id)}" title="${task.completed_sections} 节已完成">${escapeHtml(task.id)}${task.status === "done" ? " ✓" : ""}</button>`
+                `<button class="task-link" data-goto-task="${escapeHtml(task.id)}"><span>${escapeHtml(task.id)} · ${escapeHtml(task.title)}</span><span>${statusBadge(task.status)}${task.blocked ? statusBadge("blocked") : ""}<small>${task.required_completed}/${task.required_sections} 必修练习通过</small></span></button>`
             )
             .join("")}
         </div>
-      </div>`
+      </details>`
     )
     .join("");
 
   app().innerHTML = `
     <h1>学习进度 <span class="muted small">${b.progress.done}/${b.progress.total} 个任务完成</span></h1>
+    <div class="panel welcome"><h2>从第一行 Python 开始</h2><p>在这里读讲解、写代码、看反馈。每次完成一个小节即可；D02–D09 另有 24 道离线加练，遇到不熟的内容可以反复练习。</p><ol class="milestones"><li><strong>D01–D07 · 写出小程序</strong><br>能使用变量、判断、循环、函数和容器。</li><li><strong>D08–D17 · 处理真实数据</strong><br>能读写文件、编写命令、调用接口并测试。</li><li><strong>D18–D24 · 独立交付项目</strong><br>完成任务管理器，并从空目录重建运行。</li></ol><p class="small muted">学习顺序：读示例并预测输出 → 自己补全代码 → 对照反馈修改 → 再做一道加练。AI 应用在 D24 后继续学习。</p></div>
     ${currentCard}
     <div class="grid">${stagesHtml}</div>
-    <div class="panel">
-      <h2>知识模块</h2>
+    <details class="panel">
+      <summary>知识模块与来源范围</summary>
       <div class="row">
         ${b.modules
           .filter((m) => m.enabled)
-          .map((m) => `<span class="badge ${m.status}">${escapeHtml(m.id)} ${escapeHtml(m.status)}${m.supplemental ? " ⚡补充" : ""}</span>`)
+          .map((m) => `<span>${escapeHtml(m.title)} ${statusBadge(m.status)}</span>`)
           .join("")}
       </div>
       <p class="small muted">共 ${b.catalog_count} 条来源索引（仅作知识范围标题索引）</p>
-    </div>`;
+    </details>`;
 }
 
 document.addEventListener("click", (event) => {
@@ -183,16 +212,19 @@ document.addEventListener("click", (event) => {
 // ---------------------------------------------------------------- 任务页
 
 async function loadTask(taskId) {
-  state.task = await api("GET", `/api/tasks/${encodeURIComponent(taskId)}`);
+  const payload = await api("GET", `/api/tasks/${encodeURIComponent(taskId)}`);
+  if (state.route !== `#/task/${taskId}`) return false;
+  state.task = payload;
   state.taskId = taskId;
   // 切换任务后旧的变式题绑定失效，必须清除，避免评审时把上一任务的变式题发给当前小节
   state.variationId = null;
   const lesson = state.task.task.lesson;
-  if (!state.currentSection || !lesson.sections.some((s) => s.id === state.currentSection)) {
-    state.currentSection = lesson.current_section;
-  }
+  state.currentSection = lesson.current_section;
   const section = lesson.sections.find((s) => s.id === state.currentSection);
   state.editorValue = initialContent(section);
+  state.editorDirty = false;
+  state.lessonView = section.title.startsWith("加练") ? "practice" : "learn";
+  return true;
 }
 
 async function refreshTaskState() {
@@ -217,42 +249,45 @@ function initialContent(section) {
   return section.draft !== undefined ? section.draft : practice.starter_content || "";
 }
 
-async function renderTask(taskId) {
-  if (state.taskId !== taskId || !state.task) await loadTask(taskId);
+async function renderTask(taskId, version = state.renderVersion) {
+  if (state.taskId !== taskId || !state.task) {
+    if (!await loadTask(taskId)) return;
+  }
   const task = state.task.task;
   const isProjectTask = /^D(?:1[89]|2[0-4])$/.test(task.id);
   // 只有真实项目阶段显示工作区；基础语法页不把 15 个项目文件塞到学习主线里。
   if (isProjectTask) {
-    try { state.workspace = await api("GET", "/api/workspace"); } catch (_e) { state.workspace = null; }
+    state.workspace = await api("GET", "/api/workspace");
   } else {
     state.workspace = null;
   }
+  if (version !== state.renderVersion || state.route !== `#/task/${taskId}`) return;
   const lesson = task.lesson;
   const section = lesson.sections.find((s) => s.id === state.currentSection);
 
-  const navHtml = `<div class="section-nav">
+  const navHtml = `<nav class="section-nav" aria-label="本任务课程目录">
     ${lesson.sections
       .map(
         (s, i) =>
-          `<button data-section="${escapeHtml(s.id)}" class="${s.completed ? "completed" : ""} ${s.id === state.currentSection ? "active" : ""}">
-            ${i + 1}. ${escapeHtml(s.title)}${s.completed ? " ✓" : ""}
+          `<button data-section="${escapeHtml(s.id)}" ${s.id === state.currentSection ? 'aria-current="step"' : ''} class="${s.completed ? "completed" : ""} ${s.id === state.currentSection ? "active" : ""}">
+            ${i + 1}. ${escapeHtml(s.title)}<small>${s.completed ? "已通过 ✓" : s.locked ? "前置未完成" : "待练习"}${s.optional ? " · 选修加练" : " · 必修"}</small>
           </button>`
       )
       .join("")}
-  </div>`;
+  </nav>`;
 
   const prev = lesson.sections.findIndex((s) => s.id === state.currentSection);
   const pager = `<div class="row">
-      <button id="prev-section" ${prev <= 0 ? "disabled" : ""}>上一节</button>
+      <button data-section-step="-1" ${prev <= 0 ? "disabled" : ""}>上一节</button>
       <span class="muted small">${prev + 1}/${lesson.sections.length}</span>
-      <button id="next-section" ${prev >= lesson.sections.length - 1 ? "disabled" : ""}>下一节</button>
+      <button data-section-step="1" ${prev >= lesson.sections.length - 1 ? "disabled" : ""}>下一节</button>
       <span class="spacer"></span>
       <span class="muted small">已验证必修小节 ${lesson.required_completed}/${lesson.required_sections}</span>
     </div>`;
 
   const blockedHtml = task
-    ? task.status === "todo" && lesson.completed_count >= lesson.total_sections
-      ? `<div class="notice info">本任务全部小节已通过本地验证。请在“实践与验收”中填写证据并把任务标记为完成。</div>`
+    ? task.status !== "done" && lesson.required_completed >= lesson.required_sections
+      ? `<div class="notice info">本任务必修练习已全部通过。可以继续选修加练，也可以在“实践与验收”中填写证据并完成任务。</div>`
       : ""
     : "";
 
@@ -263,20 +298,22 @@ async function renderTask(taskId) {
     <div class="notice info">${task.id === "D01"
       ? "<strong>今天只做一件事：</strong>让这台电脑能运行后面的练习。先写一句学习目标，再按顺序检测环境、创建项目专用环境、安装工具、最终检查。每步完成后继续下一节；全部通过后在页面底部填写证据。"
       : "<strong>本任务怎样做：</strong>选中小节，先读目标和示例，再在本页的实践区输入并运行验证。保存草稿只保留输入；验证通过才完成小节；全部必修小节通过后，在页面底部填写证据并标记任务完成。"}</div>
-    ${task.modules.length ? `<p class="small">知识模块：${task.modules.map((m) => `${escapeHtml(m.id)} [${escapeHtml(m.status)}]${m.supplemental ? " ⚡补充" : ""}`).join("，")}</p>` : ""}
+    ${task.modules.length ? `<p class="small">知识模块：${task.modules.map((m) => `${escapeHtml(m.title)} ${statusBadge(m.status)}${m.supplemental ? " 补充" : ""}`).join("，")}</p>` : ""}
     ${blockedHtml}
-    ${navHtml}
+    <progress value="${lesson.completed_count}" max="${lesson.total_sections}" aria-label="任务小节完成进度"></progress>
+    <p class="small muted">共 ${lesson.completed_count}/${lesson.total_sections} 节通过 · 含 ${lesson.total_sections - lesson.required_sections} 节选修加练</p>
+    <div class="lesson-layout"><aside class="lesson-toc"><h2>课程目录</h2>${navHtml}</aside>
     <div class="panel lesson-panel">
       ${pager}
       <div id="section-body">${renderSection(section)}</div>
       ${pager}
-    </div>
+    </div></div>
     ${renderAiDrawer(section)}
     ${isProjectTask ? renderWorkspacePanel() : ""}
     ${isProjectTask ? renderFilesPanel() : ""}
     <div class="panel">
       <h2>实践与验收</h2>
-      <p class="small muted">产物文件：${task.artifacts.map((a) => escapeHtml(a)).join("、")}</p>
+      <p class="small muted">${isProjectTask ? '产物文件' : '拓展练习文件（按需创建，本页代码保存在小节草稿中）'}：${task.artifacts.map((a) => escapeHtml(a)).join("、")}</p>
       <p class="small muted">验收：${task.acceptance.map((a) => escapeHtml(a)).join("；")}</p>
       <div class="row">
         <button id="mark-inprogress">标记为进行中</button>
@@ -284,8 +321,9 @@ async function renderTask(taskId) {
         <span class="small muted">已验证必修小节 ${lesson.required_completed}/${lesson.required_sections}（后端权威，全部通过才能完成）</span>
       </div>
       <div class="row" style="margin-top:8px">
-        <input type="text" id="done-evidence" placeholder="完成证据（pytest 通过 / 本地验证通过 等）" style="flex:1">
+        <label for="done-evidence">我的完成证据</label><input type="text" id="done-evidence" placeholder="例如：独立完成购物车汇总，空列表检查通过" style="flex:1">
       </div>
+      ${task.status === "done" && !state.bootstrap.current.all_done ? `<button class="primary" data-goto-task="${escapeHtml(state.bootstrap.current.task.id)}">继续下一任务 ${escapeHtml(state.bootstrap.current.task.id)}</button>` : ""}
     </div>`;
   syncAiDrawerUi();
 }
@@ -309,17 +347,19 @@ function renderSection(section) {
   } else {
     const placeholder = kind === "command" ? "在此输入命令…" : "在此输入内容…";
     const control = kind === "command"
-      ? `<input type="text" class="mono" id="editor" value="${escapeHtml(state.editorValue)}" placeholder="${placeholder}" ${locked ? "disabled" : ""}>`
-      : `<textarea class="mono" id="editor" placeholder="${placeholder}" ${locked ? "disabled" : ""}>${escapeHtml(state.editorValue)}</textarea>`;
+      ? `<input type="text" class="mono" id="editor" aria-label="本节练习输入" value="${escapeHtml(state.editorValue)}" placeholder="${placeholder}" ${locked ? "disabled" : ""}>`
+      : `<textarea class="mono" id="editor" aria-label="本节练习代码或文字" spellcheck="false" autocapitalize="off" placeholder="${placeholder}" ${locked ? "disabled" : ""}>${escapeHtml(state.editorValue)}</textarea>`;
     const fileLabel = practice.file_name ? `<p class="small muted">提交文件：${escapeHtml(practice.file_name)}</p>` : "";
     editorHtml = `
       ${fileLabel}
       ${control}
+      <div class="row small muted"><span id="editor-lines">${state.editorValue.split("\n").length} 行</span><span id="draft-status" role="status">${state.editorDirty ? "有未保存内容" : "停止输入后自动保存草稿"}</span></div>
       <div class="row" style="margin-top:8px">
         <button id="save-draft" data-save-draft ${locked ? "disabled" : ""}>保存草稿</button>
         <button id="run-validate" class="primary" data-validate ${locked ? "disabled" : ""}>${section.id === "D01-onboarding" ? "保存目标并验证" : "运行并验证"}</button>
         <button id="reset-content" data-reset ${locked ? "disabled" : ""}>重置为起始内容</button>
       </div>
+      <p class="small muted">Ctrl+S 保存 · Ctrl+Enter 运行验证。Tab 可正常移动到下一个控件。</p>
       <p class="small muted" style="margin-top:6px">${section.id === "D01-onboarding" ? "这一步只记录目标；电脑是否准备好由后面四个环境动作检查。" : "本地验证在本机执行你的代码（仅 127.0.0.1），不会对外发送；失败会保留草稿，验证通过才会完成本节。"}</p>`;
   }
 
@@ -328,9 +368,10 @@ function renderSection(section) {
     .join("");
 
   return `
-    <h2>${escapeHtml(section.title)}</h2>
+    <h2 id="lesson-heading" tabindex="-1">${escapeHtml(section.title)}</h2>
     ${locked ? `<div class="notice warn"><strong>本节已锁定：</strong>${escapeHtml(section.lock_reason || "请先完成前置必修小节")}</div>` : ""}
     ${actionFirst ? `<div class="notice info"><strong>现在做什么：</strong>${escapeHtml(d01Action)}</div><div id="practice-editor" data-practice-kind="${kind}">${editorHtml}</div><div id="validation-result">${renderValidationResult(storedResult, kind)}</div><details><summary>查看详细说明与出错时的处理办法</summary>` : ""}
+    ${actionFirst ? "" : `<div class="lesson-tabs" role="tablist" aria-label="学习与实践"><button role="tab" id="learn-tab" aria-controls="lesson-theory" aria-selected="${state.lessonView === 'learn'}" data-lesson-view="learn">1. 讲解与示例</button><button role="tab" id="practice-tab" aria-controls="lesson-practice" aria-selected="${state.lessonView === 'practice'}" data-lesson-view="practice">2. 动手练习</button></div><div id="lesson-theory" role="tabpanel" aria-labelledby="learn-tab" ${state.lessonView !== 'learn' ? 'hidden' : ''}>`}
     ${section.optional ? '<span class="badge">选修巩固 · 不阻塞主线</span>' : ""}
     ${section.supplemental ? `<span class="badge supplemental">真实开发补充</span> <p class="small muted">${escapeHtml(section.supplemental_note || "")}</p>` : ""}
     ${(section.catalog_refs || []).length ? `<p class="small muted">知识范围标题：${section.catalog_refs.map((r) => escapeHtml(r)).join("、")}</p>` : ""}
@@ -340,17 +381,15 @@ function renderSection(section) {
     <pre class="syntax-note">${escapeHtml(section.syntax || "")}</pre>
     <h3>关键点</h3>
     <ul>${section.key_points.map((k) => `<li>${escapeHtml(k)}</li>`).join("")}</ul>
-    <h3>JavaScript 对照（仅辅助）</h3>
-    <p class="small">${escapeHtml(section.frontend_bridge)}</p>
+    <details><summary>如果你了解 JavaScript：辅助对照</summary>
+    <p class="small">${escapeHtml(section.js_bridge)}</p></details>
     <h3>逐步示例</h3>
-    ${(section.examples || [section.example]).map((example, index) => `<div class="lesson-example"><h4>示例 ${index + 1}</h4><pre>${escapeHtml(example.code)}</pre><p><strong>预期输出：</strong><code>${escapeHtml(example.output)}</code></p><p class="small muted">${escapeHtml(example.explanation)}</p></div>`).join("")}
-    <h3>常见错误</h3>
+    ${(section.examples || [section.example]).map((example, index) => `<div class="lesson-example"><h4>示例 ${index + 1}</h4><pre>${escapeHtml(example.code)}</pre><p><strong>${example.runnable ? '预期输出' : '片段用途'}：</strong></p><pre class="expected-output">${escapeHtml(example.output)}</pre><p class="small muted">${escapeHtml(example.explanation)}</p></div>`).join("")}
+    <details><summary>常见错误与修改方法</summary>
     <ul class="lesson-errors">${(section.common_errors || []).map((error) => `<li><strong>${escapeHtml(error.error)}</strong><pre>${escapeHtml(error.example?.code || "")}</pre><p><strong>看到：</strong>${escapeHtml(error.symptom || "")}</p><p><strong>原因：</strong>${escapeHtml(error.cause || "")}</p><p><strong>修正：</strong>${escapeHtml(error.fix || error.example?.fix || "")}</p></li>`).join("")}</ul>
-    <h3>引导练习</h3>
+    </details><h3>引导练习</h3>
     ${section.guided_practice && !Array.isArray(section.guided_practice) ? `<div class="guided-practice"><p><strong>目标：</strong>${escapeHtml(section.guided_practice.goal)}</p><pre>${escapeHtml(section.guided_practice.starter)}</pre><ol>${(section.guided_practice.steps || []).map((step) => `<li><strong>操作：</strong>${escapeHtml(step.action)}<br><strong>预期：</strong>${escapeHtml(step.expected)}</li>`).join("")}</ol><p class="small muted"><strong>检查：</strong>${escapeHtml(section.guided_practice.check)}</p></div>` : `<ol>${(section.guided_practice || []).map((step) => `<li>${escapeHtml(step)}</li>`).join("")}</ol>`}
-    <h3>步骤</h3>
-    <ol>${section.steps.map((s) => `<li>${escapeHtml(s)}</li>`).join("")}</ol>
-    <hr>
+    ${actionFirst ? "<hr>" : `<button class="primary" data-lesson-view="practice">读完了，开始动手练习 →</button></div><div id="lesson-practice" role="tabpanel" aria-labelledby="practice-tab" ${state.lessonView !== 'practice' ? 'hidden' : ''}>`}
     <h3>实践任务</h3>
     <p><strong>场景：</strong>${escapeHtml(practice.scenario)}</p>
     <p><strong>要求：</strong>${escapeHtml(practice.instructions)}</p>
@@ -359,7 +398,7 @@ function renderSection(section) {
     <p><strong>独立练习的预期行为：</strong>${escapeHtml(practice.expected_behavior)}</p>
     ${examples ? `<p><strong>可运行输入示例：</strong></p>${(practice.input_examples || []).map((e) => `<div class="catalog-item small"><strong>${escapeHtml(e.label)}</strong><pre>${escapeHtml(e.value)}</pre><p><strong>预期：</strong>${escapeHtml(e.expected || "")}</p></div>`).join("")}` : ""}
     ${practice.hints ? `<div class="notice info">💡 提示：${escapeHtml(practice.hints)}</div>` : ""}
-    ${actionFirst ? "</details>" : `<div id="validation-result">${renderValidationResult(storedResult, kind)}</div>`}`;
+    ${actionFirst ? "</details>" : `<div id="validation-result" role="status">${renderValidationResult(storedResult, kind)}</div></div>`}`;
 }
 
 function renderValidationResult(result, kind = "code") {
@@ -378,7 +417,9 @@ function renderValidationResult(result, kind = "code") {
       : "";
   return `<div class="result-box ${result.passed ? "passed" : "failed"}">
     <p><strong>${result.passed ? (kind === "env_action" ? "✅ 动作完成" : "✅ 验证通过") : (kind === "env_action" ? "❌ 动作未通过" : "❌ 验证未通过")}</strong>${result.completed ? "（本节已标记完成）" : ""} exit_code=${escapeHtml(result.exit_code ?? "—")}</p>
+    ${result.learning_feedback ? `<p class="notice info">${escapeHtml(result.learning_feedback)}</p>` : ""}
     ${command}<ul class="check-list">${checks}</ul>${output}
+    ${result.passed ? '<p>这次练习已通过。试着用自己的话解释为什么，再继续下一节。</p>' : ''}
   </div>`;
 }
 
@@ -597,6 +638,7 @@ async function renderCatalog() {
   const series = state.catalogSeries;
   const q = state.catalogQuery;
   const data = await api("GET", `/api/catalog?series=${encodeURIComponent(series)}&q=${encodeURIComponent(q)}`);
+  if (state.route !== "#/catalog" || q !== state.catalogQuery || series !== state.catalogSeries) return;
   app().innerHTML = `
     <h1>来源索引</h1>
     <p class="small muted">131 条来源仅作为知识范围标题索引，工具不会打开或抓取来源内容。共 ${data.total} 条匹配。</p>
@@ -618,6 +660,7 @@ async function renderCatalog() {
 
 async function renderDiagnostic() {
   const questions = await api("GET", "/api/diagnostic/questions");
+  if (state.route !== "#/diagnostic") return;
   const answerInputs = questions.diagnostics
     .map(
       (d) => `<div class="card">
@@ -643,146 +686,146 @@ document.addEventListener("pointerdown", (event) => {
 }, true);
 
 document.addEventListener("click", async (event) => {
-  const aiTutorTrigger = event.target.closest("#ai-tutor-trigger");
-  if (aiTutorTrigger) {
-    event.preventDefault();
-    openAiTutorDrawer();
-    return;
-  }
-  const aiTutorClose = event.target.closest("#ai-tutor-close, #ai-tutor-backdrop");
-  if (aiTutorClose) {
-    event.preventDefault();
-    closeAiTutorDrawer();
-    return;
-  }
-  const sectionBtn = event.target.closest("[data-section]");
-  if (sectionBtn) {
-    state.currentSection = sectionBtn.dataset.section;
-    const section = state.task.task.lesson.sections.find((s) => s.id === state.currentSection);
-    state.editorValue = initialContent(section);
-    // 切换小节后上一小节的变式题不再适用，立即清除陈旧 id
-    state.variationId = null;
-    saveSectionPosition(state.currentSection);
-    renderTask(state.taskId);
-    return;
-  }
-  const prevBtn = event.target.closest("#prev-section");
-  const nextBtn = event.target.closest("#next-section");
-  if (prevBtn || nextBtn) {
-    const sections = state.task.task.lesson.sections;
-    const index = sections.findIndex((s) => s.id === state.currentSection);
-    const next = prevBtn ? index - 1 : index + 1;
-    if (next >= 0 && next < sections.length) {
-      state.currentSection = sections[next].id;
-      state.editorValue = initialContent(sections[next]);
-      state.variationId = null;
-      saveSectionPosition(state.currentSection);
-      renderTask(state.taskId);
+  try {
+    const aiTutorTrigger = event.target.closest("#ai-tutor-trigger");
+    if (aiTutorTrigger) {
+      event.preventDefault();
+      openAiTutorDrawer();
+      return;
     }
-    return;
-  }
-  const openFile = event.target.closest("[data-open-file]");
-  if (openFile) {
-    await openFileEditor(openFile.dataset.openFile);
-    return;
-  }
-  const wsFile = event.target.closest("[data-ws-file]");
-  if (wsFile) {
-    await viewWorkspaceFile(wsFile.dataset.wsFile);
-    return;
-  }
-  const envAction = event.target.closest("[data-env-action]");
-  if (envAction) {
-    const action = envAction.dataset.envAction;
-    if (action === "install") {
-      // 取消则不发起请求；确认后由后端强制校验 confirmed: true
-      if (!window.confirm("安装学习工具与测试依赖需要联网执行：.venv Python -m pip install -e .[dev]。是否继续？")) {
-        return;
+    const aiTutorClose = event.target.closest("#ai-tutor-close, #ai-tutor-backdrop");
+    if (aiTutorClose) {
+      event.preventDefault();
+      closeAiTutorDrawer();
+      return;
+    }
+    const sectionBtn = event.target.closest("[data-section]");
+    if (sectionBtn) {
+      await selectSection(sectionBtn.dataset.section);
+      return;
+    }
+    const viewButton = event.target.closest("[data-lesson-view]");
+    if (viewButton) {
+      if (state.busy) return;
+      state.lessonView = viewButton.dataset.lessonView;
+      await renderTask(state.taskId);
+      $("#lesson-heading")?.focus({preventScroll: true});
+      return;
+    }
+    const prevBtn = event.target.closest('[data-section-step="-1"]');
+    const nextBtn = event.target.closest('[data-section-step="1"]');
+    if (prevBtn || nextBtn) {
+      const sections = state.task.task.lesson.sections;
+      const index = sections.findIndex((s) => s.id === state.currentSection);
+      const next = prevBtn ? index - 1 : index + 1;
+      if (next >= 0 && next < sections.length) {
+        await selectSection(sections[next].id);
       }
-      await runEnvAction(action, { confirmed: true });
-    } else {
-      await runEnvAction(action);
+      return;
     }
-    return;
-  }
-  const saveDraft = event.target.closest("[data-save-draft]");
-  if (saveDraft) {
-    await saveDraftSection();
-    return;
-  }
-  const validate = event.target.closest("[data-validate]");
-  if (validate) {
-    await validateSection();
-    return;
-  }
-  const reset = event.target.closest("[data-reset]");
-  if (reset) {
-    resetContent();
-    return;
-  }
-  const markIn = event.target.closest("#mark-inprogress");
-  if (markIn) {
-    await setTaskStatus("in_progress", "");
-    return;
-  }
-  const markDone = event.target.closest("#mark-done");
-  if (markDone) {
-    const evidence = $("#done-evidence")?.value?.trim();
-    await setTaskStatus("done", evidence);
-    return;
-  }
-  const aiSaveKey = event.target.closest("#ai-save-key");
-  if (aiSaveKey) {
-    await saveAiKey();
-    return;
-  }
-  const aiTest = event.target.closest("#ai-test");
-  if (aiTest) {
-    await testAi();
-    return;
-  }
-  const aiGenerate = event.target.closest("#ai-generate");
-  if (aiGenerate) {
-    await generateVariation();
-    return;
-  }
-  const aiReview = event.target.closest("#ai-review");
-  if (aiReview) {
-    await reviewSubmission();
-    return;
-  }
-  const aiChatSend = event.target.closest("#ai-chat-send");
-  if (aiChatSend) {
-    await sendTutorQuestion();
-    return;
-  }
-  const aiChatClear = event.target.closest("#ai-chat-clear");
-  if (aiChatClear) {
-    const key = aiChatKey();
-    state.aiChats[key] = [];
-    // 清空同时使该小节尚未返回的请求失效，避免旧回答恢复已清空的对话。
-    state.aiChatGenerations[key] = (state.aiChatGenerations[key] || 0) + 1;
-    delete state.aiChatPending[key];
-    setCurrentAiChatControlsBusy(false);
-    const input = $("#ai-chat-input");
-    if (input) input.value = "";
-    const messages = $("#ai-chat-messages");
-    if (messages) messages.innerHTML = renderAiChatMessages([]);
-    aiChatClear.disabled = true;
-    return;
-  }
-  const catalogSearch = event.target.closest("#catalog-search");
-  if (catalogSearch) {
-    state.catalogQuery = $("#catalog-q")?.value || "";
-    state.catalogSeries = $("#catalog-series")?.value || "";
-    renderCatalog();
-    return;
-  }
-  const diagnosticRun = event.target.closest("#diagnostic-run");
-  if (diagnosticRun) {
-    await runDiagnostic();
-    return;
-  }
+    const openFile = event.target.closest("[data-open-file]");
+    if (openFile) {
+      await openFileEditor(openFile.dataset.openFile);
+      return;
+    }
+    const wsFile = event.target.closest("[data-ws-file]");
+    if (wsFile) {
+      await viewWorkspaceFile(wsFile.dataset.wsFile);
+      return;
+    }
+    const envAction = event.target.closest("[data-env-action]");
+    if (envAction) {
+      const action = envAction.dataset.envAction;
+      if (action === "install") {
+        // 取消则不发起请求；确认后由后端强制校验 confirmed: true
+        if (!window.confirm("安装学习工具与测试依赖需要联网执行：.venv Python -m pip install -e .[dev]。是否继续？")) {
+          return;
+        }
+        await runTaskAction(() => runEnvAction(action, { confirmed: true }));
+      } else {
+        await runTaskAction(() => runEnvAction(action));
+      }
+      return;
+    }
+    const saveDraft = event.target.closest("[data-save-draft]");
+    if (saveDraft) {
+      await runTaskAction(saveDraftSection);
+      return;
+    }
+    const validate = event.target.closest("[data-validate]");
+    if (validate) {
+      await runTaskAction(validateSection);
+      return;
+    }
+    const reset = event.target.closest("[data-reset]");
+    if (reset) {
+      await runTaskAction(resetContent);
+      return;
+    }
+    const markIn = event.target.closest("#mark-inprogress");
+    if (markIn) {
+      await runTaskAction(() => setTaskStatus("in_progress", ""));
+      return;
+    }
+    const markDone = event.target.closest("#mark-done");
+    if (markDone) {
+      const evidence = $("#done-evidence")?.value?.trim();
+      await runTaskAction(() => setTaskStatus("done", evidence));
+      return;
+    }
+    const aiSaveKey = event.target.closest("#ai-save-key");
+    if (aiSaveKey) {
+      await saveAiKey();
+      return;
+    }
+    const aiTest = event.target.closest("#ai-test");
+    if (aiTest) {
+      await testAi();
+      return;
+    }
+    const aiGenerate = event.target.closest("#ai-generate");
+    if (aiGenerate) {
+      await generateVariation();
+      return;
+    }
+    const aiReview = event.target.closest("#ai-review");
+    if (aiReview) {
+      await reviewSubmission();
+      return;
+    }
+    const aiChatSend = event.target.closest("#ai-chat-send");
+    if (aiChatSend) {
+      await sendTutorQuestion();
+      return;
+    }
+    const aiChatClear = event.target.closest("#ai-chat-clear");
+    if (aiChatClear) {
+      const key = aiChatKey();
+      state.aiChats[key] = [];
+      // 清空同时使该小节尚未返回的请求失效，避免旧回答恢复已清空的对话。
+      state.aiChatGenerations[key] = (state.aiChatGenerations[key] || 0) + 1;
+      delete state.aiChatPending[key];
+      setCurrentAiChatControlsBusy(false);
+      const input = $("#ai-chat-input");
+      if (input) input.value = "";
+      const messages = $("#ai-chat-messages");
+      if (messages) messages.innerHTML = renderAiChatMessages([]);
+      aiChatClear.disabled = true;
+      return;
+    }
+    const catalogSearch = event.target.closest("#catalog-search");
+    if (catalogSearch) {
+      state.catalogQuery = $("#catalog-q")?.value || "";
+      state.catalogSeries = $("#catalog-series")?.value || "";
+      await renderCatalog();
+      return;
+    }
+    const diagnosticRun = event.target.closest("#diagnostic-run");
+    if (diagnosticRun) {
+      await runDiagnostic();
+      return;
+    }
+  } catch (error) { showError(error); }
 });
 
 document.addEventListener("keydown", (event) => {
@@ -790,15 +833,90 @@ document.addEventListener("keydown", (event) => {
     event.preventDefault();
     closeAiTutorDrawer();
   }
+  if (event.target.matches("#editor") && (event.ctrlKey || event.metaKey)) {
+    if (event.key.toLowerCase() === "s" || event.key === "Enter") {
+      event.preventDefault();
+      runTaskAction(event.key === "Enter" ? validateSection : saveDraftSection);
+    }
+  }
+});
+
+document.addEventListener("input", (event) => {
+  if (!event.target.matches("#editor")) return;
+  state.editorValue = event.target.value;
+  state.editorDirty = true;
+  state.lastValidation = null;
+  $("#editor-lines").textContent = `${state.editorValue.split("\n").length} 行`;
+  $("#draft-status").textContent = "有修改，正在等待自动保存…";
+  $("#validation-result").textContent = "内容已修改，重新运行可检查本次结果。";
+  window.clearTimeout(draftTimer);
+  draftTimer = window.setTimeout(() => persistDraft().catch(showError), 800);
+});
+
+window.addEventListener("beforeunload", (event) => {
+  if (!state.editorDirty && !draftSave) return;
+  event.preventDefault();
+  event.returnValue = "";
 });
 
 // ---------------------------------------------------------------- 任务操作
 
 async function saveSectionPosition(sectionId) {
+  await api("POST", `/api/tasks/${encodeURIComponent(state.taskId)}/lesson-position`, { section_id: sectionId });
+}
+
+async function selectSection(sectionId) {
+  if (state.busy || sectionId === state.currentSection) return;
+  state.busy = true;
   try {
-    await api("POST", `/api/tasks/${encodeURIComponent(state.taskId)}/lesson-position`, { section_id: sectionId });
-  } catch (_e) {
-    // 忽略定位保存失败
+    await persistDraft();
+    await saveSectionPosition(sectionId);
+    state.currentSection = sectionId;
+    const section = state.task.task.lesson.sections.find((s) => s.id === sectionId);
+    state.editorValue = initialContent(section);
+    state.editorDirty = false;
+    state.lessonView = section.title.startsWith("加练") ? "practice" : "learn";
+    state.variationId = null;
+    clearError();
+    await renderTask(state.taskId);
+    $("#lesson-heading")?.focus();
+  } finally { state.busy = false; }
+}
+
+async function persistDraft() {
+  window.clearTimeout(draftTimer);
+  if (draftSave) await draftSave;
+  if (!state.editorDirty) return;
+  const taskId = state.taskId;
+  const section = state.task.task.lesson.sections.find((s) => s.id === state.currentSection);
+  const content = state.editorValue;
+  const status = $("#draft-status");
+  if (status) status.textContent = "保存中…";
+  // 保存串行进行。切换前等待完成，并同步内存草稿，防止返回小节时显示旧内容。
+  draftSave = api("PUT", `/api/tasks/${encodeURIComponent(taskId)}/sections/${encodeURIComponent(section.id)}/draft`, {content});
+  try {
+    await draftSave;
+    section.draft = content;
+    if (state.editorValue === content) state.editorDirty = false;
+    if (status) status.textContent = state.editorDirty ? "有新修改，尚未保存" : "草稿已保存";
+  } catch (error) {
+    if (status) status.textContent = "保存未完成，请重试";
+    throw error;
+  } finally { draftSave = null; }
+}
+
+async function runTaskAction(action) {
+  if (state.busy) return;
+  state.busy = true;
+  clearError();
+  const controls = [...document.querySelectorAll('#editor, [data-validate], [data-save-draft], [data-reset], [data-env-action]')];
+  const disabled = controls.map((control) => control.disabled);
+  controls.forEach((control) => { control.disabled = true; });
+  try { await action(); }
+  catch (error) { showError(error); setResult(escapeHtml(error.message), "failed"); }
+  finally {
+    state.busy = false;
+    controls.forEach((control, index) => { control.disabled = disabled[index]; });
   }
 }
 
@@ -818,12 +936,13 @@ function setValidationResult(result, kind) {
 }
 
 async function saveDraftSection() {
-  const content = readEditor();
-  const result = await api("PUT", `/api/tasks/${encodeURIComponent(state.taskId)}/sections/${encodeURIComponent(state.currentSection)}/draft`, { content });
-  setResult(`<span class="muted">草稿已保存（${escapeHtml(result.updated_at)}）</span>`, "passed");
+  state.editorValue = readEditor();
+  state.editorDirty = true;
+  await persistDraft();
 }
 
 async function validateSection() {
+  await persistDraft();
   const section = state.task.task.lesson.sections.find((s) => s.id === state.currentSection);
   const kind = section.practice.kind;
   const resultBox = $("#validation-result");
@@ -843,22 +962,28 @@ async function validateSection() {
   }
 }
 
-function resetContent() {
+async function resetContent() {
+  if (!window.confirm("将本节草稿重置为起始内容？当前编辑内容将被替换。")) return;
   const section = state.task.task.lesson.sections.find((s) => s.id === state.currentSection);
   state.editorValue = section.practice.starter_content || "";
   const editor = $("#editor");
   if (editor) editor.value = state.editorValue;
+  state.editorDirty = true;
+  state.lastValidation = null;
+  await persistDraft();
+  await renderTask(state.taskId);
 }
 
 async function setTaskStatus(status, evidence) {
   try {
+    await persistDraft();
     await api("POST", `/api/tasks/${encodeURIComponent(state.taskId)}/status`, { status, evidence });
     const fresh = await api("GET", `/api/tasks/${encodeURIComponent(state.taskId)}`);
     state.task = fresh;
     state.bootstrap = await api("GET", "/api/bootstrap");
-    renderTask(state.taskId);
+    await renderTask(state.taskId);
   } catch (error) {
-    alert(error.message);
+    showError(error);
   }
 }
 

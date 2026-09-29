@@ -64,7 +64,7 @@ def _task_id_of(curriculum_data: dict, section_id: str) -> str:
 def test_d02_names_success_failure_and_syntax(curriculum_data: dict) -> None:
     curriculum = _curriculum()
     section = _section(curriculum, "D02", "D02-names")
-    good = "value = 7\nprint(type(value).__name__)\nprint(isinstance(value, int))\n"
+    good = "score = 88\nprint(type(score).__name__)\nprint(isinstance(score, int))\nscore = '88'\nprint(type(score).__name__)\n"
     bad = "value = 7\nprint(value)\n"
     assert validate_code(section, good, Path("."))["passed"] is True
     failed = validate_code(section, bad, Path("."))
@@ -78,7 +78,7 @@ def test_d02_names_success_failure_and_syntax(curriculum_data: dict) -> None:
 def test_representative_validators_succeed(curriculum_data: dict, tmp_path: Path) -> None:
     curriculum = _curriculum()
     cases = {
-        "D03-for": "def sum_even(numbers):\n    return sum(number for number in numbers if number % 2 == 0)\n",
+        "D03-for": "n=int(input())\ntotal=0\nfor number in range(1,n+1):\n    if number%2==0: total+=number\nprint(total)\n",
         "D08-json-read": "import json\n\ndata = json.loads('{\"ok\": true}')\nprint(data['ok'])\n",
         "D17-coroutine": "import asyncio\n\nasync def main():\n    await asyncio.sleep(0)\n\nasyncio.run(main())\n",
         "D19-config": "import os\nfrom pathlib import Path\n\ndef get_db_path():\n    return Path(os.environ.get('TASKPROJ_DB', 'taskproj.db'))\n\ndef get_int_env(name, default):\n    try:\n        return int(os.environ.get(name))\n    except (TypeError, ValueError):\n        return default\n",
@@ -95,7 +95,7 @@ def test_representative_validators_succeed(curriculum_data: dict, tmp_path: Path
 def test_core_python_semantics_use_runtime_behavior_contracts(tmp_path: Path) -> None:
     curriculum = _curriculum()
     cases = {
-        "D02-strings": "def transform_text(text):\n    return text.strip()[::-1]\n",
+        "D02-strings": "text=input()\nprint(text.strip()[::-1])\n",
         "D04-varargs": "def describe(*args, **kwargs):\n    return {'args': args, 'kwargs': kwargs}\n",
         "D04-global-nonlocal": "def make_counter():\n    value = 0\n    def step():\n        nonlocal value\n        value += 1\n        return value\n    return step\n",
         "D04-type-hints": "def format_user(name: str, age: int) -> str:\n    return f'{name}: {age}'\n",
@@ -118,7 +118,7 @@ def test_core_python_semantics_use_runtime_behavior_contracts(tmp_path: Path) ->
 def test_core_python_semantics_reject_wrong_behavior(tmp_path: Path) -> None:
     curriculum = _curriculum()
     wrong = {
-        "D02-strings": "def transform_text(text):\n    return text\n",
+        "D02-strings": "print(input())\n",
         "D04-global-nonlocal": "def make_counter():\n    value = 0\n    def step():\n        return 1\n    return step\n",
         "D05-mutability": "def copy_and_append(items):\n    items.append('new')\n    return items, items\n",
         "D05-iterators-generators": "def count_up_to(limit):\n    return list(range(limit))\n",
@@ -991,7 +991,7 @@ def test_d22_api_fails_when_workspace_config_corrupted(tmp_path: Path, curriculu
     assert result["passed"] is False, "损坏的 config.py 应使 D22-api 校验失败"
 
 
-def test_beginner_goal_and_first_functions_use_actual_contract(tmp_path: Path) -> None:
+def test_beginner_goal_and_statements_use_actual_contract(tmp_path: Path) -> None:
     from learnctl.practice import validate_text
 
     curriculum = _curriculum()
@@ -1001,20 +1001,12 @@ def test_beginner_goal_and_first_functions_use_actual_contract(tmp_path: Path) -
 
     cases = {
         "D02-numbers": (
-            "def divide_parts(total, size):\n"
-            "    if size == 0: raise ValueError('除数为零')\n"
-            "    return total // size, total % size\n",
-            "def divide_parts(total, size):\n"
-            "    if size == 0: raise ValueError('除数为零')\n"
-            "    return 0, 0\n",
+            "total=int(input())\nsize=int(input())\nprint(total//size,total%size)\n",
+            "print('0 0')\n",
         ),
         "D02-bool-none": (
-            "def describe_value(value):\n"
-            "    if value is None: return 'missing'\n"
-            "    if value == '': return 'empty text'\n"
-            "    return 'present'\n",
-            "def describe_value(value):\n"
-            "    return 'missing' if not value else 'present'\n",
+            "value=None\nprint(value is None,bool(value))\nvalue=0\nprint(value is None,bool(value))\nvalue=''\nprint(value is None,bool(value))\n",
+            "print('True False')\n",
         ),
     }
     for section_id, (good, bad) in cases.items():

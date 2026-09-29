@@ -22,7 +22,8 @@ body {
   font-family: -apple-system, "Segoe UI", "Microsoft YaHei", sans-serif;
   background: var(--bg);
   color: var(--ink);
-  line-height: 1.6;
+  line-height: 1.75;
+  font-size: 16px;
 }
 
 .topbar {
@@ -51,7 +52,7 @@ body {
 }
 .nav button.active { background: var(--brand); color: var(--brand-ink); border-color: var(--brand); }
 
-.app { max-width: 1080px; margin: 0 auto; padding: 20px; }
+.app { max-width: 1320px; margin: 0 auto; padding: 24px; padding-bottom: 100px; }
 
 h1 { font-size: 22px; margin: 8px 0; }
 h2 { font-size: 18px; margin: 16px 0 8px; }
@@ -270,3 +271,60 @@ kbd { background: var(--code-bg); border-radius: 4px; padding: 1px 5px; font-siz
 table { border-collapse: collapse; width: 100%; font-size: 14px; }
 th, td { border: 1px solid var(--line); padding: 6px 8px; text-align: left; }
 th { background: var(--code-bg); }
+
+/* 主线、加练和反馈共用一套布局；长代码只在代码块内横向滚动。 */
+[hidden] { display: none !important; }
+button, summary { min-height: 44px; }
+button, input, textarea { max-width: 100%; }
+button, p, li, .notice { overflow-wrap: anywhere; }
+:focus-visible { outline: 3px solid var(--brand); outline-offset: 3px; }
+summary { cursor: pointer; font-weight: 600; }
+progress { width: 100%; height: 12px; accent-color: var(--brand); }
+.page-feedback { position: sticky; top: 65px; z-index: 20; margin: 12px 24px; padding: 12px; border: 1px solid var(--err); border-radius: 8px; background: var(--err-bg); color: var(--err); }
+.welcome { border-left: 4px solid var(--brand); }
+.milestones { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; padding-left: 24px; }
+.task-list { display: grid; gap: 8px; margin-top: 14px; }
+.task-link { display: flex; align-items: center; justify-content: space-between; gap: 12px; text-align: left; padding: 12px; }
+.task-link small { display: block; color: var(--muted); }
+.lesson-layout { display: grid; grid-template-columns: 240px minmax(0, 1fr); gap: 20px; align-items: start; }
+.lesson-toc { position: sticky; top: 76px; max-height: calc(100vh - 96px); overflow: auto; padding-right: 4px; }
+.lesson-toc h2 { margin-top: 12px; }
+.lesson-toc .section-nav { display: grid; gap: 6px; }
+.section-nav button { width: 100%; text-align: left; padding: 10px 12px; background: var(--panel); }
+.section-nav button small { display: block; font-weight: normal; }
+.lesson-panel { min-width: 0; margin-top: 12px; padding: 24px; }
+#lesson-heading { scroll-margin-top: 85px; }
+.lesson-tabs { display: flex; gap: 10px; margin: 16px 0; border-bottom: 1px solid var(--line); padding-bottom: 10px; }
+.lesson-tabs [aria-selected="true"] { border-color: var(--brand); background: #eaf2ff; color: #164bb3; font-weight: 600; }
+.lesson-example { margin: 16px 0; border-left: 3px solid var(--line); padding-left: 14px; }
+.expected-output { white-space: pre-wrap; background: #edf8f0; }
+.lesson-panel details { margin: 16px 0; padding: 12px; border: 1px solid var(--line); border-radius: 8px; }
+.lesson-errors { padding-left: 20px; }
+.lesson-errors li { margin-bottom: 18px; }
+#editor { min-height: 260px; font-size: 15px; line-height: 1.65; tab-size: 4; }
+#editor[type="text"] { min-height: 44px; }
+.check-list li { overflow-wrap: anywhere; }
+.badge.learn { color: #164bb3; background: #eaf2ff; }
+.badge.practice { color: var(--warn); background: var(--warn-bg); }
+.badge.mastered { color: var(--ok); background: var(--ok-bg); }
+@media (max-width: 760px) {
+  .topbar { flex-direction: column; align-items: stretch; gap: 6px; padding: 8px 12px; }
+  .nav { overflow-x: auto; flex-wrap: nowrap; }
+  .nav button { flex-shrink: 0; white-space: nowrap; }
+  .app { padding: 14px; padding-bottom: 90px; }
+  .milestones { grid-template-columns: 1fr; gap: 10px; }
+  .task-link { flex-direction: column; align-items: flex-start; }
+  .lesson-layout { grid-template-columns: minmax(0, 1fr); gap: 8px; }
+  .lesson-toc { position: static; max-height: 210px; overflow-y: auto; border-bottom: 1px solid var(--line); }
+  .lesson-toc h2 { font-size: 15px; }
+  .lesson-toc .section-nav { grid-template-columns: 1fr; margin: 6px 0; }
+  .lesson-panel { padding: 14px; }
+  .lesson-tabs { gap: 6px; }
+  .lesson-tabs button { flex: 1; padding: 8px; }
+  .panel, .card { min-width: 0; }
+  .page-feedback { top: 104px; margin: 8px 14px; }
+  #lesson-heading { scroll-margin-top: 110px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { transition: none !important; scroll-behavior: auto !important; }
+}

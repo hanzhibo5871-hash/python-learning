@@ -117,7 +117,7 @@ def test_successful_validation_and_env_action_refresh_authoritative_task_state(w
     assert d01_sections["D01-create-venv"]["locked"] is False
 
     _unlock_d02(web_server)
-    solution = "value = 7\nprint(type(value).__name__)\nprint(isinstance(value, int))\n"
+    solution = "score = 88\nprint(type(score).__name__)\nprint(isinstance(score, int))\nscore = '88'\nprint(type(score).__name__)\n"
     status, result, _ = request(
         web_server,
         "POST",
@@ -192,6 +192,18 @@ def test_static_markers_and_no_legacy_copy(web_server: Any) -> None:
     assert "后端权威" in app_js
 
 
+def test_beginner_ui_supports_drafts_tabs_and_mobile_navigation() -> None:
+    app_js = (REPOSITORY / "learnctl" / "web" / "static" / "app.js").read_text(encoding="utf-8")
+    css = (REPOSITORY / "learnctl" / "web" / "static" / "styles.css").read_text(encoding="utf-8")
+    for marker in ('data-lesson-view', 'role="tabpanel"', '讲解与示例', '动手练习',
+                   '选修加练', 'beforeunload', 'await persistDraft()', 'section.draft = content',
+                   'window.confirm', 'data-section-step', 'page-feedback'):
+        assert marker in app_js
+    assert 'id="prev-section"' not in app_js and 'id="next-section"' not in app_js
+    assert 'prefers-reduced-motion' in css and 'focus-visible' in css
+    assert 'minmax(0, 1fr)' in css
+
+
 def test_bootstrap_counts_and_route(web_server: Any) -> None:
     status, bootstrap, _ = request(web_server, "GET", "/api/bootstrap")
     assert status == 200
@@ -200,6 +212,8 @@ def test_bootstrap_counts_and_route(web_server: Any) -> None:
     assert [stage["id"] for stage in bootstrap["stages"]] == ["S1", "S2", "S3", "S4"]
     assert bootstrap["curriculum_version"] == "3.0.0"
     assert bootstrap["catalog_count"] == 131
+    assert all(task['required_completed'] <= task['required_sections'] <= task['total_sections']
+               for stage in bootstrap['stages'] for task in stage['tasks'])
 
 
 def test_curriculum_version_and_project_artifact_count(web_server: Any) -> None:
@@ -207,7 +221,7 @@ def test_curriculum_version_and_project_artifact_count(web_server: Any) -> None:
     data = json.loads((web_server.project_root / "data" / "curriculum.json").read_text(encoding="utf-8"))
     assert data["curriculum_version"] == "3.0.0"
     total_sections = sum(len(task["lesson"]) for task in data["tasks"])
-    assert total_sections == 122
+    assert total_sections == 146
     project_files = {
         section.get("practice", {}).get("project_file")
         for task in data["tasks"]
@@ -289,7 +303,7 @@ def test_locked_section_cannot_validate_or_mark_done_via_api(web_server: Any) ->
 
 def test_validate_code_passes_and_completes_section_without_auto_done(web_server: Any) -> None:
     _unlock_d02(web_server)
-    solution = "value = 7\nprint(type(value).__name__)\nprint(isinstance(value, int))\n"
+    solution = "score = 88\nprint(type(score).__name__)\nprint(isinstance(score, int))\nscore = '88'\nprint(type(score).__name__)\n"
     status, result, _ = request(
         web_server,
         "POST",
@@ -319,6 +333,58 @@ def test_validate_failure_keeps_draft_and_does_not_complete(web_server: Any) -> 
     assert result["completed"] is False
     draft_file = web_server.project_root / ".learn" / "lesson-submissions" / "D02" / "D02-names.json"
     assert draft_file.is_file(), "失败应保留草稿"
+
+
+def test_successful_lesson_submission_is_restored_after_reload(web_server: Any) -> None:
+    content = "我想用 Python 整理文件并生成日报。"
+    status, result, _ = request(web_server, "POST", "/api/tasks/D01/sections/D01-onboarding/validate", {"content": content})
+    assert status == 200 and result["completed"]
+    status, fresh, _ = request(web_server, "GET", "/api/tasks/D01")
+    assert fresh["task"]["lesson"]["sections"][0]["draft"] == content
+    assert fresh["task"]["status"] == "todo"
+
+
+def test_lesson_validation_serializes_writes_and_rejects_duplicates(web_server: Any, monkeypatch: pytest.MonkeyPatch) -> None:
+    from concurrent.futures import ThreadPoolExecutor
+
+    started, release, waiting = threading.Event(), threading.Event(), threading.Event()
+    original_lock = web_server.state_lock
+
+    class ObservableLock:
+        def __enter__(self):
+            if started.is_set() and not release.is_set():
+                waiting.set()
+            original_lock.acquire()
+            return self
+
+        def __exit__(self, *args):
+            original_lock.release()
+
+    def slow_validation(*args):
+        started.set()
+        assert release.wait(5)
+        return {"passed": True, "checks": [], "stdout": "", "stderr": "", "exit_code": 0}
+
+    web_server.state_lock = ObservableLock()
+    monkeypatch.setattr(web_server_module, "run_validation", slow_validation)
+    url = "/api/tasks/D01/sections/D01-onboarding/validate"
+    with ThreadPoolExecutor(max_workers=2) as pool:
+        validation = pool.submit(request, web_server, "POST", url, {"content": "隔离测试中的学习目标"})
+        try:
+            assert started.wait(5)
+            status, error, _ = request(web_server, "POST", url, {"content": "重复请求"})
+            assert status == 409 and "正在验证" in error["error"]
+            module = pool.submit(request, web_server, "POST", "/api/modules/py-basics/status", {"status": "practice"})
+            assert waiting.wait(5)
+            assert not module.done()
+        finally:
+            release.set()
+        assert validation.result()[0] == 200
+        assert module.result()[0] == 200
+    progress = json.loads((web_server.project_root / ".learn/progress.json").read_text(encoding="utf-8"))
+    assert "D01-onboarding" in progress["lesson_progress"]["D01"]["completed_sections"]
+    assert progress["modules"]["py-basics"] == "practice"
+    assert not web_server.running_sections
 
 
 def test_validate_text_section(web_server: Any) -> None:

@@ -13,6 +13,7 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from typing import Any, Callable
 
+from .drills import CLI_CASES, FILE_FIXTURES, FUNCTION_CASES, SCRIPT_CASES
 from .envcheck import run_action
 from .errors import DataError, UsageError
 from .progress import now_iso
@@ -69,6 +70,7 @@ def _run_proc(
     cwd: Path,
     timeout: int = TIMEOUT_SECONDS,
     env: dict[str, str] | None = None,
+    input_text: str | None = None,
 ) -> dict[str, Any]:
     # 强制 UTF-8 环境，保证 Windows 中文 stdout/stderr 不乱码；
     # 调用方可显式覆盖 PYTHONIOENCODING / PYTHONUTF8。
@@ -89,6 +91,7 @@ def _run_proc(
             check=False,
             timeout=timeout,
             env=merged,
+            input=input_text,
         )
         return {"timeout": False, "stdout": proc.stdout or "", "stderr": proc.stderr or "", "exit_code": proc.returncode}
     except subprocess.TimeoutExpired as exc:
@@ -155,8 +158,17 @@ def _build_harness(module: str, checks: list[tuple[str, str]], *, imports: tuple
     ]
     for name, expr in checks:
         lines.append("try:")
-        lines.append(f"    ok = {expr}")
-        lines.append(f"    results.append({{'name': {name!r}, 'passed': bool(ok), 'detail': repr(ok)}})")
+        comparison = ast.parse(expr, mode="eval").body
+        # 等式两侧各求值一次：反馈实际值与期望值，不重复调用有副作用的函数。
+        if isinstance(comparison, ast.Compare) and len(comparison.ops) == 1 and isinstance(comparison.ops[0], ast.Eq):
+            lines.append(f"    actual = {ast.unparse(comparison.left)}")
+            lines.append(f"    expected = {ast.unparse(comparison.comparators[0])}")
+            lines.append("    ok = actual == expected")
+            lines.append("    detail = '期望：{}；实际：{}'.format(repr(expected), repr(actual))")
+        else:
+            lines.append(f"    ok = {expr}")
+            lines.append("    detail = '检查通过' if ok else '行为与本项要求不符，请检查边界输入或返回值'")
+        lines.append(f"    results.append({{'name': {name!r}, 'passed': bool(ok), 'detail': detail}})")
         lines.append("except Exception as e:")
         lines.append(
             f"    results.append({{'name': {name!r}, 'passed': False, 'detail': '{{}}: {{}}'.format(type(e).__name__, e)}})"
@@ -212,6 +224,8 @@ def _function_validator(spec: dict[str, Any]) -> Callable[[str, PracticeContext,
             env = dict(os.environ)
             env.update(spec["env"])
         proc, checks = _run_harness(ctx, harness, "_result.json", env=env)
+        if spec.get("silent_import"):
+            checks.append({"name": "导入不产生输出", "passed": not proc["stdout"], "detail": _tail(proc["stdout"])})
         return _finalize(checks, proc)
 
     return validate
@@ -1460,6 +1474,42 @@ _CODE_VALIDATORS["D23-cli-mutate"] = _CODE_VALIDATORS["D23-cli"]
 # 对外校验入口
 # --------------------------------------------------------------------------
 
+def _script_practice(cases: list[tuple[str, list[str], str | None, int]]):
+    def validate(code: str, ctx: PracticeContext, section: dict[str, Any]) -> dict[str, Any]:
+        ctx.write("main.py", code)
+        checks = []
+        outputs, errors = [], []
+        proc = {"exit_code": None, "timeout": False}
+        for number, (input_text, args, expected, exit_code) in enumerate(cases, 1):
+            proc = _run_proc([sys.executable, *args], cwd=ctx.temp, input_text=input_text)
+            actual = proc["stdout"].rstrip("\r\n")
+            passed = proc["exit_code"] == exit_code and (expected is None or actual == expected)
+            detail = f"输入：{input_text.strip()!r}" if input_text else f"运行：{' '.join(args)}"
+            if expected is not None:
+                detail += f"；期望：{expected!r}；实际：{_truncate(actual, 500)!r}"
+            detail += f"；退出码：{proc['exit_code']}（期望 {exit_code}）"
+            checks.append({"name": f"样例 {number}", "passed": passed, "detail": detail})
+            outputs.append(f"[样例 {number}]\n{proc['stdout']}")
+            if proc["stderr"]:
+                errors.append(proc["stderr"])
+            # 同一错误不必运行所有样例，尤其避免重复等待无限循环超时。
+            if proc["timeout"] or (proc["exit_code"] != exit_code and exit_code == 0):
+                break
+        proc.update(stdout="\n".join(outputs), stderr="\n".join(errors))
+        return _finalize(checks, proc)
+    return validate
+
+
+for _id, _cases in SCRIPT_CASES.items():
+    _CODE_VALIDATORS[_id] = _script_practice([(text, ["main.py"], expected, 0) for text, expected in _cases])
+for _id, _cases in CLI_CASES.items():
+    _CODE_VALIDATORS[_id] = _script_practice([("", args, expected, code) for args, expected, code in _cases])
+for _id, _checks in FUNCTION_CASES.items():
+    _register(_id, {"file": "main.py", "module": "main", "checks": _checks,
+                    "imports": ("from pathlib import Path",), "scaffold": FILE_FIXTURES.get(_id, []),
+                    "silent_import": _id == "D07-slug"})
+
+
 def _section_task(curriculum: dict[str, Any], task_id: str) -> dict[str, Any]:
     task = curriculum["_index"]["tasks"].get(task_id)
     if task is None:
@@ -1780,6 +1830,20 @@ def run_validation(curriculum: dict[str, Any], task_id: str, section_id: str, su
     if result.get("passed") and isinstance(project_file, str) and project_file:
         _write_project_artifact(project_file, submission, project_root)
 
+    if not result.get("passed"):
+        details = result.get("stderr", "") + "\n" + "\n".join(check.get("detail", "") for check in result["checks"])
+        tips = {
+            "IndentationError": "缩进不一致：看报错行和上一行的冒号。同一代码块统一四个空格，块外语句顶格。",
+            "SyntaxError": "代码还不能被解析：先检查报错行的冒号、括号、引号，并确认用了英文标点。",
+            "NameError": "使用了尚未定义的名字：检查拼写，以及赋值是否在使用之前执行。",
+            "TypeError": "参与操作的数据类型不匹配：input() 返回字符串，需要计算时先转成 int 或 float；函数还要检查参数数量。",
+            "ValueError": "值无法转换或不符合规则：对照题目的合法输入范围，区分返回结果和应该抛出的异常。",
+            "IndexError": "索引超出范围：第一个位置是 0，最后一个是 len(...) - 1；空容器不能取第一个元素。",
+            "KeyError": "字典中没有这个键：检查键名拼写，以及输入是否真的包含该字段。",
+            "EOFError": "input() 次数多于题目提供的输入：按题目要求读取行数，不要在验证过程中额外等待输入。",
+        }
+        tip = next((message for name, message in tips.items() if name in details), None)
+        result["learning_feedback"] = tip or "先定位第一项未通过的检查，对照期望值与实际值；检查返回值、循环边界和空输入，每次只修改一个问题再运行。"
     return result
 
 

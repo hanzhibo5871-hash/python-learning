@@ -11,6 +11,8 @@ import json
 from pathlib import Path
 from typing import Any
 
+from beginner_drills import add_beginner_drills, align_beginner_contracts
+
 
 ROOT = Path(__file__).resolve().parents[1]
 DATA = ROOT / "data" / "curriculum.json"
@@ -574,7 +576,7 @@ CORE_TEACHING: dict[str, dict[str, Any]] = {
     "D02-execution": _detail(
         [
             "Python 解释器读取一个源文件时，先执行顶层语句，再进入被调用的函数。赋值、函数调用和条件语句都是有顺序的动作；同一行之前的名字若还没有绑定，运行到它时就会出现 NameError。",
-            "冒号表示后面要跟一个代码块，代码块的边界由缩进决定。缩进不是排版装饰：同一块中的语句必须对齐，少一个空格会导致 IndentationError，多缩进则可能让语句落进错误的分支。",
+            "冒号表示后面要跟一个代码块，代码块的边界由缩进决定。同一块中的语句必须对齐，通常用四个空格；取消块内语句的缩进或同一块缩进不一致才会产生缩进错误，单行使用三个空格本身不一定报错。",
             "注释从 # 开始到行尾，解释器不会执行它；它适合说明意图而不是掩盖代码。学习执行顺序时，可以在每个动作后打印标记，并故意改变缩进观察错误发生在哪里。",
         ],
         "JavaScript 用 {} 标记块、用分号分隔语句，而 Python 用冒号加一致缩进标记块；Python 没有 JS 那种依靠花括号恢复层级的写法。两者都从上到下执行，但 Python 的空白错误在解析阶段就会阻止程序启动。",
@@ -585,7 +587,7 @@ CORE_TEACHING: dict[str, dict[str, Any]] = {
         "能观察一条语句接一条语句的执行顺序，并用统一四空格写出一个合法代码块。",
         "print('先执行')\nif True:\n    # 在块内补一条可观察语句\n    pass\n",
         [("把 print 放进 if 块", "运行输出两行且没有缩进错误"), ("在块外增加第二个 print", "第二个 print 无条件执行，输出顺序与源文件一致")],
-        "运行文件并检查输出顺序；再把块内一行临时少缩进，确认本地解释器确实报告语法错误。",
+        "运行文件并检查输出顺序；再把 if 后唯一的块内语句完全顶格，确认解释器报告 IndentationError，然后恢复四个空格。",
         [("合法块", "if True:\n    print('ready')", "ready"), ("执行顺序", "print('A')\nprint('B')", "A\nB")],
         "编写 main.py：先打印 START，再在 if True 块内打印 BLOCK，最后打印 END；保持四空格缩进，并保留一行解释每个阶段。",
         "运行输出严格为 START、BLOCK、END 三行；把块内缩进改错时验证应失败而不是静默跳过。",
@@ -1340,7 +1342,7 @@ CORE_TEACHING: dict[str, dict[str, Any]] = {
 CORE_INPUT_EXAMPLES: dict[str, list[dict[str, str]]] = {
     "D02-execution": [
         {"label": "完整输出", "value": "运行 main.py；源码依次打印 START、BLOCK、END", "expected": "stdout 恰好为 START、BLOCK、END 三行。"},
-        {"label": "缩进边界", "value": "将 BLOCK 行临时减少一个空格后运行 main.py；仍检查 START/BLOCK/END", "expected": "解释器报告 IndentationError，而不是静默跳过 BLOCK。"},
+        {"label": "缩进边界", "value": "将 BLOCK 行完全取消缩进后运行 main.py", "expected": "解释器报告 IndentationError，程序无法执行。"},
     ],
     "D02-names": [
         {"label": "整数绑定", "value": "score = 88; print(type(score).__name__); print(isinstance(score, int))", "expected": "输出 int 和 True。"},
@@ -1527,7 +1529,7 @@ CORE_INPUT_IDENTIFIERS: dict[str, list[str]] = {
 # 每个示例都补充关键行、输出因果和边界说明。这里保留在构建器中，
 # 而不是在 loader 中用重复句式“凑长度”，以便内容审阅可以逐节定位。
 CORE_EXAMPLE_NOTES: dict[str, list[str]] = {
-    "D02-execution": ["if True 的缩进行在条件成立时执行，所以先打印第一句，再打印缩进块。把缩进行少一个空格会在程序启动阶段得到 IndentationError。", "# 行不会执行，value = 2 先建立绑定，最后一行 print 才能输出 2。若删掉赋值而保留 print(value)，边界结果是 NameError。"],
+    "D02-execution": ["if True 的缩进行在条件成立时执行，所以先打印第一句，再打印缩进块。把唯一的块内语句完全顶格会在程序启动阶段得到 IndentationError。", "# 行不会执行，value = 2 先建立绑定，最后一行 print 才能输出 2。若删掉赋值而保留 print(value)，边界结果是 NameError。"],
     "D02-names": ["value = 7 先绑定整数，随后 type(value).__name__ 输出 int；名字绑定对象而不是固定类型盒子。把右侧改成未定义名字会在赋值时得到 NameError。", "value = '七' 重新绑定同一个名字，type(...).__name__ 因此输出 str。这个例子没有做数值转换；空字符串仍是 str，只是内容为空。"],
     "D02-numbers": ["7 // 2 得到整数商 3，7 % 2 得到余数 1，所以两行变量输出 3 1。除数改成 0 时会触发 ZeroDivisionError，应先定义输入边界。", "3 < 5 的结果是 True，而 0.1 + 0.2 == 0.3 常为 False，分别展示比较和浮点精度边界。若改用整数 1 + 2 == 3，结果会是 True。"],
     "D02-bool-none": ["name = '' 的真值是 False，not name 因而进入 if 并输出需要输入。把 name 改成非空文本时不会输出；None 与空字符串要按契约区分。", "循环分别打印 value is None 和 bool(value)，因此能看到 None、0、空文本、空列表与非空列表的差异。空容器是假值但不是 None，这是本例最重要的边界。"],
@@ -1576,7 +1578,7 @@ CORE_EXAMPLE_NOTES: dict[str, list[str]] = {
 # explanation.
 CORE_EXAMPLE_EXPLANATIONS: dict[str, list[str]] = {
     "D02-execution": [
-        "if True 的缩进行在条件成立时执行，所以先打印第一句，再打印缩进块。把缩进行少一个空格会在程序启动阶段得到 IndentationError。",
+        "if True 的缩进行在条件成立时执行，所以先打印第一句，再打印缩进块。把唯一的块内语句完全顶格会在程序启动阶段得到 IndentationError。",
         "# 行不会执行，value = 2 先建立绑定，最后一行 print 才能输出 2。若删掉赋值而保留 print(value)，边界结果是 NameError。",
     ],
     "D02-names": [
@@ -3775,16 +3777,6 @@ def build() -> None:
         task["prerequisites"] = [] if index == 0 else [order[index - 1]]
     # 入门阶段的指引和选修安排与生成数据同源，重建课程时不会丢失。
     sections = {section["id"]: section for task in data["tasks"] for section in task["lesson"]}
-    sections["D02-numbers"]["practice"]["starter_content"] = (
-        "def divide_parts(total, size):\n"
-        "    # 这里只需计算商和余数；除数为零时抛 ValueError\n"
-        "    pass\n"
-    )
-    sections["D02-bool-none"]["practice"]["starter_content"] = (
-        "def describe_value(value):\n"
-        "    # 分别判断 None、空字符串和其他值\n"
-        "    pass\n"
-    )
     sections["D03-comprehension"]["explanation"].insert(
         0, "列表用 [] 按顺序存值，字典用 {键: 值} 查找值，集合用 {} 保存不重复元素；本节先借用这三种容器，D05 会系统学习。"
     )
@@ -3795,10 +3787,12 @@ def build() -> None:
                        "D05-iterators-generators", "D07-inheritance", "D10-dotenv"):
         sections[section_id]["optional"] = True
 
+    align_beginner_contracts(data)
+    add_beginner_drills(data)
     data["schema_version"] = 3
     data["curriculum_version"] = "3.0.0"
     data["meta"]["curriculum_rebuild"] = "v3: Python syntax first, common development second, real project third, AI last"
-    data["stages"][0].update({"title": "Python 3 环境与完整基础语法", "goal": "先配置环境，再按顺序完整学习 Python 核心语法。诊断不能跳过任何必修语法。"})
+    data["stages"][0].update({"title": "Python 零基础入门", "goal": "从第一行输出开始，依次掌握变量、判断、循环、函数和容器；每个任务配有离线加练，可反复完成。"})
     data["stages"][1]["title"] = "常用开发能力"
     data["stages"][2]["title"] = "真实 task-manager 项目"
     data["stages"][3].update({"title": "AI 应用（D24 后）", "prerequisites": ["S3"]})

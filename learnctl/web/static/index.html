@@ -9,13 +9,14 @@
 <body>
   <header class="topbar">
     <div class="brand">learnctl 学习工作台</div>
-    <nav class="nav" id="nav">
-      <button data-route="dashboard">仪表盘</button>
+    <nav class="nav" id="nav" aria-label="主导航">
+      <button data-route="dashboard">学习首页</button>
       <button data-route="catalog">来源索引</button>
       <button data-route="diagnostic">诊断</button>
     </nav>
   </header>
-  <main id="app" class="app" aria-live="polite"></main>
+  <div id="page-feedback" class="page-feedback" role="alert" hidden></div>
+  <main id="app" class="app"></main>
   <script src="/static/app.js"></script>
 </body>
 </html>

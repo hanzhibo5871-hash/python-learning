@@ -1,6 +1,6 @@
 # learnctl
 
-`learnctl` 是一个离线、本地的 Python / API / AI 学习工作台。它读取 `data/curriculum.json`（curriculum 3.0.0、schema 3），提供 4 阶段、28 任务、122 个教学小节的**输入型实践路线**（没有任何选择题）：先学习 D02-D07 Python 基础语法（进阶小节可选修巩固），再学习 D08-D17 常用开发，随后从零制作 D18-D24 的 task-manager，最后进入 D25-D28 AI。路线包含本地确定性验证、草稿保存、断点恢复、可选 D0-D5 诊断，以及可选 DeepSeek AI 助教。
+`learnctl` 是一个面向 Python 零基础学习者的本地学习工作台。它读取 `data/curriculum.json`（curriculum 3.0.0、schema 3），提供 4 阶段、28 任务、146 个教学与实践小节，其中包含 24 道离线加练题。先学习 D02-D07 基础语法，再学习 D08-D17 常用开发，随后从零制作 D18-D24 的 task-manager，最后进入 D25-D28 AI。所有练习均需自己输入，使用本地验证反馈修改；AI 助教为可选功能。
 
 原始 131 个来源条目只保存在 `source_catalog` 中，作为知识范围标题索引；工具不会下载、抓取或播放来源，也不把打开来源作为完成条件。FastAPI、SQLite、asyncio、测试、配置/日志/CLI、JSON 工程实践与 DeepSeek API 等索引缺口以 `supplemental` 标记为真实开发补充，索引标题只作知识范围，不代表视频正文。
 
@@ -31,6 +31,12 @@ python -m learnctl serve --open
 任务状态为 `todo`、`in_progress`、`done`；知识模块状态为 `learn`、`practice`、`mastered`。任务改为 `done` 时必须提供证据，且全部前置任务和前置阶段已完成。小节验证通过才会记录完成，任务不会自动完成。
 
 ## 实践与验证
+
+零基础建议每次完成一个小节：在“讲解与示例”中预测输出，再进入“动手练习”补全代码。D02/D03 先写顺序语句、判断和循环，D04 才开始系统编写函数。JavaScript 对照收在可选说明里，不要求先懂前端。
+
+D02–D09 每个任务提供 3 道“加练”题：输入转换与小票、运费与循环、函数、购物车统计、异常边界、数据对象、UTF-8/JSON、命令行。加练保存独立草稿与完成记录，可重复验证，不增加主线完成门槛。工具会自动向 `input()` 提供题目约定的输入；在终端运行同一程序时需自己键入输入。
+
+编辑器停止输入后自动保存，切换小节或任务会先等待保存；页面显示保存状态。支持 Ctrl+S 保存、Ctrl+Enter 验证。重置需要确认；验证失败会展示真实输出、期望值与实际值，以及常见 Python 错误的中文提示。通过后仍需自己填写任务完成证据。
 
 每个小节都是输入型实践：
 
@@ -116,7 +122,7 @@ AI 助教默认且唯一的 provider 为 DeepSeek 官方 API（`https://api.deep
 
 ```text
 learnctl/                    CLI 与工作台源码
-data/curriculum.json         schema 3、curriculum 3.0、131 条来源索引、4 阶段 28 任务 122 小节
+data/curriculum.json         schema 3、curriculum 3.0、131 条来源索引、4 阶段 28 任务 146 小节
 docs/learning-path.md        4 阶段学习契约
 docs/tool-spec.md            CLI、数据、API 与 AI 边界规格
 tool_tests/                  learnctl 自身测试

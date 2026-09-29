@@ -6,10 +6,10 @@ Offline, local Python-learning-progress tool (`learnctl`) for frontend developer
 
 `CLAUDE.md` describes the old pre-web version (5 stages / 21 tasks / 20 modules / no web / no AI). Trust `README.md` + `docs/` instead. Current reality:
 
-- `schema_version` 2, `curriculum_version` 2.2.0
-- 4 stages (S1–S4), 28 tasks (D01–D28), 63 lesson sections, 22 modules, 1 optional track (`langchain-cloud`, off), 5 exercises, 6 diagnostics (D0–D5), 131 `source_catalog` entries.
+- Curriculum `schema_version` 3, `curriculum_version` 3.0.0; progress remains schema 2.
+- 4 stages (S1–S4), 28 tasks (D01–D28), 146 lesson sections (including 24 optional offline drills), 22 modules, 1 optional track (`langchain-cloud`, off), 5 exercises, 6 diagnostics (D0–D5), 131 `source_catalog` entries.
 - Modules not mentioned in CLAUDE.md: `workflow.py`, `practice.py`, `envcheck.py`, `ai.py`, `web/`.
-- `docs/curriculum-v3-design.md` is a FUTURE design (v3.0.0), not implemented.
+- `docs/curriculum-v3-design.md` is the historical v3 design; current behavior is described in README and tool-spec.
 
 ## Commands (run from repo root — `data/`/`.learn/` paths resolve against `Path.cwd()`)
 
@@ -36,9 +36,9 @@ In `--json` mode stdout must be exactly one JSON object; prompts/errors go to st
 
 ## Architecture
 
-- `curriculum.py` — `validate_curriculum` is the strict gatekeeper (schema v2 only, bidirectional cross-refs, DAG check, non-supplemental modules must exactly cover all 131 catalog refs). Attaches `root["_index"]` (ID→object maps) that everything else relies on.
+- `curriculum.py` — `validate_curriculum` is the strict gatekeeper (curriculum schema v3 only, bidirectional cross-refs, DAG check, non-supplemental modules must exactly cover all 131 catalog refs). Attaches `root["_index"]` (ID→object maps) that everything else relies on.
 - `workflow.py` — `today`/`lesson` payloads and completion rules (NOT in `__main__.py` as CLAUDE.md claims).
-- `progress.py` — `.learn/progress.json` schema v2, atomic writes, local-timezone ISO timestamps. No auto-migration: schema 1 or legacy `courses`/`course_decisions` hard-fail (exit 3). Only known in-memory migration chain: 2.0.0→2.1.0→2.2.0.
+- `progress.py` — `.learn/progress.json` schema v2, atomic writes, local-timezone ISO timestamps. Schema 1 or legacy `courses`/`course_decisions` hard-fail (exit 3). Only explicit known curriculum-version transitions are supported, including the existing 3.0.0 transition; no fallback.
 - `practice.py` — server-private validators `_CODE_VALIDATORS` keyed by section id (harness + local mock HTTP/DeepSeek servers). A `code` section without a registered validator → `DataError`.
 - `envcheck.py` — D01 env actions (detect/create_venv/install/verify).
 - `ai.py` — DeepSeek client, `urllib` only (no SDK).
@@ -48,7 +48,7 @@ In `--json` mode stdout must be exactly one JSON object; prompts/errors go to st
 
 ## Conventions / gotchas
 
-- `data/curriculum.json` is GENERATED: edit `scripts/curriculum_content.py`, then run `python scripts/build_curriculum.py` (reuses the existing 131-entry `source_catalog`, validates coverage). Don't hand-edit `curriculum.json`.
+- `data/curriculum.json` is GENERATED: edit `scripts/build_curriculum_v3.py` and `scripts/beginner_drills.py`, then run `python scripts/build_curriculum_v3.py` (reuses the existing 131-entry `source_catalog`). Don't hand-edit `curriculum.json` or rebuild v3 with the historical v2 scripts. Offline drill checks live in `learnctl/drills.py` and use the existing subprocess runner.
 - Fail-loud, never guess-and-repair: invalid data → exit 3, no fallback file, no silent rewrites.
 - Task `done` requires non-empty evidence + all task/stage prerequisites done + all required (non-`optional`) sections validated. Marking D24 `done` triggers end-to-end project acceptance (`validate_project_acceptance`).
 - All writes (progress/drafts/notes/workspace files) are atomic (temp + fsync + `os.replace`).
