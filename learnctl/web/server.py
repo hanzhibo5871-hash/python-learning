@@ -21,6 +21,7 @@ from ..curriculum import load_curriculum, parse_test_command
 from ..diagnostic import QUESTIONS, collect_answers, persist_diagnostic, run_diagnostics, validate_answers_data
 from ..envcheck import run_action
 from ..errors import BlockedError, DataError, LearnctlError, UsageError
+from ..experiments import run_experiment
 from ..practice import find_section, load_draft, run_validation, save_draft
 from ..progress import load_progress
 from ..test_runner import run_exercise_capture
@@ -120,6 +121,7 @@ class LearnctlServer(ThreadingHTTPServer):
         self.project_root = project_root.resolve()
         self.state_lock = threading.RLock()
         self.env_lock = threading.RLock()
+        self.experiment_lock = threading.Lock()
         self.running_lock = threading.Lock()
         self.running_exercises: set[str] = set()
         self.ai_session = AiSession()
@@ -301,6 +303,14 @@ class LearnctlRequestHandler(BaseHTTPRequestHandler):
                 urllib.parse.unquote(section_draft_match.group(1)),
                 urllib.parse.unquote(section_draft_match.group(2)),
             )
+        experiment_match = re.fullmatch(r"/api/tasks/([^/]+)/sections/([^/]+)/experiment", path)
+        if experiment_match and method == "POST":
+            body = self._read_json()
+            curriculum, _, _, _, _ = self._context()
+            _, section = find_section(curriculum, urllib.parse.unquote(experiment_match.group(1)),
+                                     urllib.parse.unquote(experiment_match.group(2)))
+            with self.app_server.experiment_lock:
+                return run_experiment(section, body)
         section_validate_match = re.fullmatch(r"/api/tasks/([^/]+)/sections/([^/]+)/validate", path)
         if section_validate_match and method == "POST":
             return self._section_validate(
@@ -451,6 +461,7 @@ class LearnctlRequestHandler(BaseHTTPRequestHandler):
         if result.get("passed"):
             with self.app_server.state_lock:
                 curriculum, progress, _, progress_path, _ = self._context()
+                save_draft(self.app_server.project_root, task_id, section_id, content)
                 complete_section(curriculum, progress, progress_path, task_id, section_id)
                 completed = True
         else:

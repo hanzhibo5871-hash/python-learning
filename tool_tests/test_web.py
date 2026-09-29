@@ -428,6 +428,7 @@ def test_ai_status_and_session_key_never_leak(web_server: Any, monkeypatch: pyte
 
 
 def test_ai_generate_and_review_are_mocked_offline(web_server: Any, monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("DEEPSEEK_API_KEY", "local-test-key")  # only mocked transport; never a real key
     called = {"count": 0, "prompt": ""}
 
     def fake_request(url, payload, api_key, timeout=60):
@@ -460,6 +461,7 @@ def test_ai_generate_and_review_are_mocked_offline(web_server: Any, monkeypatch:
 
 
 def test_ai_tutor_chat_is_bound_to_server_curriculum_context(web_server: Any, monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("DEEPSEEK_API_KEY", "local-test-key")  # only mocked transport; never a real key
     captured: dict = {}
 
     def fake_request(url, payload, api_key, timeout=60):
@@ -514,6 +516,7 @@ def test_ai_tutor_chat_rejects_invalid_messages(web_server: Any, body: dict, exp
 
 
 def test_ai_tutor_chat_error_is_explicit_and_not_fallback(web_server: Any, monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("DEEPSEEK_API_KEY", "local-test-key")  # only mocked transport; never a real key
     calls = 0
 
     def fake_request(*args, **kwargs):
@@ -606,6 +609,7 @@ def test_ai_tutor_frontend_invalidates_stale_requests_and_caps_memory() -> None:
 
 
 def test_ai_variation_id_binds_review_to_server_context(web_server: Any, monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("DEEPSEEK_API_KEY", "local-test-key")  # only mocked transport; never a real key
     prompts: list[str] = []
     variation = {
         "title": "服务端绑定变式标题",
@@ -648,6 +652,7 @@ def test_ai_variation_id_binds_review_to_server_context(web_server: Any, monkeyp
 
 
 def test_ai_variation_invalid_or_mismatched_id_never_falls_back(web_server: Any, monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("DEEPSEEK_API_KEY", "local-test-key")  # only mocked transport; never a real key
     calls = 0
     variation = {"title": "t", "scenario": "s", "instructions": "i", "starter_content": "c", "review_rubric": "r"}
 
@@ -684,6 +689,7 @@ def test_ai_variation_invalid_or_mismatched_id_never_falls_back(web_server: Any,
 
 
 def test_ai_variation_id_is_lost_after_server_restart(web_server: Any, monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("DEEPSEEK_API_KEY", "local-test-key")  # only mocked transport; never a real key
     variation = {"title": "t", "scenario": "s", "instructions": "i", "starter_content": "c", "review_rubric": "r"}
     monkeypatch.setattr(
         ai,
@@ -714,6 +720,7 @@ def test_ai_variation_id_is_lost_after_server_restart(web_server: Any, monkeypat
 
 
 def test_ai_error_returns_json_error(web_server: Any, monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("DEEPSEEK_API_KEY", "local-test-key")  # only mocked transport; never a real key
     monkeypatch.setattr(ai, "_request", lambda *a, **k: (401, b'{"error":"unauthorized"}'))
     status, result, _ = request(web_server, "POST", "/api/ai/generate", {"task_id": "D02", "section_id": "D02-names"})
     assert status == 200
@@ -1134,21 +1141,21 @@ _PL_SECTIONS: list[tuple[str, list[tuple[str, str]]]] = [
         ("D18-scope", "## 用户故事与非目标\n\n实现一个本机任务管理应用，用 SQLite 持久化任务数据，提供 CLI 命令行与网页界面来管理任务；非目标是不做账号系统。"),
         ("D18-acceptance", "## 验收\n\n成功场景是新增、列表、完成、删除返回正确结果；失败场景包含空标题 422、未知 ID 404，逐项记录状态码和错误 detail。"),
         ("D18-data-contract", json.dumps({
-            "task": {"id": 1, "title": "写需求", "done": False},
-            "endpoints": [
-                {"method": "GET", "path": "/api/tasks"},
-                {"method": "POST", "path": "/api/tasks"},
-                {"method": "PATCH", "path": "/api/tasks/{id}/done"},
-                {"method": "DELETE", "path": "/api/tasks/{id}"},
-            ],
+            "task": {"input": {"title": "string"},
+                     "output": {"id": 1, "title": "写需求", "done": False}},
+            "errors": {"empty_title": 422, "unknown_id": 404},
         }, ensure_ascii=False)),
         ("D18-api-contract", json.dumps({
-            "task": {"id": 1, "title": "写需求", "done": False},
+            "task": {"input": {"title": "string"},
+                     "output": {"id": 1, "title": "写需求", "done": False}},
+            "errors": {"empty_title": 422, "unknown_id": 404},
             "endpoints": [
+                {"method": "GET", "path": "/"},
+                {"method": "GET", "path": "/health"},
                 {"method": "GET", "path": "/api/tasks"},
                 {"method": "POST", "path": "/api/tasks"},
-                {"method": "PATCH", "path": "/api/tasks/{id}/done"},
-                {"method": "DELETE", "path": "/api/tasks/{id}"},
+                {"method": "PATCH", "path": "/api/tasks/{task_id}/done"},
+                {"method": "DELETE", "path": "/api/tasks/{task_id}"},
             ],
         }, ensure_ascii=False)),
     ]),

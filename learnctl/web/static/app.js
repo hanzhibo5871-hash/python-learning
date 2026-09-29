@@ -290,97 +290,134 @@ async function renderTask(taskId) {
   syncAiDrawerUi();
 }
 
-function renderSection(section) {
-  const practice = section.practice;
-  const kind = practice.kind;
-  const locked = Boolean(section.locked);
-  const actionFirst = section.id.startsWith("D01-");
-  const d01Action = {
-    "D01-onboarding": "写一句你想用 Python 做的事，然后点击“保存目标并验证”。通过后点“下一节”。",
-    "D01-detect": "点击“检测我的环境”。先看当前状态；此时有工具尚未安装是正常的。",
-    "D01-create-venv": "点击“创建项目专用环境（.venv）”。成功后点“下一节”。",
-    "D01-install": "点击“安装学习工具与测试依赖”，确认后等待结果。这一步可能需要联网。",
-    "D01-verify": "点击“检查环境是否准备完成”。全部通过后，在页面底部填写证据并标记 D01 完成。",
-  }[section.id];
-  const storedResult = state.lastValidation?.section_id === section.id ? state.lastValidation : null;
-  let editorHtml = "";
-  if (kind === "env_action") {
-    editorHtml = renderEnvActions(practice, locked);
-  } else {
-    const placeholder = kind === "command" ? "在此输入命令…" : "在此输入内容…";
-    const control = kind === "command"
-      ? `<input type="text" class="mono" id="editor" value="${escapeHtml(state.editorValue)}" placeholder="${placeholder}" ${locked ? "disabled" : ""}>`
-      : `<textarea class="mono" id="editor" placeholder="${placeholder}" ${locked ? "disabled" : ""}>${escapeHtml(state.editorValue)}</textarea>`;
-    const fileLabel = practice.file_name ? `<p class="small muted">提交文件：${escapeHtml(practice.file_name)}</p>` : "";
-    editorHtml = `
-      ${fileLabel}
-      ${control}
-      <div class="row" style="margin-top:8px">
-        <button id="save-draft" data-save-draft ${locked ? "disabled" : ""}>保存草稿</button>
-        <button id="run-validate" class="primary" data-validate ${locked ? "disabled" : ""}>${section.id === "D01-onboarding" ? "保存目标并验证" : "运行并验证"}</button>
-        <button id="reset-content" data-reset ${locked ? "disabled" : ""}>重置为起始内容</button>
-      </div>
-      <p class="small muted" style="margin-top:6px">${section.id === "D01-onboarding" ? "这一步只记录目标；电脑是否准备好由后面四个环境动作检查。" : "本地验证在本机执行你的代码（仅 127.0.0.1），不会对外发送；失败会保留草稿，验证通过才会完成本节。"}</p>`;
+function experimentKey(sectionId, mode, index) {
+  return `${state.taskId}/${sectionId}/${mode}/${index}`;
+}
+const experimentDrafts = new Map();
+const experimentResults = new Map();
+
+function experimentBlock(section, item, mode, index) {
+  const key = experimentKey(section.id, mode, index);
+  const source = experimentDrafts.has(key) ? experimentDrafts.get(key) : (item.starter ?? item.code ?? "");
+  const title = item.title || (mode === "example" ? `示例 ${index + 1}` : `练习 ${index + 1}`);
+  const result = experimentResults.get(key);
+  if (!item.runnable || item.source_kind !== "python") {
+    return `<details class="mini-example"><summary>${escapeHtml(title)} · 文件/命令片段</summary><p>操作位置：${escapeHtml(item.target_path || "按题目指定位置")}</p><pre>${escapeHtml(source)}</pre><h4>预期效果（不是实际执行结果）</h4><pre>${escapeHtml(item.output || "")}</pre></details>`;
   }
+  return `<details class="mini-example" ${mode === "card" ? "open" : ""} data-experiment-key="${escapeHtml(key)}">
+    <summary>${escapeHtml(title)}${mode === "card" ? " · 先补这个知识" : " · 可编辑运行"}</summary>
+    <p>${escapeHtml(item.rule || item.instructions || "先运行原例子，再改一个值观察结果；不覆盖下方正式作业。")}</p>
+    <div class="experiment-grid"><div><label class="small">独立实验代码<textarea class="mono experiment-editor" data-experiment-editor="${escapeHtml(key)}" spellcheck="false">${escapeHtml(source)}</textarea></label>
+    <button type="button" data-run-experiment data-mode="${mode}" data-index="${index}" data-section-id="${escapeHtml(section.id)}">${mode === "drill" ? "运行这道练习" : "运行并观察"}</button></div>
+    <div><h4>预期输出（参考）</h4><pre class="expected-output">${escapeHtml(item.output ?? "")}</pre><div data-experiment-result aria-live="polite">${result ? renderExperimentResult(result) : '<p class="muted">尚未运行；实际输出将在这里出现。</p>'}</div></div></div>
+  </details>`;
+}
 
-  const examples = (practice.input_examples || [])
-    .map((e) => `<div class="catalog-item small">${escapeHtml(e.label)}：<code class="mono">${escapeHtml(e.value)}</code></div>`)
-    .join("");
+function renderExperimentResult(result) {
+  return `<div class="result-box ${result.passed ? "passed" : "failed"}"><strong>${result.passed ? "✓ 输出符合预期" : "输出有差异或运行失败"}</strong>
+    <p>${escapeHtml(result.message || "")}</p><h4>实际输出 stdout</h4><pre>${escapeHtml(result.stdout || "（没有打印输出）")}</pre>
+    ${result.stderr ? `<h4>错误输出 stderr</h4><pre>${escapeHtml(result.stderr)}</pre>` : ""}
+    ${result.diff ? `<details open><summary>逐行差异</summary><pre>${escapeHtml(result.diff)}</pre></details>` : ""}
+    <p class="small muted">退出码 ${escapeHtml(result.exit_code)} · ${escapeHtml(result.duration_ms)} ms · 不计入主作业完成</p></div>`;
+}
 
-  return `
-    <h2>${escapeHtml(section.title)}</h2>
-    ${locked ? `<div class="notice warn"><strong>本节已锁定：</strong>${escapeHtml(section.lock_reason || "请先完成前置必修小节")}</div>` : ""}
-    ${actionFirst ? `<div class="notice info"><strong>现在做什么：</strong>${escapeHtml(d01Action)}</div><div id="practice-editor" data-practice-kind="${kind}">${editorHtml}</div><div id="validation-result">${renderValidationResult(storedResult, kind)}</div><details><summary>查看详细说明与出错时的处理办法</summary>` : ""}
-    ${section.optional ? '<span class="badge">选修巩固 · 不阻塞主线</span>' : ""}
-    ${section.supplemental ? `<span class="badge supplemental">真实开发补充</span> <p class="small muted">${escapeHtml(section.supplemental_note || "")}</p>` : ""}
-    ${(section.catalog_refs || []).length ? `<p class="small muted">知识范围标题：${section.catalog_refs.map((r) => escapeHtml(r)).join("、")}</p>` : ""}
-    <div class="lesson-objective"><h3>本节目标</h3><p>${escapeHtml(section.objective || "")}</p></div>
-    ${section.explanation.map((p) => `<p>${escapeHtml(p)}</p>`).join("")}
-    <h3>Python 语法规则</h3>
-    <pre class="syntax-note">${escapeHtml(section.syntax || "")}</pre>
-    <h3>关键点</h3>
-    <ul>${section.key_points.map((k) => `<li>${escapeHtml(k)}</li>`).join("")}</ul>
-    <h3>JavaScript 对照（仅辅助）</h3>
-    <p class="small">${escapeHtml(section.frontend_bridge)}</p>
-    <h3>逐步示例</h3>
-    ${(section.examples || [section.example]).map((example, index) => `<div class="lesson-example"><h4>示例 ${index + 1}</h4><pre>${escapeHtml(example.code)}</pre><p><strong>预期输出：</strong><code>${escapeHtml(example.output)}</code></p><p class="small muted">${escapeHtml(example.explanation)}</p></div>`).join("")}
-    <h3>常见错误</h3>
-    <ul class="lesson-errors">${(section.common_errors || []).map((error) => `<li><strong>${escapeHtml(error.error)}</strong><pre>${escapeHtml(error.example?.code || "")}</pre><p><strong>看到：</strong>${escapeHtml(error.symptom || "")}</p><p><strong>原因：</strong>${escapeHtml(error.cause || "")}</p><p><strong>修正：</strong>${escapeHtml(error.fix || error.example?.fix || "")}</p></li>`).join("")}</ul>
-    <h3>引导练习</h3>
-    ${section.guided_practice && !Array.isArray(section.guided_practice) ? `<div class="guided-practice"><p><strong>目标：</strong>${escapeHtml(section.guided_practice.goal)}</p><pre>${escapeHtml(section.guided_practice.starter)}</pre><ol>${(section.guided_practice.steps || []).map((step) => `<li><strong>操作：</strong>${escapeHtml(step.action)}<br><strong>预期：</strong>${escapeHtml(step.expected)}</li>`).join("")}</ol><p class="small muted"><strong>检查：</strong>${escapeHtml(section.guided_practice.check)}</p></div>` : `<ol>${(section.guided_practice || []).map((step) => `<li>${escapeHtml(step)}</li>`).join("")}</ol>`}
-    <h3>步骤</h3>
-    <ol>${section.steps.map((s) => `<li>${escapeHtml(s)}</li>`).join("")}</ol>
-    <hr>
-    <h3>实践任务</h3>
-    <p><strong>场景：</strong>${escapeHtml(practice.scenario)}</p>
-    <p><strong>要求：</strong>${escapeHtml(practice.instructions)}</p>
-    ${actionFirst ? "" : `<div id="practice-editor" data-practice-kind="${kind}">${editorHtml}</div>`}
-    ${projectArtifactNote(section)}
-    <p><strong>独立练习的预期行为：</strong>${escapeHtml(practice.expected_behavior)}</p>
-    ${examples ? `<p><strong>可运行输入示例：</strong></p>${(practice.input_examples || []).map((e) => `<div class="catalog-item small"><strong>${escapeHtml(e.label)}</strong><pre>${escapeHtml(e.value)}</pre><p><strong>预期：</strong>${escapeHtml(e.expected || "")}</p></div>`).join("")}` : ""}
-    ${practice.hints ? `<div class="notice info">💡 提示：${escapeHtml(practice.hints)}</div>` : ""}
-    ${actionFirst ? "</details>" : `<div id="validation-result">${renderValidationResult(storedResult, kind)}</div>`}`;
+function renderSection(section) {
+  const p = section.practice;
+  const kind = p.kind;
+  const locked = Boolean(section.locked);
+  const pf = section.practice_first || {};
+  const storedResult = state.lastValidation?.section_id === section.id ? state.lastValidation : null;
+  const isEnvironment = kind === "env_action";
+  const isOnboarding = section.id === "D01-onboarding";
+  const editor = isEnvironment ? renderEnvActions(p, locked) : `
+    <label for="editor">${kind === "code" ? "在这里编写正式作业" : kind === "command" ? "在这里编写命令说明（不执行）" : "在这里填写本节内容"}</label>
+    ${p.file_name ? `<p class="small muted">提交文件：${escapeHtml(p.file_name)}</p>` : ""}
+    <textarea class="mono" id="editor" spellcheck="false" ${locked ? "disabled" : ""}>${escapeHtml(state.editorValue)}</textarea>
+    <div class="row"><button id="run-validate" class="primary" data-validate ${locked ? "disabled" : ""}>${isOnboarding ? "保存目标并验证" : "验证正式作业"}</button><button id="save-draft" data-save-draft ${locked ? "disabled" : ""}>保存草稿</button><button data-reset ${locked ? "disabled" : ""}>重置为起始内容</button></div>`;
+  const inputExamples = (p.input_examples || []).map(x => `<tr><td><pre>${escapeHtml(x.value)}</pre></td><td><pre>${escapeHtml(x.expected)}</pre></td></tr>`).join("");
+  const prereqs = (pf.prerequisites || []).map(id => `<button type="button" data-review-section="${escapeHtml(id)}">复习 ${escapeHtml(id)}</button>`).join("");
+  return `<h2>${escapeHtml(section.title)}</h2>
+    ${section.optional ? '<p class="badge">选修巩固 · 不阻塞主线</p>' : ""}
+    ${locked ? `<div class="notice warn">正式作业未解锁：${escapeHtml(section.lock_reason)}。仍可阅读和运行独立示例。</div>` : ""}
+    <div class="brief-rules"><p><strong>现在做什么：</strong>${escapeHtml(pf.goal || p.instructions)}</p>
+    <p class="small">${escapeHtml((pf.rules || [section.syntax]).slice(0, 2).join("\n"))}</p>
+    ${pf.provided ? `<p class="small muted">${escapeHtml(pf.provided)}</p>` : ""}
+    ${prereqs ? `<details><summary>需要回顾的前置知识</summary><div class="row">${prereqs}</div></details>` : ""}</div>
+    ${(pf.cards || []).map((x,i) => experimentBlock(section,x,"card",i)).join("")}
+    <div class="practice-grid"><div class="practice-writing">
+      <h3>${isEnvironment ? "环境操作" : "独立作业"}</h3><div id="practice-editor" data-practice-kind="${kind}">${editor}</div>
+      ${projectArtifactNote(section)}
+      <p class="small muted">Python 代码会在本机执行，不是安全沙箱。不要运行不可信代码或填写真实密钥。命令文本不在这里执行。</p>
+      <details><summary>卡住时看提示</summary><p>${escapeHtml(p.hints || "对比输入与预期，再检查最先失败的一项。")}</p></details>
+    </div><aside class="practice-output"><h3>结果对照</h3>
+      <div id="validation-result" aria-live="polite">${storedResult ? renderValidationResult(storedResult, kind) : '<p class="muted">尚未验证。下方是目标，不是你的实际运行结果。</p>'}</div>
+      <details ${storedResult ? "" : "open"}><summary>本题输入与预期</summary><div class="table-scroll"><table class="case-table"><thead><tr><th>输入 / 操作</th><th>预期返回、输出或异常</th></tr></thead><tbody>${inputExamples}</tbody></table></div></details>
+    </aside></div>
+    ${(pf.drills || []).length ? `<section class="drill-section"><h3>多写几次：补全与改写</h3><p class="small muted">独立编辑器，不覆盖正式作业。先补全再换输入；不同输出不一定是错误。</p>${pf.drills.map((x,i) => experimentBlock(section,x,"drill",i)).join("")}</section>` : ""}
+    <details class="examples-reference"><summary>查看并运行完整示例</summary>${(section.examples || []).map((x,i) => experimentBlock(section,x,"example",i)).join("")}</details>
+    <details class="long-reference"><summary>详细原理、常见错误与 JavaScript 对照（按需阅读）</summary>
+      <h3>本节目标</h3><p>${escapeHtml(section.objective)}</p>
+      ${(section.explanation || []).map(x=>`<p>${escapeHtml(x)}</p>`).join("")}
+      <h3>语法与关键点</h3><pre>${escapeHtml(section.syntax)}</pre><ul>${(section.key_points || []).map(x=>`<li>${escapeHtml(x)}</li>`).join("")}</ul>
+      <h3>JavaScript 对照（仅辅助）</h3><p>${escapeHtml(section.frontend_bridge)}</p>
+      <h3>常见错误</h3>${(section.common_errors || []).map(x=>`<h4>${escapeHtml(x.error)}</h4><pre>${escapeHtml(x.example?.code || "")}</pre><p>${escapeHtml(x.symptom)} ${escapeHtml(x.cause)}</p><p>修正：${escapeHtml(x.fix)}</p>`).join("")}
+      <h3>引导步骤</h3><ol>${(section.guided_practice?.steps || []).map(x=>`<li>${escapeHtml(x.action)} → ${escapeHtml(x.expected)}</li>`).join("")}</ol>
+      <p class="small muted">来源标题只作知识范围索引：${(section.catalog_refs || []).map(escapeHtml).join("、")}</p>
+    </details>`;
 }
 
 function renderValidationResult(result, kind = "code") {
   if (!result) return "";
-  const checks = (result.checks || [])
-    .map((c) => `<li class="${c.passed ? "pass" : "fail"}">${c.passed ? "✓" : "✗"} ${escapeHtml(c.name)}${c.detail ? ` — ${escapeHtml(c.detail)}` : ""}</li>`)
-    .join("");
-  const command = kind === "env_action" && result.command
-    ? `<h4>固定命令</h4><pre class="env-command mono">${escapeHtml(result.command)}</pre>`
-    : "";
-  const output = kind === "env_action"
-    ? `<h4>stdout</h4><pre>${escapeHtml(result.stdout || "（空）")}</pre>
-       <h4>stderr</h4><pre>${escapeHtml(result.stderr || "（空）")}</pre>`
-    : (result.stdout || result.stderr)
-      ? `<pre>${escapeHtml((result.stdout || "") + (result.stderr ? "\n" + result.stderr : ""))}</pre>`
-      : "";
+  const cases = result.cases || [];
+  const table = cases.length ? `<div class="table-scroll"><table class="case-table"><thead><tr><th>测试输入</th><th>预期</th><th>实际</th><th>结果</th></tr></thead><tbody>${cases.map(c => `<tr><td><pre>${escapeHtml(c.input || c.name)}</pre></td><td><pre>${escapeHtml(c.expected)}</pre></td><td><pre>${escapeHtml(c.actual)}</pre></td><td>${c.passed ? "✓" : "✗"}</td></tr>`).join("")}</tbody></table></div>` : "";
+  const checks = (result.checks || []).map(c => `<li class="${c.passed ? "pass" : "fail"}">${c.passed ? "✓" : "✗"} ${escapeHtml(c.name)}${c.detail ? ` — ${escapeHtml(c.detail)}` : ""}</li>`).join("");
   return `<div class="result-box ${result.passed ? "passed" : "failed"}">
-    <p><strong>${result.passed ? (kind === "env_action" ? "✅ 动作完成" : "✅ 验证通过") : (kind === "env_action" ? "❌ 动作未通过" : "❌ 验证未通过")}</strong>${result.completed ? "（本节已标记完成）" : ""} exit_code=${escapeHtml(result.exit_code ?? "—")}</p>
-    ${command}<ul class="check-list">${checks}</ul>${output}
+    <p><strong>${result.passed ? "✓ 验证通过" : "✗ 验证未通过"}</strong>${result.completed ? " · 本节已记录完成" : ""}</p>
+    ${table}<p class="small muted">预期要求抛异常时，正确抛出也算通过；返回值与 print 输出是不同的结果。</p>
+    <h4>控制台输出 stdout</h4><pre>${escapeHtml(result.stdout || "（没有 print 输出；返回值请看上方对照或检查项）")}</pre>
+    ${result.stderr ? `<details ${result.passed ? "" : "open"}><summary>错误输出 stderr</summary><pre>${escapeHtml(result.stderr)}</pre></details>` : ""}
+    <details ${!cases.length || !result.passed ? "open" : ""}><summary>逐项检查与运行信息</summary><ul class="check-list">${checks}</ul><p>exit_code=${escapeHtml(result.exit_code ?? "—")}</p>${result.command ? `<pre>${escapeHtml(result.command)}</pre>` : ""}</details>
   </div>`;
 }
+
+document.addEventListener("input", event => {
+  const el = event.target;
+  if (el.matches("[data-experiment-editor]")) experimentDrafts.set(el.dataset.experimentEditor, el.value);
+  if (el.id === "editor") state.editorValue = el.value;
+});
+document.addEventListener("click", async event => {
+  const review = event.target.closest("[data-review-section]");
+  if (review) {
+    const sid = review.dataset.reviewSection;
+    state.currentSection = sid;
+    if (state.taskId === sid.slice(0,3)) {
+      const section = state.task.task.lesson.sections.find(x => x.id === sid);
+      state.editorValue = initialContent(section);
+      await renderTask(state.taskId);
+    } else navigate(`#/task/${sid.slice(0,3)}`);
+    return;
+  }
+  const button = event.target.closest("[data-run-experiment]");
+  if (!button || button.disabled) return;
+  const block = button.closest("[data-experiment-key]");
+  const key = block.dataset.experimentKey;
+  const output = block.querySelector("[data-experiment-result]");
+  const taskId = state.taskId;
+  const sectionId = button.dataset.sectionId;
+  const mode = button.dataset.mode;
+  const index = Number(button.dataset.index);
+  const content = block.querySelector("textarea").value;
+  experimentDrafts.set(key, content);
+  button.disabled = true;
+  output.innerHTML = '<p role="status">正在运行这份代码…</p>';
+  try {
+    const result = await api("POST", `/api/tasks/${encodeURIComponent(taskId)}/sections/${encodeURIComponent(sectionId)}/experiment`, {mode,index,content});
+    experimentResults.set(key, result);
+    if (output.isConnected) output.innerHTML = renderExperimentResult(result);
+  } catch (error) {
+    if (output.isConnected) output.innerHTML = `<div class="notice warn">${escapeHtml(error.message)}</div>`;
+  } finally { button.disabled = false; }
+});
 
 function projectArtifactNote(section) {
   const pf = section.practice.project_file;
@@ -824,23 +861,33 @@ async function saveDraftSection() {
 }
 
 async function validateSection() {
+  const taskId = state.taskId;
   const section = state.task.task.lesson.sections.find((s) => s.id === state.currentSection);
   const kind = section.practice.kind;
+  const content = readEditor();
+  const button = $("[data-validate]");
+  if (button?.disabled) return;
+  if (button) button.disabled = true;
   const resultBox = $("#validation-result");
-  if (resultBox) resultBox.innerHTML = '<span class="muted">验证中…（本地执行）</span>';
-  let result;
-  if (kind === "env_action") {
-    result = await api("POST", "/api/env/action", { action: section.practice.action });
-  } else {
-    const content = readEditor();
-    result = await api("POST", `/api/tasks/${encodeURIComponent(state.taskId)}/sections/${encodeURIComponent(state.currentSection)}/validate`, { content });
-  }
-  state.lastValidation = { section_id: section.id, ...result };
-  setValidationResult(state.lastValidation, kind);
-  if (result.passed) {
-    await refreshTaskState();
-    await renderTask(state.taskId);
-  }
+  if (resultBox) resultBox.innerHTML = '<p role="status">正在验证本节作业…</p>';
+  try {
+    const result = kind === "env_action"
+      ? await api("POST", "/api/env/action", { action: section.practice.action })
+      : await api("POST", `/api/tasks/${encodeURIComponent(taskId)}/sections/${encodeURIComponent(section.id)}/validate`, { content });
+    // Do not show a slow result in a different lesson after navigation.
+    if (state.taskId !== taskId || state.currentSection !== section.id) { state.bootstrap = null; return; }
+    state.lastValidation = { section_id: section.id, ...result };
+    setValidationResult(state.lastValidation, kind);
+    if (result.passed) {
+      await refreshTaskState();
+      state.editorValue = content;
+      await renderTask(state.taskId);
+    }
+  } catch (error) {
+    if (state.taskId === taskId && state.currentSection === section.id) {
+      setResult(escapeHtml(error.message), "failed");
+    }
+  } finally { if (button?.isConnected) button.disabled = false; }
 }
 
 function resetContent() {

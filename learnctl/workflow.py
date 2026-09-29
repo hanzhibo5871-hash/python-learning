@@ -104,6 +104,11 @@ def lesson_payload(curriculum: dict[str, Any], task: dict[str, Any], progress: d
         public_practice.pop("starter_policy", None)
         public_practice.pop("input_identifiers", None)
         public_section["practice"] = public_practice
+        if "practice_first" in public_section:
+            brief = dict(public_section["practice_first"])
+            brief["drills"] = [{k: v for k, v in drill.items() if k != "reference"}
+                               for drill in brief.get("drills", [])]
+            public_section["practice_first"] = brief
         missing = missing_section_prerequisites(curriculum, progress, task, section["id"])
         sections.append(
             {

@@ -270,3 +270,25 @@ kbd { background: var(--code-bg); border-radius: 4px; padding: 1px 5px; font-siz
 table { border-collapse: collapse; width: 100%; font-size: 14px; }
 th, td { border: 1px solid var(--line); padding: 6px 8px; text-align: left; }
 th { background: var(--code-bg); }
+
+/* Practice-first: output is adjacent to code; long theory remains opt-in. */
+.brief-rules { padding: 12px 0; }
+.brief-rules .small { white-space: pre-line; }
+.practice-grid { display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1fr); gap:20px; align-items:start; }
+.practice-writing, .practice-output { min-width:0; }
+.practice-output { position:sticky; top:18px; }
+.practice-writing textarea { min-height:300px; font-size:15px; line-height:1.65; tab-size:4; }
+.experiment-grid { display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1fr); gap:16px; }
+.experiment-editor { display:block; width:100%; min-height:170px; font-size:14px; line-height:1.6; tab-size:4; }
+.mini-example { margin:12px 0; padding:12px; border:1px solid #dce2e8; border-radius:8px; }
+summary { cursor:pointer; line-height:1.7; }
+.long-reference, .examples-reference { margin-top:20px; padding:12px; border-top:1px solid #dce2e8; }
+.drill-section { margin-top:22px; }
+.table-scroll { width:100%; overflow-x:auto; }
+.case-table { width:100%; border-collapse:collapse; font-size:13px; }
+.case-table th, .case-table td { text-align:left; vertical-align:top; padding:8px; border-bottom:1px solid #dce2e8; }
+.case-table pre { margin:0; padding:4px; white-space:pre-wrap; overflow-wrap:anywhere; }
+.practice-output pre, .experiment-grid pre { white-space:pre-wrap; overflow-wrap:anywhere; }
+.result-box { overflow:hidden; }
+button:focus-visible, summary:focus-visible, textarea:focus-visible { outline:3px solid #2173b8; outline-offset:3px; }
+@media(max-width:980px) { .practice-grid,.experiment-grid { grid-template-columns:1fr; } .practice-output { position:static; } }
