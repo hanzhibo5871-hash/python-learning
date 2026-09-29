@@ -22,7 +22,7 @@ def test_curriculum_route_and_counts(curriculum_data: dict) -> None:
     assert [stage["id"] for stage in validated["stages"]] == ["S1", "S2", "S3", "S4"]
     assert len(validated["tasks"]) == 28
     sections = [s for task in validated["tasks"] for s in task["lesson"]]
-    assert len(sections) == 146
+    assert len(sections) == 122
     all_titles = " ".join(
         [stage["title"] for stage in validated["stages"]]
         + [task["title"] for task in validated["tasks"]]
@@ -203,14 +203,11 @@ def test_v3_teaching_contract_and_core_coverage(curriculum_data: dict) -> None:
     assert len(set(error_values)) == len(error_values)
 
     core_sections = {section_id: sections[section_id] for section_id in core}
-    from learnctl.drills import SCRIPT_CASES
     for section_id, section in core_sections.items():
         practice = section["practice"]
         identifiers = practice.get("input_identifiers", [])
         values = "\n".join(item["value"] for item in practice["input_examples"])
-        # 入门脚本的公开输入是 stdin 文本；函数课才需要公开调用标识符。
-        if section_id not in SCRIPT_CASES:
-            assert identifiers and all(identifier in values for identifier in identifiers), section_id
+        assert identifiers and all(identifier in values for identifier in identifiers), section_id
         assert len(practice["input_examples"]) >= 2
         assert all(item["expected"] for item in practice["input_examples"])
         policy = practice.get("starter_policy")
@@ -549,12 +546,8 @@ def test_advanced_sections_are_optional_in_first_pass(curriculum_data: dict) -> 
     from learnctl.workflow import required_sections
 
     optional_ids = {"D03-match", "D04-global-nonlocal", "D04-lambda",
-                    "D05-iterators-generators", "D07-inheritance", "D10-dotenv",
-                    "D03-enumerate-zip", "D03-comprehension", "D04-varargs"}
+                    "D05-iterators-generators", "D07-inheritance", "D10-dotenv", "D13-lifecycle"}
     sections = {s["id"]: (task, s) for task in curriculum_data["tasks"] for s in task["lesson"]}
-    drills = {section_id for section_id, (_, section) in sections.items() if section["title"].startswith("加练")}
-    assert len(drills) == 24
-    optional_ids |= drills
     assert {section_id for section_id, (_, section) in sections.items() if section.get("optional")} == optional_ids
     for section_id in optional_ids:
         task, _ = sections[section_id]

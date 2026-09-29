@@ -21,6 +21,7 @@ from ..curriculum import load_curriculum, parse_test_command
 from ..diagnostic import QUESTIONS, collect_answers, persist_diagnostic, run_diagnostics, validate_answers_data
 from ..envcheck import run_action
 from ..errors import BlockedError, DataError, LearnctlError, UsageError
+from ..experiments import run_experiment
 from ..practice import find_section, load_draft, run_validation, save_draft
 from ..progress import load_progress
 from ..test_runner import run_exercise_capture
@@ -120,9 +121,9 @@ class LearnctlServer(ThreadingHTTPServer):
         self.project_root = project_root.resolve()
         self.state_lock = threading.RLock()
         self.env_lock = threading.RLock()
+        self.experiment_lock = threading.Lock()
         self.running_lock = threading.Lock()
         self.running_exercises: set[str] = set()
-        self.running_sections: set[str] = set()
         self.ai_session = AiSession()
         # 变式题只保存在当前服务进程内存（按生成顺序淘汰），不落盘、不跨服务共享。
         self.variations: "OrderedDict[str, dict[str, Any]]" = OrderedDict()
@@ -302,6 +303,14 @@ class LearnctlRequestHandler(BaseHTTPRequestHandler):
                 urllib.parse.unquote(section_draft_match.group(1)),
                 urllib.parse.unquote(section_draft_match.group(2)),
             )
+        experiment_match = re.fullmatch(r"/api/tasks/([^/]+)/sections/([^/]+)/experiment", path)
+        if experiment_match and method == "POST":
+            body = self._read_json()
+            curriculum, _, _, _, _ = self._context()
+            _, section = find_section(curriculum, urllib.parse.unquote(experiment_match.group(1)),
+                                     urllib.parse.unquote(experiment_match.group(2)))
+            with self.app_server.experiment_lock:
+                return run_experiment(section, body)
         section_validate_match = re.fullmatch(r"/api/tasks/([^/]+)/sections/([^/]+)/validate", path)
         if section_validate_match and method == "POST":
             return self._section_validate(
@@ -355,9 +364,6 @@ class LearnctlRequestHandler(BaseHTTPRequestHandler):
                         "missing_prerequisites": payload["missing_prerequisites"],
                         "current_section": lesson["current_section"],
                         "completed_sections": lesson["completed_count"],
-                        "total_sections": lesson["total_sections"],
-                        "required_sections": lesson["required_sections"],
-                        "required_completed": lesson["required_completed"],
                     }
                 )
             done = sum(item["status"] == "done" for item in tasks)
@@ -447,26 +453,24 @@ class LearnctlRequestHandler(BaseHTTPRequestHandler):
         content = body.get("content")
         if not isinstance(content, str):
             raise UsageError("验证需要字符串 content")
-        run_key = f"lesson:{task_id}/{section_id}"
-        with self.app_server.running_lock:
-            if run_key in self.app_server.running_sections:
-                raise BlockedError("本节练习正在验证，请等待本次结果")
-            self.app_server.running_sections.add(run_key)
-        try:
-            # 执行、真实产物和完成证据属于一次操作，其他页面写入须等待它结束。
+        curriculum, progress, _, _, _ = self._context()
+        task, _ = find_section(curriculum, task_id, section_id)
+        assert_section_unlocked(curriculum, progress, task, section_id)
+        result = run_validation(curriculum, task_id, section_id, content, self.app_server.project_root)
+        completed = False
+        if result.get("passed"):
             with self.app_server.state_lock:
                 curriculum, progress, _, progress_path, _ = self._context()
-                task, _ = find_section(curriculum, task_id, section_id)
-                assert_section_unlocked(curriculum, progress, task, section_id)
-                result = run_validation(curriculum, task_id, section_id, content, self.app_server.project_root)
                 save_draft(self.app_server.project_root, task_id, section_id, content)
-                if result.get("passed"):
-                    complete_section(curriculum, progress, progress_path, task_id, section_id)
-                result["completed"] = bool(result.get("passed"))
-                return result
-        finally:
-            with self.app_server.running_lock:
-                self.app_server.running_sections.remove(run_key)
+                complete_section(curriculum, progress, progress_path, task_id, section_id)
+                completed = True
+        else:
+            # 失败保留草稿，避免学习者丢失内容
+            with self.app_server.state_lock:
+                find_section(curriculum, task_id, section_id)
+                save_draft(self.app_server.project_root, task_id, section_id, content)
+        result["completed"] = completed
+        return result
 
     def _env_action(self) -> dict[str, Any]:
         body = self._read_json()

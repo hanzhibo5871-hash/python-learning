@@ -3796,6 +3796,8 @@ def build() -> None:
     data["stages"][1]["title"] = "常用开发能力"
     data["stages"][2]["title"] = "真实 task-manager 项目"
     data["stages"][3].update({"title": "AI 应用（D24 后）", "prerequisites": ["S3"]})
+    from practice_first_content import apply_practice_first
+    apply_practice_first(data)
     DATA.write_text(json.dumps(data, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
 
 

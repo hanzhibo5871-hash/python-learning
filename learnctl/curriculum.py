@@ -598,6 +598,8 @@ def validate_curriculum(data: Any) -> dict[str, Any]:
         "tasks": task_by_id,
         "exercises": exercise_by_id,
     }
+    from .practice_first_schema import validate_practice_first
+    validate_practice_first(root)
     return root
 
 
