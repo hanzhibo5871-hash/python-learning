@@ -192,16 +192,16 @@ def test_static_markers_and_no_legacy_copy(web_server: Any) -> None:
     assert "后端权威" in app_js
 
 
-def test_beginner_ui_supports_drafts_tabs_and_mobile_navigation() -> None:
+def test_practice_first_ui_keeps_drafts_and_section_navigation() -> None:
+    # The merged practice-first UI uses inline teaching, not the retired tabs.
+    # Browser smoke covers actual draft persistence and mobile navigation.
     app_js = (REPOSITORY / "learnctl" / "web" / "static" / "app.js").read_text(encoding="utf-8")
     css = (REPOSITORY / "learnctl" / "web" / "static" / "styles.css").read_text(encoding="utf-8")
-    for marker in ('data-lesson-view', 'role="tabpanel"', '讲解与示例', '动手练习',
-                   '选修加练', 'beforeunload', 'await persistDraft()', 'section.draft = content',
-                   'window.confirm', 'data-section-step', 'page-feedback'):
+    for marker in ('data-section=', 'data-save-draft', 'section.draft',
+                   '选修巩固 · 不阻塞主线', 'id="prev-section"', 'id="next-section"'):
         assert marker in app_js
-    assert 'id="prev-section"' not in app_js and 'id="next-section"' not in app_js
     assert 'prefers-reduced-motion' in css and 'focus-visible' in css
-    assert 'minmax(0, 1fr)' in css
+    assert 'minmax(0,1fr)' in css.replace(' ', '')
 
 
 def test_bootstrap_counts_and_route(web_server: Any) -> None:

@@ -11,7 +11,7 @@ import json
 from pathlib import Path
 from typing import Any
 
-from beginner_drills import add_beginner_drills, align_beginner_contracts
+from beginner_drills import add_beginner_drills
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -3787,7 +3787,8 @@ def build() -> None:
                        "D05-iterators-generators", "D07-inheritance", "D10-dotenv"):
         sections[section_id]["optional"] = True
 
-    align_beginner_contracts(data)
+    # Keep the practice-first contracts; the legacy beginner alignment rewrites
+    # those same exercises with incompatible stdin-based requirements.
     add_beginner_drills(data)
     data["schema_version"] = 3
     data["curriculum_version"] = "3.0.0"

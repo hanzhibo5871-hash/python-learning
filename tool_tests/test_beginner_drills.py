@@ -76,10 +76,12 @@ def test_drills_cover_eight_tasks_without_gating_existing_progress(curriculum_da
                 assert section['optional'] and section['id'] not in required
 
 
-def test_first_tasks_do_not_require_functions_or_exceptions(curriculum_data):
+def test_first_task_drills_do_not_require_functions_or_exceptions(curriculum_data):
+    # Main lessons retain their provided practice-first wrappers and bridge cards.
+    # The additional stdin drills must remain simple standalone programs.
     for task in curriculum_data['tasks'][1:3]:
         for section in task['lesson']:
-            if section.get('optional'):
+            if section['id'] not in SOLUTIONS:
                 continue
             starter = section['practice']['starter_content']
             assert 'def ' not in starter and 'raise ' not in starter

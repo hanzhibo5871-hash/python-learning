@@ -2,16 +2,6 @@
 
 # 脚本练习：stdin、预期 stdout。多个输入可发现只打印固定答案的程序。
 SCRIPT_CASES = {
-    'D02-names': [('', 'int\nTrue\nstr')],
-    'D02-numbers': [('17\n5\n', '3 2'), ('0\n4\n', '0 0'), ('-7\n3\n', '-3 2')],
-    'D02-bool-none': [('', 'True False\nFalse False\nFalse False')],
-    'D02-strings': [(' ab \n', 'ba'), ('Python\n', 'nohtyP'), ('\n', '')],
-    'D02-string-methods': [('  a,b  \n', 'a / b'), ('python\n', 'python'), ('x,y,z\n', 'x / y / z')],
-    'D03-if': [('90\n', 'A'), ('60\n', 'B'), ('59\n', 'C'), ('-1\n', '非法')],
-    'D03-match': [('list\n', '查看'), ('add\n', '新增'), ('other\n', '未知')],
-    'D03-for': [('5\n', '6'), ('6\n', '12'), ('0\n', '0')],
-    'D03-while': [('3\n', '3\n2\n1'), ('0\n', ''), ('1\n', '1')],
-    'D03-break-continue': [('8\n', '1\n3\n5'), ('2\n', '1'), ('0\n', '')],
     'D02-input': [('3\n', '6'), ('0\n', '0'), ('12\n', '24')],
     'D02-receipt': [('12.5\n2\n', '总价：25.00'), ('3.2\n3\n', '总价：9.60'), ('0\n3\n', '总价：0.00')],
     'D02-normalize': [('  Alice  \n', 'alice'), ('PYTHON_01\n', 'python_01'), ('   \n', '')],
