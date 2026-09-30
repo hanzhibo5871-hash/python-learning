@@ -608,7 +608,7 @@ def test_ai_tutor_frontend_keeps_section_scoped_browser_memory() -> None:
     assert "aiChats: {}" in app_js
     assert "function aiChatKey" in app_js
     assert "currentAiMessages" in app_js
-    assert 'slice(-8)' in app_js
+    assert 'slice(-AI_CHAT_HISTORY_LIMIT)' in app_js
     assert '"/api/ai/chat"' in app_js
     assert "切换小节后会自动切换对话上下文" in app_js
     send_body = app_js.split("async function sendTutorQuestion()", 1)[1].split("function summarizeValidation", 1)[0]
@@ -668,7 +668,7 @@ def test_ai_tutor_frontend_invalidates_stale_requests_and_caps_memory() -> None:
     assert "aiChatPending: {}" in app_js
     assert "state.aiChatGenerations[key] !== requestGeneration" in send_body
     assert "aiChatKey() !== key" in send_body
-    assert ".slice(-8)" in send_body
+    assert ".slice(-AI_CHAT_HISTORY_LIMIT)" in send_body
     assert "state.aiChatGenerations[key]" in clear_body
     assert "delete state.aiChatPending[key]" in clear_body
     assert 'input.value = ""' in clear_body
