@@ -726,6 +726,7 @@ class LearnctlRequestHandler(BaseHTTPRequestHandler):
                 section_id,
                 question,
                 history,
+                learner_context=body.get("learner_context"),
             )
         except AiError as exc:
             return _json_error(str(exc))

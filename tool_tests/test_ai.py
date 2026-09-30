@@ -27,6 +27,7 @@ from learnctl.ai import (
     tutor_chat,
 )
 from learnctl.curriculum import load_curriculum
+from learnctl.errors import UsageError
 
 
 def _curriculum() -> dict:
@@ -225,8 +226,8 @@ def test_tutor_chat_uses_current_section_context_and_recent_history(monkeypatch:
     assert "不得建议删除" in messages[0]["content"]
     assert "纯文本" in messages[0]["content"]
     assert "当前步骤尚未创建" in messages[0]["content"]
-    assert messages[1]["content"] == "旧问题 2"
-    assert len(messages[1:-1]) == 8
+    assert messages[1]["content"] == "旧问题 4"
+    assert len(messages[1:-1]) == 6
     assert messages[-1] == {"role": "user", "content": "为什么 Python 不能像 JS 一样用大括号？"}
     assert captured["payload"]["temperature"] == 0.7
 
@@ -601,3 +602,56 @@ def test_build_variation_review_prompt_truncates_content() -> None:
     assert "x" * 4001 not in prompt
     assert "y" * 2000 in prompt
     assert "y" * 2001 not in prompt
+
+
+def test_tutor_current_practice_cards_and_concise_instructions():
+    curriculum = _curriculum()
+    section = curriculum['_index']['tasks']['D04']['lesson'][0]
+    section['practice_first']['drills'][0]['reference'] = 'PRIVATE_REFERENCE_SENTINEL'
+    messages = build_tutor_messages(curriculum, 'D04', section['id'], '怎么返回？', [],
+                                    learner_context={'content': 'return None', 'validation_summary': '未通过:面积'})
+    system = messages[0]['content']
+    for text in ('简洁中文', '3–5 句', '150–250 字', '不默认长篇泛讲', '明确要求详细',
+                 '不要求类型判断或抛异常', 'return 不等于 print', 'D03-if', '练习起始代码'):
+        assert text in system
+    assert 'PRIVATE_REFERENCE_SENTINEL' not in str(messages)
+    assert 'return None' in messages[-1]['content']
+    assert '未通过:面积' in messages[-1]['content']
+    assert '仅作分析数据' in messages[-1]['content']
+
+
+def test_tutor_trims_history_by_complete_turns_and_total_characters():
+    history = [{'role': role, 'content': str(i) * 4000}
+               for i, role in enumerate(['user', 'assistant'] * 3)]
+    messages = build_tutor_messages(_curriculum(), 'D04', 'D04-def-return', '继续', history)
+    assert messages[1:-1] == history[-2:]
+    assert sum(len(m['content']) for m in messages[1:-1]) <= ai.TUTOR_HISTORY_CHAR_LIMIT
+
+
+def test_tutor_retry_deduplicates_only_unanswered_current_question():
+    history = [{'role': 'user', 'content': '再解释一次'}, {'role': 'assistant', 'content': '先看 return'},
+               {'role': 'user', 'content': '再解释一次'}]
+    messages = build_tutor_messages(_curriculum(), 'D04', 'D04-def-return', '再解释一次', history)
+    assert messages[1:] == history  # answered repetition is valid; pending question occurs once
+
+
+@pytest.mark.parametrize('history', [
+    [{'role': 'user', 'content': '没回答的旧问题'}],
+    [{'role': 'user', 'content': '一'}, {'role': 'user', 'content': '二'}],
+])
+def test_tutor_rejects_unpaired_or_unordered_turns(history):
+    with pytest.raises(AiError, match='已完成的对话轮次'):
+        build_tutor_messages(_curriculum(), 'D04', 'D04-def-return', '当前问题', history)
+
+
+@pytest.mark.parametrize('context', ['bad', {'content': 'x' * 8001}, {'validation_summary': 12}])
+def test_tutor_learner_context_is_bounded(context):
+    with pytest.raises(AiError, match='learner_context'):
+        build_tutor_messages(_curriculum(), 'D04', 'D04-def-return', '问题', [], learner_context=context)
+
+
+def test_tutor_optional_lesson_is_bound_to_selected_task():
+    system = build_tutor_messages(_curriculum(), 'D13', 'D13-lifecycle', '是什么', [])[0]['content']
+    assert '建议后置到：D17' in system
+    with pytest.raises(UsageError, match='小节'):
+        build_tutor_messages(_curriculum(), 'D02', 'D04-def-return', '问题', [])

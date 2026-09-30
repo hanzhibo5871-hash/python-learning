@@ -151,9 +151,13 @@ def main() -> None:
                 page.evaluate('() => navigate("#/task/D04")')
                 assert_teaching(page, expect, 'D04')
                 assert page.locator('#editor').input_value() == correct
+                from browser_tutor_smoke import assert_tutor_chat
+                assert_tutor_chat(page, expect, server)
+                if args.screenshots:
+                    page.screenshot(path=str(args.screenshots / 'tutor-chat.png'), full_page=True)
                 assert not errors, errors
                 browser.close()
-            print('PASS: teaching before example/drills/assignment; five representative lessons; wrong/correct output; isolated experiment; saved solution; mobile width; no JS errors')
+            print('PASS: teaching before example/drills/assignment; five representative lessons; wrong/correct output; isolated experiment; saved solution; mobile width; tutor history/retry/lesson isolation/reset; no JS errors')
         finally:
             server.shutdown()
             server.server_close()

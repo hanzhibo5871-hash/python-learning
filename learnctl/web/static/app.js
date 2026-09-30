@@ -26,6 +26,7 @@ const state = {
 const $ = (sel) => document.querySelector(sel);
 const app = () => $("#app");
 const AI_DRAWER_FOCUS_DELAY_MS = 220;
+const AI_CHAT_HISTORY_LIMIT = 6;
 let aiDrawerFocusTimer = null;
 
 async function api(method, path, body) {
@@ -538,8 +539,8 @@ function renderAiDrawer(section) {
           </div>
         </div>
         <div class="ai-chat" style="margin-top:14px">
-          <div class="row"><h3 style="margin:0">💬 当前小节对话</h3><span class="spacer"></span><button id="ai-chat-clear" class="ghost" ${messages.length ? "" : "disabled"}>清空对话</button></div>
-          <p class="small muted">自动携带“${escapeHtml(section.title)}”的教学、示例和练习上下文。切换小节后会自动切换对话上下文；最近 8 条消息会发给 DeepSeek。</p>
+          <div class="row"><h3 style="margin:0">💬 当前小节对话</h3><span class="spacer"></span><button id="ai-chat-clear" class="ghost" ${messages.length || currentAiChatBusy() ? "" : "disabled"}>清空对话</button></div>
+          <p class="small muted">自动携带“${escapeHtml(section.title)}”的教学、示例和练习上下文。切换小节后会自动切换对话上下文；提问时发送本课时内容、当前编辑代码、最近验证摘要及最近 3 轮对话（最多 6 条历史消息）。</p>
           <div id="ai-chat-messages" class="ai-chat-messages">${renderAiChatMessages(messages)}</div>
           <textarea id="ai-chat-input" placeholder="例如：我不理解为什么这里要缩进四个空格，请结合当前示例解释。" maxlength="2000" style="min-height:88px"></textarea>
           <div class="row" style="margin-top:8px"><button id="ai-chat-send" class="primary" ${currentAiChatBusy() ? "disabled" : ""}>${currentAiChatBusy() ? "正在回答…" : "发送问题"}</button><span class="small muted">联网调用 DeepSeek；不会改变本节完成状态。</span></div>
@@ -606,6 +607,8 @@ function setCurrentAiChatControlsBusy(busy) {
   const input = $("#ai-chat-input");
   const button = $("#ai-chat-send");
   if (input) input.disabled = busy;
+  const clear = $("#ai-chat-clear");
+  if (clear) clear.disabled = !busy && !currentAiMessages().length;
   if (button) {
     button.disabled = busy;
     button.textContent = busy ? "正在回答…" : "发送问题";
@@ -805,6 +808,8 @@ document.addEventListener("click", async (event) => {
     if (input) input.value = "";
     const messages = $("#ai-chat-messages");
     if (messages) messages.innerHTML = renderAiChatMessages([]);
+    const errorBox = $("#ai-chat-error");
+    if (errorBox) errorBox.innerHTML = "";
     aiChatClear.disabled = true;
     return;
   }
@@ -1102,7 +1107,7 @@ async function sendTutorQuestion() {
     if (errorBox) errorBox.innerHTML = '<div class="result-box failed">请输入你对当前小节的问题。</div>';
     return;
   }
-  const history = currentAiMessages().slice(-8);
+  const history = currentAiMessages().slice(-AI_CHAT_HISTORY_LIMIT);
   const requestTaskId = state.taskId;
   const requestSectionId = state.currentSection;
   const requestGeneration = (state.aiChatGenerations[key] || 0) + 1;
@@ -1116,11 +1121,15 @@ async function sendTutorQuestion() {
       section_id: requestSectionId,
       question,
       history,
+      learner_context: {
+        content: readEditor().slice(0, 8000),
+        validation_summary: state.lastValidation?.section_id === requestSectionId ? summarizeValidation() : "",
+      },
     });
     if (!data.ok) throw new Error(data.error || "AI 助教回答失败");
     if (state.aiChatGenerations[key] !== requestGeneration) return;
-    // 发送给模型和保存在浏览器中的历史使用同一个 8 条上限。
-    state.aiChats[key] = [...history, { role: "user", content: question }, { role: "assistant", content: data.answer }].slice(-8);
+    // 发送给模型和保存在浏览器中的历史使用同一个 6 条（3 轮）上限。
+    state.aiChats[key] = [...history, { role: "user", content: question }, { role: "assistant", content: data.answer }].slice(-AI_CHAT_HISTORY_LIMIT);
     delete state.aiChatPending[key];
     if (aiChatKey() !== key) return;
     setCurrentAiChatControlsBusy(false);
