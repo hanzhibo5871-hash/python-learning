@@ -22,7 +22,7 @@ def test_curriculum_route_and_counts(curriculum_data: dict) -> None:
     assert [stage["id"] for stage in validated["stages"]] == ["S1", "S2", "S3", "S4"]
     assert len(validated["tasks"]) == 28
     sections = [s for task in validated["tasks"] for s in task["lesson"]]
-    assert len(sections) == 122
+    assert len(sections) == 146
     all_titles = " ".join(
         [stage["title"] for stage in validated["stages"]]
         + [task["title"] for task in validated["tasks"]]
@@ -547,6 +547,8 @@ def test_advanced_sections_are_optional_in_first_pass(curriculum_data: dict) -> 
 
     optional_ids = {"D03-match", "D04-global-nonlocal", "D04-lambda",
                     "D05-iterators-generators", "D07-inheritance", "D10-dotenv", "D13-lifecycle"}
+    from test_beginner_drills import SOLUTIONS
+    optional_ids |= set(SOLUTIONS)
     sections = {s["id"]: (task, s) for task in curriculum_data["tasks"] for s in task["lesson"]}
     assert {section_id for section_id, (_, section) in sections.items() if section.get("optional")} == optional_ids
     for section_id in optional_ids:

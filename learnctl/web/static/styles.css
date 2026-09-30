@@ -292,3 +292,7 @@ summary { cursor:pointer; line-height:1.7; }
 .result-box { overflow:hidden; }
 button:focus-visible, summary:focus-visible, textarea:focus-visible { outline:3px solid #2173b8; outline-offset:3px; }
 @media(max-width:980px) { .practice-grid,.experiment-grid { grid-template-columns:1fr; } .practice-output { position:static; } }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { transition: none !important; scroll-behavior: auto !important; }
+}

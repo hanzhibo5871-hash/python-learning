@@ -1350,8 +1350,8 @@
   "stages": [
     {
       "id": "S1",
-      "title": "Python 3 环境与完整基础语法",
-      "goal": "先配置环境，再按顺序完整学习 Python 核心语法。诊断不能跳过任何必修语法。",
+      "title": "Python 零基础入门",
+      "goal": "从第一行输出开始，依次掌握变量、判断、循环、函数和容器；每个任务配有离线加练，可反复完成。",
       "deliverable": "可复现的 .venv 环境、第一个商品表单清洗程序",
       "acceptance": [
         "环境检测全部通过",
@@ -2177,7 +2177,7 @@
         "异常"
       ],
       "frontend_bridge": "前端表单拿到的是字符串；后端第一件事就是清洗与转换，这和你在前端做 trim/Number() 是同一件事。",
-      "coding_task": "实现 clean_name、parse_price 与 process_form，把它们组合成可验证的业务程序。",
+      "coding_task": "在本页完成顺序执行、类型观察、数字计算和字符串处理；加练输入、小票和账号清理。",
       "snippet": {
         "language": "python",
         "code": "name = \" 张三 \"\nprice = \"99.9\"\ndata = {\"name\": name.strip(), \"price\": float(price)}\nprint(data)"
@@ -2201,10 +2201,9 @@
         "form"
       ],
       "acceptance": [
-        "姓名去掉首尾空白且非空",
-        "价格字符串转 float",
-        "含税金额正确",
-        "空值与非法价格抛出明确异常"
+        "能解释每行代码的执行顺序",
+        "区分整数、文本、布尔值和 None",
+        "根据实际输入得到正确输出"
       ],
       "lesson": [
         {
@@ -2219,7 +2218,7 @@
           "objective": "读懂 Python 3 从上到下执行语句，并用缩进表达代码块。",
           "explanation": [
             "Python 解释器读取一个源文件时，先执行顶层语句，再进入被调用的函数。赋值、函数调用和条件语句都是有顺序的动作；同一行之前的名字若还没有绑定，运行到它时就会出现 NameError。",
-            "冒号表示后面要跟一个代码块，代码块的边界由缩进决定。缩进不是排版装饰：同一块中的语句必须对齐，少一个空格会导致 IndentationError，多缩进则可能让语句落进错误的分支。",
+            "冒号表示后面要跟一个代码块，代码块的边界由缩进决定。同一块中的语句必须对齐，通常用四个空格；取消块内语句的缩进或同一块缩进不一致才会产生缩进错误，单行使用三个空格本身不一定报错。",
             "注释从 # 开始到行尾，解释器不会执行它；它适合说明意图而不是掩盖代码。学习执行顺序时，可以在每个动作后打印标记，并故意改变缩进观察错误发生在哪里。"
           ],
           "syntax": "顶层语句按顺序执行；冒号开启代码块，后续必须统一缩进；# 后内容是注释。",
@@ -2229,7 +2228,7 @@
               "language": "python",
               "code": "print('第一句')\nif True:\n    print('缩进块')",
               "output": "第一句\n缩进块",
-              "explanation": "if True 的缩进行在条件成立时执行，所以先打印第一句，再打印缩进块。把缩进行少一个空格会在程序启动阶段得到 IndentationError。",
+              "explanation": "if True 的缩进行在条件成立时执行，所以先打印第一句，再打印缩进块。把唯一的块内语句完全顶格会在程序启动阶段得到 IndentationError。",
               "source_kind": "python",
               "runnable": true
             },
@@ -2279,7 +2278,7 @@
                 "expected": "第二个 print 无条件执行，输出顺序与源文件一致"
               }
             ],
-            "check": "运行文件并检查输出顺序；再把块内一行临时少缩进，确认本地解释器确实报告语法错误。"
+            "check": "运行文件并检查输出顺序；再把 if 后唯一的块内语句完全顶格，确认解释器报告 IndentationError，然后恢复四个空格。"
           },
           "practice": {
             "kind": "code",
@@ -2296,8 +2295,8 @@
               },
               {
                 "label": "缩进边界",
-                "value": "将 BLOCK 行临时减少一个空格后运行 main.py；仍检查 START/BLOCK/END",
-                "expected": "解释器报告 IndentationError，而不是静默跳过 BLOCK。"
+                "value": "将 BLOCK 行完全取消缩进后运行 main.py",
+                "expected": "解释器报告 IndentationError，程序无法执行。"
               }
             ],
             "input_identifiers": [
@@ -2318,7 +2317,7 @@
             "language": "python",
             "code": "print('第一句')\nif True:\n    print('缩进块')",
             "output": "第一句\n缩进块",
-            "explanation": "if True 的缩进行在条件成立时执行，所以先打印第一句，再打印缩进块。把缩进行少一个空格会在程序启动阶段得到 IndentationError。",
+            "explanation": "if True 的缩进行在条件成立时执行，所以先打印第一句，再打印缩进块。把唯一的块内语句完全顶格会在程序启动阶段得到 IndentationError。",
             "source_kind": "python",
             "runnable": true
           },
@@ -3108,6 +3107,459 @@
                 "starter": "# TODO：补全下面第 3 行的 None，使输出与右侧预期一致。\nname = '小林'\ncount = None\nprint(f'{name} 有 {count} 个任务')",
                 "output": "小林 有 3 个任务",
                 "reference": "name = '小林'\ncount = 3\nprint(f'{name} 有 {count} 个任务')",
+                "source_kind": "python",
+                "runnable": true
+              }
+            ],
+            "provided": "起始代码中的函数签名及标注“平台提供”的代码可以保留；本题只编写 TODO 部分。"
+          }
+        },
+        {
+          "id": "D02-input",
+          "title": "加练 · 输入与类型转换",
+          "catalog_refs": [
+            "py-10",
+            "py-13",
+            "py-16",
+            "py-17"
+          ],
+          "objective": "把键盘输入的数量变成可计算的整数。",
+          "explanation": [
+            "input() 读入一行文字，即使输入 3，得到的也是字符串。int() 才把数字文本转换成整数；print() 将计算结果显示出来。页面验证会自动提供输入，在自己的终端运行时则由你输入并按回车。",
+            "赋值语句不是把值塞进固定类型的盒子，而是让名字指向一个对象。执行 value = 7 后，value 指向 int 对象；再次执行 value = '七'，只是改变绑定，旧对象是否还存在由引用决定。",
+            "每个对象仍然有自己的运行时类型。type(value) 适合观察精确类型，isinstance(value, int) 适合判断是否属于某个类型体系，例如 bool 是 int 的子类这一点会影响判断结果。"
+          ],
+          "syntax": "name = value 绑定对象；type() 查看精确类型；isinstance() 检查继承关系。",
+          "js_bridge": "JavaScript 变量也能在运行时换类型，但 let/const 描述的是绑定是否可重新赋值；Python 的变量名没有 const 关键字。Python 的 isinstance 更像面向对象层次判断，不能简单等同于 JS 的 typeof 字符串比较。",
+          "examples": [
+            {
+              "language": "python",
+              "code": "value = 7\nprint(type(value).__name__)\nprint(isinstance(value, int))",
+              "output": "int\nTrue",
+              "explanation": "value = 7 先绑定整数，type(value).__name__ 输出 int，isinstance 再输出它属于 int。把右侧改成未定义名字会在赋值时得到 NameError。",
+              "source_kind": "python",
+              "runnable": true
+            },
+            {
+              "language": "python",
+              "code": "value = '七'\nprint(type(value).__name__)",
+              "output": "str",
+              "explanation": "value = '七' 重新绑定同一个名字，type(value).__name__ 因而输出 str。这个例子没有做数值转换；空字符串仍是 str，只是内容为空。",
+              "source_kind": "python",
+              "runnable": true
+            }
+          ],
+          "common_errors": [
+            {
+              "error": "输入 3 得到 33",
+              "symptom": "输入 3 得到 33",
+              "cause": "数量仍是文本，乘法重复了文本",
+              "fix": "先用 int 转换数量再乘二",
+              "example": {
+                "code": "print(input() * 2)",
+                "symptom": "输入 3 得到 33",
+                "fix": "先用 int 转换数量再乘二"
+              }
+            },
+            {
+              "error": "转换后仍在重复文本",
+              "symptom": "转换后仍在重复文本",
+              "cause": "int 返回新值，没有改写 quantity",
+              "fix": "接住转换结果，再用这个整数计算",
+              "example": {
+                "code": "int(quantity)\nprint(quantity * 2)",
+                "symptom": "转换后仍在重复文本",
+                "fix": "接住转换结果，再用这个整数计算"
+              }
+            }
+          ],
+          "guided_practice": {
+            "goal": "把键盘输入的数量变成可计算的整数。",
+            "starter": "quantity = input()\n# 先转成 int，再计算两倍并打印\n",
+            "steps": [
+              {
+                "action": "使用输入：3",
+                "expected": "6"
+              },
+              {
+                "action": "使用输入：0",
+                "expected": "0"
+              }
+            ],
+            "check": "3 → 6；0 → 0；12 → 24。"
+          },
+          "practice": {
+            "kind": "code",
+            "file_name": "main.py",
+            "scenario": "把键盘输入的数量变成可计算的整数。",
+            "instructions": "读取一行非负整数数量，输出它的两倍。使用 input() 读取，不添加输入提示文字，只输出一行结果。",
+            "starter_content": "quantity = input()\n# 先转成 int，再计算两倍并打印\n",
+            "starter_policy": "complete",
+            "expected_behavior": "3 → 6；0 → 0；12 → 24。",
+            "hints": "先试 int('3') 和 '3' * 2 的区别；后者得到重复文本。",
+            "input_examples": [
+              {
+                "label": "练习输入 1",
+                "value": "3",
+                "expected": "6"
+              },
+              {
+                "label": "练习输入 2",
+                "value": "0",
+                "expected": "0"
+              }
+            ]
+          },
+          "key_points": [
+            "把键盘输入的数量变成可计算的整数。",
+            "先试 int('3') 和 '3' * 2 的区别；后者得到重复文本。",
+            "3 → 6；0 → 0；12 → 24。"
+          ],
+          "frontend_bridge": "前端经验只作辅助：变量命名、赋值与动态类型 必须先按 Python 3 的执行、类型和错误规则完成。",
+          "example": {
+            "language": "python",
+            "code": "value = 7\nprint(type(value).__name__)\nprint(isinstance(value, int))",
+            "output": "int\nTrue",
+            "explanation": "value = 7 先绑定整数，type(value).__name__ 输出 int，isinstance 再输出它属于 int。把右侧改成未定义名字会在赋值时得到 NameError。",
+            "source_kind": "python",
+            "runnable": true
+          },
+          "steps": [
+            "先用第一个输入检查正常结果",
+            "独立补全代码，再检查边界输入",
+            "读懂失败反馈，修改后重新验证"
+          ],
+          "optional": true,
+          "practice_first": {
+            "goal": "读取一行非负整数数量，输出它的两倍。使用 input() 读取，不添加输入提示文字，只输出一行结果。",
+            "rules": [
+              "name = value 绑定对象；type() 查看精确类型；isinstance() 检查继承关系。",
+              "先改变量或表达式，运行看变化。函数外壳由起始代码提供，D04 再从头编写。"
+            ],
+            "prerequisites": [
+              "D01-verify"
+            ],
+            "cards": [],
+            "drills": [
+              {
+                "id": "fill-0",
+                "title": "补全练习 1",
+                "instructions": "替换 TODO 指出的占位 None，保留其他输入；运行后对比每一行输出，再完成下方独立作业。",
+                "starter": "# TODO：补全下面第 2 行的 None，使输出与右侧预期一致。\nvalue = None\nprint(type(value).__name__)\nprint(isinstance(value, int))",
+                "output": "int\nTrue",
+                "reference": "value = 7\nprint(type(value).__name__)\nprint(isinstance(value, int))",
+                "source_kind": "python",
+                "runnable": true
+              },
+              {
+                "id": "fill-1",
+                "title": "补全练习 2",
+                "instructions": "替换 TODO 指出的占位 None，保留其他输入；运行后对比每一行输出，再完成下方独立作业。",
+                "starter": "# TODO：补全下面第 2 行的 None，使输出与右侧预期一致。\nvalue = None\nprint(type(value).__name__)",
+                "output": "str",
+                "reference": "value = '七'\nprint(type(value).__name__)",
+                "source_kind": "python",
+                "runnable": true
+              }
+            ],
+            "provided": "起始代码中的函数签名及标注“平台提供”的代码可以保留；本题只编写 TODO 部分。"
+          }
+        },
+        {
+          "id": "D02-receipt",
+          "title": "加练 · 购物小票",
+          "catalog_refs": [
+            "py-10",
+            "py-13",
+            "py-16",
+            "py-17"
+          ],
+          "objective": "把计算、类型转换和格式化组合起来。",
+          "explanation": [
+            "小票需要把价格作为 float、数量作为 int，再用乘法计算总额。f-string 的 :.2f 只决定显示两位小数，不会把价格变成整数，也不改变原数值；先计算再展示更容易检查错误。",
+            "字符串方法通过点号调用，通常返回新字符串或新列表，而不是默默修改原字符串。strip 处理首尾空白，split 把一段文本拆成 list，join 则要求所有待连接元素都是 str。",
+            "方法可以串联，但每一步的数据类型要跟得上：' a,b '.strip() 仍是 str，split(',') 后变成 list[str]，此时才能用 '|'.join(parts)。把中间结果打印出来能定位链式调用的错误。"
+          ],
+          "syntax": "方法返回新值；f'{name}: {value}' 在运行时格式化表达式结果。",
+          "js_bridge": "JavaScript 也有 trim、split、join 和模板字符串，但 Python 使用 f'...' 而不是反引号；Python join 是分隔符字符串的方法，调用形式与 JS 的数组 join 相反。",
+          "examples": [
+            {
+              "language": "python",
+              "code": "raw = '  a,b  '\nparts = raw.strip().split(',')\nprint('|'.join(parts))",
+              "output": "a|b",
+              "explanation": "raw.strip() 去掉两端空白，split(',') 得到 a、b，join 用竖线重新连接，所以输出 a|b。没有逗号的文本会得到单元素列表，这是本例的边界。",
+              "source_kind": "python",
+              "runnable": true
+            },
+            {
+              "language": "python",
+              "code": "name = '小林'\ncount = 3\nprint(f'{name} 有 {count} 个任务')",
+              "output": "小林 有 3 个任务",
+              "explanation": "name 和 count 被花括号中的表达式读取，f-string 因而输出小林 有 3 个任务。把 count 改成字符串仍能格式化，但计算前要明确类型。",
+              "source_kind": "python",
+              "runnable": true
+            }
+          ],
+          "common_errors": [
+            {
+              "error": "小票总额算成了相加",
+              "symptom": "小票总额算成了相加",
+              "cause": "购物金额是单价乘数量，不是两项相加",
+              "fix": "用乘法计算总额",
+              "example": {
+                "code": "print(price + quantity)",
+                "symptom": "小票总额算成了相加",
+                "fix": "用乘法计算总额"
+              }
+            },
+            {
+              "error": "小票小数位数不固定",
+              "symptom": "小票小数位数不固定",
+              "cause": "没有指定显示精度，25.0 不等于题目的 25.00",
+              "fix": "在表达式后使用 :.2f",
+              "example": {
+                "code": "print(f'总价：{total}')",
+                "symptom": "小票小数位数不固定",
+                "fix": "在表达式后使用 :.2f"
+              }
+            }
+          ],
+          "guided_practice": {
+            "goal": "把计算、类型转换和格式化组合起来。",
+            "starter": "price = float(input())\nquantity = int(input())\n# 计算总价，用 f-string 输出\n",
+            "steps": [
+              {
+                "action": "使用输入：12.5\n2",
+                "expected": "总价：25.00"
+              },
+              {
+                "action": "使用输入：3.2\n3",
+                "expected": "总价：9.60"
+              }
+            ],
+            "check": "12.5 和 2 → 总价：25.00；0 和 3 → 总价：0.00。"
+          },
+          "practice": {
+            "kind": "code",
+            "file_name": "main.py",
+            "scenario": "把计算、类型转换和格式化组合起来。",
+            "instructions": "用两个 input() 依次读取单价和数量，只输出一行 总价：金额，金额保留两位小数，例如 总价：25.00。",
+            "starter_content": "price = float(input())\nquantity = int(input())\n# 计算总价，用 f-string 输出\n",
+            "starter_policy": "complete",
+            "expected_behavior": "12.5 和 2 → 总价：25.00；0 和 3 → 总价：0.00。",
+            "hints": "花括号里写表达式，冒号后写 .2f；不要把单价和数量当文本拼接。",
+            "input_examples": [
+              {
+                "label": "练习输入 1",
+                "value": "12.5\n2",
+                "expected": "总价：25.00"
+              },
+              {
+                "label": "练习输入 2",
+                "value": "3.2\n3",
+                "expected": "总价：9.60"
+              }
+            ]
+          },
+          "key_points": [
+            "把计算、类型转换和格式化组合起来。",
+            "花括号里写表达式，冒号后写 .2f；不要把单价和数量当文本拼接。",
+            "12.5 和 2 → 总价：25.00；0 和 3 → 总价：0.00。"
+          ],
+          "frontend_bridge": "前端经验只作辅助：字符串方法与 f-string 必须先按 Python 3 的执行、类型和错误规则完成。",
+          "example": {
+            "language": "python",
+            "code": "raw = '  a,b  '\nparts = raw.strip().split(',')\nprint('|'.join(parts))",
+            "output": "a|b",
+            "explanation": "raw.strip() 去掉两端空白，split(',') 得到 a、b，join 用竖线重新连接，所以输出 a|b。没有逗号的文本会得到单元素列表，这是本例的边界。",
+            "source_kind": "python",
+            "runnable": true
+          },
+          "steps": [
+            "先用第一个输入检查正常结果",
+            "独立补全代码，再检查边界输入",
+            "读懂失败反馈，修改后重新验证"
+          ],
+          "optional": true,
+          "practice_first": {
+            "goal": "用两个 input() 依次读取单价和数量，只输出一行 总价：金额，金额保留两位小数，例如 总价：25.00。",
+            "rules": [
+              "方法返回新值；f'{name}: {value}' 在运行时格式化表达式结果。",
+              "先改变量或表达式，运行看变化。函数外壳由起始代码提供，D04 再从头编写。"
+            ],
+            "prerequisites": [
+              "D01-verify"
+            ],
+            "cards": [],
+            "drills": [
+              {
+                "id": "fill-0",
+                "title": "补全练习 1",
+                "instructions": "替换 TODO 指出的占位 None，保留其他输入；运行后对比每一行输出，再完成下方独立作业。",
+                "starter": "# TODO：补全下面第 3 行的 None，使输出与右侧预期一致。\nraw = '  a,b  '\nparts = None\nprint('|'.join(parts))",
+                "output": "a|b",
+                "reference": "raw = '  a,b  '\nparts = raw.strip().split(',')\nprint('|'.join(parts))",
+                "source_kind": "python",
+                "runnable": true
+              },
+              {
+                "id": "fill-1",
+                "title": "补全练习 2",
+                "instructions": "替换 TODO 指出的占位 None，保留其他输入；运行后对比每一行输出，再完成下方独立作业。",
+                "starter": "# TODO：补全下面第 3 行的 None，使输出与右侧预期一致。\nname = '小林'\ncount = None\nprint(f'{name} 有 {count} 个任务')",
+                "output": "小林 有 3 个任务",
+                "reference": "name = '小林'\ncount = 3\nprint(f'{name} 有 {count} 个任务')",
+                "source_kind": "python",
+                "runnable": true
+              }
+            ],
+            "provided": "起始代码中的函数签名及标注“平台提供”的代码可以保留；本题只编写 TODO 部分。"
+          }
+        },
+        {
+          "id": "D02-normalize",
+          "title": "加练 · 清理账号输入",
+          "catalog_refs": [
+            "py-10",
+            "py-13",
+            "py-16",
+            "py-17"
+          ],
+          "objective": "从一条带空白和大小写的文本得到统一账号。",
+          "explanation": [
+            "strip() 只移除两端空白，不会删除姓名或账号内部的空格。lower() 返回小写的新字符串；Python 字符串不能原地修改，所以需要接住返回值，最后再打印清理后的结果。",
+            "字符串是由字符组成的不可变序列，单个索引用从 0 开始的位置，负索引从末尾倒数。切片的 stop 不包含在结果里，因此 text[1:4] 取的是位置 1、2、3。",
+            "不可变意味着不能执行 text[0] = 'X'；它不意味着不能变换文本。strip、replace、切片和拼接都会创建新字符串，必须把结果保存到新名字或重新绑定原名字。"
+          ],
+          "syntax": "s[i] 取单个字符，s[start:stop:step] 切片；修改要创建新字符串。",
+          "js_bridge": "JavaScript 的 String 也不可变并支持索引/slice，但 JS 常用 slice 的参数和 Python 切片步长不同；Python 可写 text[::-1] 反转，JS 需要拆分、反转再合并。Python 的索引越界抛 IndexError，而 JS 常得到 undefined。",
+          "examples": [
+            {
+              "language": "python",
+              "code": "text = 'Python'\nprint(text[0])\nprint(text[1:4])",
+              "output": "P\nyth",
+              "explanation": "text[0] 读取第一个字符 P，text[1:4] 取位置 1、2、3，所以输出是 P 和 yth。切片右端不包含 4；若索引超出长度会抛 IndexError。",
+              "source_kind": "python",
+              "runnable": true
+            },
+            {
+              "language": "python",
+              "code": "text = '猫'\nnew_text = text + '和狗'\nprint(text, new_text)",
+              "output": "猫 猫和狗",
+              "explanation": "text + '和狗' 创建新字符串，第二次 print 同时显示原 text 和 new_text，因此输出是猫 猫和狗。空字符串没有可读取的索引，应先检查长度。",
+              "source_kind": "python",
+              "runnable": true
+            }
+          ],
+          "common_errors": [
+            {
+              "error": "账号两端仍有空白",
+              "symptom": "账号两端仍有空白",
+              "cause": "清理方法返回的新字符串没有被使用",
+              "fix": "把 strip 结果重新赋值或直接链式调用",
+              "example": {
+                "code": "account.strip()\nprint(account)",
+                "symptom": "账号两端仍有空白",
+                "fix": "把 strip 结果重新赋值或直接链式调用"
+              }
+            },
+            {
+              "error": "账号内部空格也被删掉",
+              "symptom": "账号内部空格也被删掉",
+              "cause": "replace 会移除所有普通空格，超出了清理两端的规则",
+              "fix": "用 strip 去两端，再 lower",
+              "example": {
+                "code": "print(account.replace(' ', ''))",
+                "symptom": "账号内部空格也被删掉",
+                "fix": "用 strip 去两端，再 lower"
+              }
+            }
+          ],
+          "guided_practice": {
+            "goal": "从一条带空白和大小写的文本得到统一账号。",
+            "starter": "account = input()\n# 依次清理两端空白和大小写\n",
+            "steps": [
+              {
+                "action": "使用输入：  Alice  ",
+                "expected": "alice"
+              },
+              {
+                "action": "使用输入：PYTHON_01",
+                "expected": "python_01"
+              }
+            ],
+            "check": "  Alice  → alice；全空白 → 空行。"
+          },
+          "practice": {
+            "kind": "code",
+            "file_name": "main.py",
+            "scenario": "从一条带空白和大小写的文本得到统一账号。",
+            "instructions": "读取一行账号，先去掉首尾空白，再全部转小写，只打印清理后的账号。只含空白时输出空行。",
+            "starter_content": "account = input()\n# 依次清理两端空白和大小写\n",
+            "starter_policy": "complete",
+            "expected_behavior": "  Alice  → alice；全空白 → 空行。",
+            "hints": "可以分两次赋值，也可以链式调用；输入与输出均为字符串。",
+            "input_examples": [
+              {
+                "label": "练习输入 1",
+                "value": "  Alice  ",
+                "expected": "alice"
+              },
+              {
+                "label": "练习输入 2",
+                "value": "PYTHON_01",
+                "expected": "python_01"
+              }
+            ]
+          },
+          "key_points": [
+            "从一条带空白和大小写的文本得到统一账号。",
+            "可以分两次赋值，也可以链式调用；输入与输出均为字符串。",
+            "  Alice  → alice；全空白 → 空行。"
+          ],
+          "frontend_bridge": "前端经验只作辅助：字符串字面量、索引切片与不可变性 必须先按 Python 3 的执行、类型和错误规则完成。",
+          "example": {
+            "language": "python",
+            "code": "text = 'Python'\nprint(text[0])\nprint(text[1:4])",
+            "output": "P\nyth",
+            "explanation": "text[0] 读取第一个字符 P，text[1:4] 取位置 1、2、3，所以输出是 P 和 yth。切片右端不包含 4；若索引超出长度会抛 IndexError。",
+            "source_kind": "python",
+            "runnable": true
+          },
+          "steps": [
+            "先用第一个输入检查正常结果",
+            "独立补全代码，再检查边界输入",
+            "读懂失败反馈，修改后重新验证"
+          ],
+          "optional": true,
+          "practice_first": {
+            "goal": "读取一行账号，先去掉首尾空白，再全部转小写，只打印清理后的账号。只含空白时输出空行。",
+            "rules": [
+              "s[i] 取单个字符，s[start:stop:step] 切片；修改要创建新字符串。",
+              "先改变量或表达式，运行看变化。函数外壳由起始代码提供，D04 再从头编写。"
+            ],
+            "prerequisites": [
+              "D01-verify"
+            ],
+            "cards": [],
+            "drills": [
+              {
+                "id": "fill-0",
+                "title": "补全练习 1",
+                "instructions": "替换 TODO 指出的占位 None，保留其他输入；运行后对比每一行输出，再完成下方独立作业。",
+                "starter": "# TODO：补全下面第 2 行的 None，使输出与右侧预期一致。\ntext = None\nprint(text[0])\nprint(text[1:4])",
+                "output": "P\nyth",
+                "reference": "text = 'Python'\nprint(text[0])\nprint(text[1:4])",
+                "source_kind": "python",
+                "runnable": true
+              },
+              {
+                "id": "fill-1",
+                "title": "补全练习 2",
+                "instructions": "替换 TODO 指出的占位 None，保留其他输入；运行后对比每一行输出，再完成下方独立作业。",
+                "starter": "# TODO：补全下面第 3 行的 None，使输出与右侧预期一致。\ntext = '猫'\nnew_text = None\nprint(text, new_text)",
+                "output": "猫 猫和狗",
+                "reference": "text = '猫'\nnew_text = text + '和狗'\nprint(text, new_text)",
                 "source_kind": "python",
                 "runnable": true
               }
@@ -4291,6 +4743,445 @@
             ],
             "provided": "起始代码中的函数签名及标注“平台提供”的代码可以保留；本题只编写 TODO 部分。"
           }
+        },
+        {
+          "id": "D03-delivery",
+          "title": "加练 · 运费边界",
+          "catalog_refs": [
+            "py-29",
+            "py-31",
+            "py-33",
+            "py-34"
+          ],
+          "objective": "练习把文字规则变成互斥分支。",
+          "explanation": [
+            "订单金额达到 99 元免运费，意味着 99 本身应进入免运费分支。用 >= 表达包含边界的判断，else 负责其余合法金额；测试 98.99、99 和 100 可以发现大于号写错的问题。",
+            "if 从上到下测试条件，第一条为真的分支执行后，其余 elif/else 不再执行。条件边界必须写清楚，例如成绩 60 是否算通过，不能靠分支排列让读者猜。",
+            "elif 适合互斥的多段范围，else 表示前面条件都不成立。比较数字时要同时考虑最小值、最大值和类型错误；把复杂条件拆成有名字的布尔变量通常更容易调试。"
+          ],
+          "syntax": "if 条件: 开启分支；elif 可继续判断；else 处理剩余情况。",
+          "js_bridge": "JavaScript 和 Python 都有 if/else，但 JS 用括号和花括号，Python 用冒号和缩进；Python 没有强制三元写法，条件表达式写作 value_if_true if condition else value_if_false。",
+          "examples": [
+            {
+              "language": "python",
+              "code": "score = 89\nif score >= 90:\n    level = 'A'\nelif score >= 60:\n    level = 'B'\nelse:\n    level = 'C'\nprint(level)",
+              "output": "B",
+              "explanation": "score = 89 先跳过 >=90，再命中 >=60，level 因而是 B。把分数改成 90 会命中 A，改成 59 会进入 else，这是分支边界。",
+              "source_kind": "python",
+              "runnable": true
+            },
+            {
+              "language": "python",
+              "code": "age = 18\nprint('成人' if age >= 18 else '未成年')",
+              "output": "成人",
+              "explanation": "条件表达式先检查 age >= 18，age 为 18 时输出成人。age 改成 17 会选择未成年；这条语句只适合二选一。",
+              "source_kind": "python",
+              "runnable": true
+            }
+          ],
+          "common_errors": [
+            {
+              "error": "99 元仍被收运费",
+              "symptom": "99 元仍被收运费",
+              "cause": "大于号没有包含免运费的起点",
+              "fix": "使用 >=99 判断",
+              "example": {
+                "code": "if amount > 99: print(0)",
+                "symptom": "99 元仍被收运费",
+                "fix": "使用 >=99 判断"
+              }
+            },
+            {
+              "error": "免运费订单输出两行",
+              "symptom": "免运费订单输出两行",
+              "cause": "第二个 print 位于分支外，总会执行",
+              "fix": "将收费输出放入 else 分支",
+              "example": {
+                "code": "if amount >= 99: print(0)\nprint(8)",
+                "symptom": "免运费订单输出两行",
+                "fix": "将收费输出放入 else 分支"
+              }
+            }
+          ],
+          "guided_practice": {
+            "goal": "练习把文字规则变成互斥分支。",
+            "starter": "amount = float(input())\n# 按免运费边界写 if/else\n",
+            "steps": [
+              {
+                "action": "使用输入：98.99",
+                "expected": "8"
+              },
+              {
+                "action": "使用输入：99",
+                "expected": "0"
+              }
+            ],
+            "check": "98.99 → 8；99 → 0；0 → 8。"
+          },
+          "practice": {
+            "kind": "code",
+            "file_name": "main.py",
+            "scenario": "练习把文字规则变成互斥分支。",
+            "instructions": "读取一行非负订单金额；金额 >= 99 输出 0，否则输出 8。只输出运费数字。",
+            "starter_content": "amount = float(input())\n# 按免运费边界写 if/else\n",
+            "starter_policy": "complete",
+            "expected_behavior": "98.99 → 8；99 → 0；0 → 8。",
+            "hints": "不要用两个相互覆盖的 if；确认恰好达到 99 的情况。",
+            "input_examples": [
+              {
+                "label": "练习输入 1",
+                "value": "98.99",
+                "expected": "8"
+              },
+              {
+                "label": "练习输入 2",
+                "value": "99",
+                "expected": "0"
+              }
+            ]
+          },
+          "key_points": [
+            "练习把文字规则变成互斥分支。",
+            "不要用两个相互覆盖的 if；确认恰好达到 99 的情况。",
+            "98.99 → 8；99 → 0；0 → 8。"
+          ],
+          "frontend_bridge": "前端经验只作辅助：if、elif、else 与边界 必须先按 Python 3 的执行、类型和错误规则完成。",
+          "example": {
+            "language": "python",
+            "code": "score = 89\nif score >= 90:\n    level = 'A'\nelif score >= 60:\n    level = 'B'\nelse:\n    level = 'C'\nprint(level)",
+            "output": "B",
+            "explanation": "score = 89 先跳过 >=90，再命中 >=60，level 因而是 B。把分数改成 90 会命中 A，改成 59 会进入 else，这是分支边界。",
+            "source_kind": "python",
+            "runnable": true
+          },
+          "steps": [
+            "先用第一个输入检查正常结果",
+            "独立补全代码，再检查边界输入",
+            "读懂失败反馈，修改后重新验证"
+          ],
+          "optional": true,
+          "practice_first": {
+            "goal": "读取一行非负订单金额；金额 >= 99 输出 0，否则输出 8。只输出运费数字。",
+            "rules": [
+              "if 条件: 开启分支；elif 可继续判断；else 处理剩余情况。",
+              "先运行条件表，再补分支或循环。and 是同时成立，or 是至少一个成立，not 是取反。"
+            ],
+            "prerequisites": [
+              "D02-names",
+              "D02-numbers",
+              "D02-bool-none"
+            ],
+            "cards": [],
+            "drills": [
+              {
+                "id": "fill-1",
+                "title": "补全练习 2",
+                "instructions": "替换 TODO 指出的占位 None，保留其他输入；运行后对比每一行输出，再完成下方独立作业。",
+                "starter": "# TODO：补全下面第 2 行的 None，使输出与右侧预期一致。\nage = None\nprint('成人' if age >= 18 else '未成年')",
+                "output": "成人",
+                "reference": "age = 18\nprint('成人' if age >= 18 else '未成年')",
+                "source_kind": "python",
+                "runnable": true
+              }
+            ],
+            "provided": "起始代码中的函数签名及标注“平台提供”的代码可以保留；本题只编写 TODO 部分。"
+          }
+        },
+        {
+          "id": "D03-odd-total",
+          "title": "加练 · 奇数累加",
+          "catalog_refs": [
+            "py-29",
+            "py-31",
+            "py-33",
+            "py-34"
+          ],
+          "objective": "独立完成范围、判断与累加。",
+          "explanation": [
+            "range 的右端不包含在循环中，要包含 n 就写到 n + 1。总和需要在循环前初始化为 0，每次只把奇数加入；当 n 为 0 时循环为空，初始的 0 就是合理结果。",
+            "for 不按下标猜测循环次数，而是向可迭代对象逐项请求值。range(1, 4) 产生 1、2、3，stop 永远不包含；这条开区间规则适合表达长度和下标范围。",
+            "循环变量在每轮被重新绑定，循环体应只处理当前值并维护必要的累积状态。遍历 list、tuple、字符串和字典时，得到的元素形状不同，字典默认遍历键。"
+          ],
+          "syntax": "for item in iterable:；range(stop)、range(start, stop, step) 的终点不包含。",
+          "js_bridge": "JavaScript 的 for...of 也遍历值，传统 for 则遍历索引；Python 的 for 更直接地依赖 iterable 协议。Python range 是惰性的整数序列对象，不等于 JS 的数组，也不会包含 stop。",
+          "examples": [
+            {
+              "language": "python",
+              "code": "for number in range(1, 4):\n    print(number)",
+              "output": "1\n2\n3",
+              "explanation": "range(1, 4) 的终点 4 不包含，所以循环依次输出 1、2、3。把 stop 改成 1 时循环为空，这是 range 的开区间边界。",
+              "source_kind": "python",
+              "runnable": true
+            },
+            {
+              "language": "python",
+              "code": "total = 0\nfor value in [2, 5, 3]:\n    total += value\nprint(total)",
+              "output": "10",
+              "explanation": "total 从 0 开始，for 依次把 2、5、3 加入，最终输出 10。列表为空时循环体不执行，total 仍为 0。",
+              "source_kind": "python",
+              "runnable": true
+            }
+          ],
+          "common_errors": [
+            {
+              "error": "既漏终点又加了偶数",
+              "symptom": "既漏终点又加了偶数",
+              "cause": "range 终点不包含，且没有取余筛选",
+              "fix": "使用 n+1 并只累加奇数",
+              "example": {
+                "code": "for n in range(1, n):\n    total += n",
+                "symptom": "既漏终点又加了偶数",
+                "fix": "使用 n+1 并只累加奇数"
+              }
+            },
+            {
+              "error": "奇数总和反复归零",
+              "symptom": "奇数总和反复归零",
+              "cause": "累计变量在循环体里重新初始化",
+              "fix": "把 total=0 放在循环前",
+              "example": {
+                "code": "for number in range(n):\n    total = 0",
+                "symptom": "奇数总和反复归零",
+                "fix": "把 total=0 放在循环前"
+              }
+            }
+          ],
+          "guided_practice": {
+            "goal": "独立完成范围、判断与累加。",
+            "starter": "n = int(input())\ntotal = 0\n# 用循环和取余判断完成累加\n",
+            "steps": [
+              {
+                "action": "使用输入：5",
+                "expected": "9"
+              },
+              {
+                "action": "使用输入：0",
+                "expected": "0"
+              }
+            ],
+            "check": "5 → 9；6 → 9；0 → 0。"
+          },
+          "practice": {
+            "kind": "code",
+            "file_name": "main.py",
+            "scenario": "独立完成范围、判断与累加。",
+            "instructions": "读取一行非负整数 n，使用循环计算 1 到 n（包含 n）中所有奇数的和，打印总和。",
+            "starter_content": "n = int(input())\ntotal = 0\n# 用循环和取余判断完成累加\n",
+            "starter_policy": "complete",
+            "expected_behavior": "5 → 9；6 → 9；0 → 0。",
+            "hints": "number % 2 != 0 可以识别奇数；print 应放在循环结束后。",
+            "input_examples": [
+              {
+                "label": "练习输入 1",
+                "value": "5",
+                "expected": "9"
+              },
+              {
+                "label": "练习输入 2",
+                "value": "0",
+                "expected": "0"
+              }
+            ]
+          },
+          "key_points": [
+            "独立完成范围、判断与累加。",
+            "number % 2 != 0 可以识别奇数；print 应放在循环结束后。",
+            "5 → 9；6 → 9；0 → 0。"
+          ],
+          "frontend_bridge": "前端经验只作辅助：for 遍历与 range 必须先按 Python 3 的执行、类型和错误规则完成。",
+          "example": {
+            "language": "python",
+            "code": "for number in range(1, 4):\n    print(number)",
+            "output": "1\n2\n3",
+            "explanation": "range(1, 4) 的终点 4 不包含，所以循环依次输出 1、2、3。把 stop 改成 1 时循环为空，这是 range 的开区间边界。",
+            "source_kind": "python",
+            "runnable": true
+          },
+          "steps": [
+            "先用第一个输入检查正常结果",
+            "独立补全代码，再检查边界输入",
+            "读懂失败反馈，修改后重新验证"
+          ],
+          "optional": true,
+          "practice_first": {
+            "goal": "读取一行非负整数 n，使用循环计算 1 到 n（包含 n）中所有奇数的和，打印总和。",
+            "rules": [
+              "for item in iterable:；range(stop)、range(start, stop, step) 的终点不包含。",
+              "先运行条件表，再补分支或循环。and 是同时成立，or 是至少一个成立，not 是取反。"
+            ],
+            "prerequisites": [
+              "D02-names",
+              "D02-numbers",
+              "D02-bool-none"
+            ],
+            "cards": [],
+            "drills": [
+              {
+                "id": "fill-1",
+                "title": "补全练习 2",
+                "instructions": "替换 TODO 指出的占位 None，保留其他输入；运行后对比每一行输出，再完成下方独立作业。",
+                "starter": "# TODO：补全下面第 2 行的 None，使输出与右侧预期一致。\ntotal = None\nfor value in [2, 5, 3]:\n    total += value\nprint(total)",
+                "output": "10",
+                "reference": "total = 0\nfor value in [2, 5, 3]:\n    total += value\nprint(total)",
+                "source_kind": "python",
+                "runnable": true
+              }
+            ],
+            "provided": "起始代码中的函数签名及标注“平台提供”的代码可以保留；本题只编写 TODO 部分。"
+          }
+        },
+        {
+          "id": "D03-countdown",
+          "title": "加练 · 修复倒计时",
+          "catalog_refs": [
+            "py-29",
+            "py-31",
+            "py-33",
+            "py-34"
+          ],
+          "objective": "通过更新循环变量让程序正确结束。",
+          "explanation": [
+            "while 每轮重新判断条件，条件成立才执行循环体。倒计时从 n 开始，每输出一次要减一；减法放在循环外会让正数输入一直循环，输出顺序也会影响是否包含起点。",
+            "while 每次进入循环前重新计算条件，适合重复次数由状态决定的场景，例如等待用户输入或消费队列。和 for 不同，它不会自动推进任何变量，推进责任在循环体。",
+            "一个可靠的 while 要有初始化、条件、状态变化和退出证据。若条件依赖 remaining，就必须在每轮减少 remaining；若读取输入，就要处理空输入、退出命令和输入异常。"
+          ],
+          "syntax": "while condition: 每轮重新判断；循环体必须改变最终会影响 condition 的状态。",
+          "js_bridge": "JavaScript 的 while 结构相似，也需要手动改变状态；Python 不使用 ++ 运算符，写 remaining -= 1。Python 的真值规则会直接决定 while 是否继续，空容器可以自然结束循环。",
+          "examples": [
+            {
+              "language": "python",
+              "code": "remaining = 3\nwhile remaining:\n    print(remaining)\n    remaining -= 1",
+              "output": "3\n2\n1",
+              "explanation": "remaining 每轮输出当前值再减一，依次输出 3、2、1；变成 0 后条件为假而结束。初始值为 0 时不会进入循环。",
+              "source_kind": "python",
+              "runnable": true
+            },
+            {
+              "language": "python",
+              "code": "answer = ''\nwhile answer != 'yes':\n    answer = 'yes'\nprint('继续')",
+              "output": "继续",
+              "explanation": "answer 初始为空，while 条件成立后把它改为 yes，下一轮停止并输出继续。若循环体不更新 answer，就会无限循环。",
+              "source_kind": "python",
+              "runnable": true
+            }
+          ],
+          "common_errors": [
+            {
+              "error": "倒计时一直输出同一个数",
+              "symptom": "倒计时一直输出同一个数",
+              "cause": "决定是否继续的 remaining 没有减少",
+              "fix": "每轮在块内执行 remaining -= 1",
+              "example": {
+                "code": "while remaining > 0:\n    print(remaining)",
+                "symptom": "倒计时一直输出同一个数",
+                "fix": "每轮在块内执行 remaining -= 1"
+              }
+            },
+            {
+              "error": "倒计时多输出了零",
+              "symptom": "倒计时多输出了零",
+              "cause": "条件把零也包含进循环",
+              "fix": "只在 remaining>0 时进入循环",
+              "example": {
+                "code": "while remaining >= 0:\n    print(remaining)\n    remaining -= 1",
+                "symptom": "倒计时多输出了零",
+                "fix": "只在 remaining>0 时进入循环"
+              }
+            }
+          ],
+          "guided_practice": {
+            "goal": "通过更新循环变量让程序正确结束。",
+            "starter": "remaining = int(input())\nwhile remaining > 0:\n    print(remaining)\n    # 补充更新条件的语句\nprint('完成')\n",
+            "steps": [
+              {
+                "action": "使用输入：3",
+                "expected": "3\n2\n1\n完成"
+              },
+              {
+                "action": "使用输入：0",
+                "expected": "完成"
+              }
+            ],
+            "check": "3 → 三行 3/2/1 后一行 完成；0 → 完成。"
+          },
+          "practice": {
+            "kind": "code",
+            "file_name": "main.py",
+            "scenario": "通过更新循环变量让程序正确结束。",
+            "instructions": "读取非负整数 n，用 while 逐行输出 n 到 1，最后输出 完成。n=0 时只输出 完成。",
+            "starter_content": "remaining = int(input())\nwhile remaining > 0:\n    print(remaining)\n    # 补充更新条件的语句\nprint('完成')\n",
+            "starter_policy": "complete",
+            "expected_behavior": "3 → 三行 3/2/1 后一行 完成；0 → 完成。",
+            "hints": "检查 remaining 是否在每轮循环中减少。",
+            "input_examples": [
+              {
+                "label": "练习输入 1",
+                "value": "3",
+                "expected": "3\n2\n1\n完成"
+              },
+              {
+                "label": "练习输入 2",
+                "value": "0",
+                "expected": "完成"
+              }
+            ]
+          },
+          "key_points": [
+            "通过更新循环变量让程序正确结束。",
+            "检查 remaining 是否在每轮循环中减少。",
+            "3 → 三行 3/2/1 后一行 完成；0 → 完成。"
+          ],
+          "frontend_bridge": "前端经验只作辅助：while 条件循环与终止 必须先按 Python 3 的执行、类型和错误规则完成。",
+          "example": {
+            "language": "python",
+            "code": "remaining = 3\nwhile remaining:\n    print(remaining)\n    remaining -= 1",
+            "output": "3\n2\n1",
+            "explanation": "remaining 每轮输出当前值再减一，依次输出 3、2、1；变成 0 后条件为假而结束。初始值为 0 时不会进入循环。",
+            "source_kind": "python",
+            "runnable": true
+          },
+          "steps": [
+            "先用第一个输入检查正常结果",
+            "独立补全代码，再检查边界输入",
+            "读懂失败反馈，修改后重新验证"
+          ],
+          "optional": true,
+          "practice_first": {
+            "goal": "读取非负整数 n，用 while 逐行输出 n 到 1，最后输出 完成。n=0 时只输出 完成。",
+            "rules": [
+              "while condition: 每轮重新判断；循环体必须改变最终会影响 condition 的状态。",
+              "先运行条件表，再补分支或循环。and 是同时成立，or 是至少一个成立，not 是取反。"
+            ],
+            "prerequisites": [
+              "D02-names",
+              "D02-numbers",
+              "D02-bool-none"
+            ],
+            "cards": [],
+            "drills": [
+              {
+                "id": "fill-0",
+                "title": "补全练习 1",
+                "instructions": "替换 TODO 指出的占位 None，保留其他输入；运行后对比每一行输出，再完成下方独立作业。",
+                "starter": "# TODO：补全下面第 2 行的 None，使输出与右侧预期一致。\nremaining = None\nwhile remaining:\n    print(remaining)\n    remaining -= 1",
+                "output": "3\n2\n1",
+                "reference": "remaining = 3\nwhile remaining:\n    print(remaining)\n    remaining -= 1",
+                "source_kind": "python",
+                "runnable": true
+              },
+              {
+                "id": "fill-1",
+                "title": "补全练习 2",
+                "instructions": "替换 TODO 指出的占位 None，保留其他输入；运行后对比每一行输出，再完成下方独立作业。",
+                "starter": "# TODO：补全下面第 4 行的 None，使输出与右侧预期一致。\nanswer = ''\nwhile answer != 'yes':\n    answer = None\nprint('继续')",
+                "output": "继续",
+                "reference": "answer = ''\nwhile answer != 'yes':\n    answer = 'yes'\nprint('继续')",
+                "source_kind": "python",
+                "runnable": true
+              }
+            ],
+            "provided": "起始代码中的函数签名及标注“平台提供”的代码可以保留；本题只编写 TODO 部分。"
+          }
         }
       ]
     },
@@ -5436,6 +6327,445 @@
             ],
             "provided": "主作业只提交当前编辑器内容。独立实验在临时目录运行，不覆盖作业和项目。"
           }
+        },
+        {
+          "id": "D04-shipping",
+          "title": "加练 · 可复用的运费函数",
+          "catalog_refs": [
+            "py-47",
+            "py-48",
+            "py-49",
+            "py-50",
+            "py-69"
+          ],
+          "objective": "把学过的分支提取为可多次调用的函数。",
+          "explanation": [
+            "相同的运费规则可以封装进 shipping(amount)，由调用者传入金额。函数应 return 数字而不是只 print；测试代码需要拿到返回值继续计算，屏幕上出现正确数字不能代替返回值正确。",
+            "def 语句创建函数对象并绑定到一个名字，函数体只有在调用时才执行。参数是调用者传入的局部名字，return 把一个值交给调用者并立即结束当前调用。",
+            "没有 return 或只写 return 时，函数结果是 None；print 是输出副作用，不等于返回值。把计算和显示分开，函数才容易被测试、复用和组合。"
+          ],
+          "syntax": "def name(parameters) -> return_type:；return 立即结束函数，省略时返回 None。",
+          "js_bridge": "JavaScript 用 function 或箭头函数，Python 用 def 和缩进；两者都有 return，但 Python 函数省略 return 明确得到 None。Python 没有 JS 自动插入分号，缩进决定函数体范围。",
+          "examples": [
+            {
+              "language": "python",
+              "code": "def area(width, height):\n    return width * height\nprint(area(3, 4))",
+              "output": "12",
+              "explanation": "area(3, 4) 把两个实参绑定到 width、height，return 计算并交回 12。函数体只有调用时执行；传入缺少参数会得到 TypeError。",
+              "source_kind": "python",
+              "runnable": true
+            },
+            {
+              "language": "python",
+              "code": "def greet(name):\n    print('你好', name)\nprint(greet('林'))",
+              "output": "你好 林\nNone",
+              "explanation": "greet 通过 print 输出你好 林，但没有 return，所以外层 print 又输出 None。函数打印和返回是两种不同的可观察结果。",
+              "source_kind": "python",
+              "runnable": true
+            }
+          ],
+          "common_errors": [
+            {
+              "error": "函数调用拿到 None",
+              "symptom": "函数调用拿到 None",
+              "cause": "运费被打印了，但没有返回给调用者",
+              "fix": "使用 return 把数值交给调用方",
+              "example": {
+                "code": "def shipping(amount):\n    print(8)",
+                "symptom": "函数调用拿到 None",
+                "fix": "使用 return 把数值交给调用方"
+              }
+            },
+            {
+              "error": "运费类型变成了字符串",
+              "symptom": "运费类型变成了字符串",
+              "cause": "引号让数字变成文本，后续无法直接相加",
+              "fix": "返回数值 0 或 8",
+              "example": {
+                "code": "def shipping(amount):\n    return '0'",
+                "symptom": "运费类型变成了字符串",
+                "fix": "返回数值 0 或 8"
+              }
+            }
+          ],
+          "guided_practice": {
+            "goal": "把学过的分支提取为可多次调用的函数。",
+            "starter": "def shipping(amount):\n    # 根据金额返回运费\n    pass\n",
+            "steps": [
+              {
+                "action": "使用输入：shipping(99)",
+                "expected": "0"
+              },
+              {
+                "action": "使用输入：shipping(0)",
+                "expected": "8"
+              }
+            ],
+            "check": "shipping(99) == 0；shipping(98.99) == 8。"
+          },
+          "practice": {
+            "kind": "code",
+            "file_name": "main.py",
+            "scenario": "把学过的分支提取为可多次调用的函数。",
+            "instructions": "定义 shipping(amount)：amount >= 99 返回整数 0，否则返回整数 8。参数保证为非负数，不在函数内调用 input。",
+            "starter_content": "def shipping(amount):\n    # 根据金额返回运费\n    pass\n",
+            "starter_policy": "complete",
+            "expected_behavior": "shipping(99) == 0；shipping(98.99) == 8。",
+            "hints": "把上一题的输入改成参数，把输出改成 return。",
+            "input_examples": [
+              {
+                "label": "练习输入 1",
+                "value": "shipping(99)",
+                "expected": "0"
+              },
+              {
+                "label": "练习输入 2",
+                "value": "shipping(0)",
+                "expected": "8"
+              }
+            ]
+          },
+          "key_points": [
+            "把学过的分支提取为可多次调用的函数。",
+            "把上一题的输入改成参数，把输出改成 return。",
+            "shipping(99) == 0；shipping(98.99) == 8。"
+          ],
+          "frontend_bridge": "前端经验只作辅助：函数定义、调用与 return 必须先按 Python 3 的执行、类型和错误规则完成。",
+          "example": {
+            "language": "python",
+            "code": "def area(width, height):\n    return width * height\nprint(area(3, 4))",
+            "output": "12",
+            "explanation": "area(3, 4) 把两个实参绑定到 width、height，return 计算并交回 12。函数体只有调用时执行；传入缺少参数会得到 TypeError。",
+            "source_kind": "python",
+            "runnable": true
+          },
+          "steps": [
+            "先用第一个输入检查正常结果",
+            "独立补全代码，再检查边界输入",
+            "读懂失败反馈，修改后重新验证"
+          ],
+          "optional": true,
+          "practice_first": {
+            "goal": "定义 shipping(amount)：amount >= 99 返回整数 0，否则返回整数 8。参数保证为非负数，不在函数内调用 input。",
+            "rules": [
+              "def name(parameters) -> return_type:；return 立即结束函数，省略时返回 None。",
+              "先写返回值，再打印观察；参数、默认值、作用域分开练，不把输入校验混进第一题。"
+            ],
+            "prerequisites": [
+              "D03-if",
+              "D02-string-methods"
+            ],
+            "cards": [],
+            "drills": [
+              {
+                "id": "fill-0",
+                "title": "补全练习 1",
+                "instructions": "替换 TODO 指出的占位 None，保留其他输入；运行后对比每一行输出，再完成下方独立作业。",
+                "starter": "# TODO：补全下面第 3 行的 None，使输出与右侧预期一致。\ndef area(width, height):\n    return None\nprint(area(3, 4))",
+                "output": "12",
+                "reference": "def area(width, height):\n    return width * height\nprint(area(3, 4))",
+                "source_kind": "python",
+                "runnable": true
+              }
+            ],
+            "provided": "主作业只提交当前编辑器内容。独立实验在临时目录运行，不覆盖作业和项目。"
+          }
+        },
+        {
+          "id": "D04-greeting",
+          "title": "加练 · 默认参数与关键字",
+          "catalog_refs": [
+            "py-47",
+            "py-48",
+            "py-49",
+            "py-50",
+            "py-69"
+          ],
+          "objective": "用一个默认值支持两种调用方式。",
+          "explanation": [
+            "默认参数在调用没有传值时生效，显式传入的值会覆盖它。把问候语设为默认参数，比复制两份函数更清楚；返回字符串时要保留中文逗号，调用者才能稳定展示结果。",
+            "默认参数在调用者省略对应实参时提供值，函数体看到的仍是普通局部参数。带默认值的参数必须放在无默认参数之后，否则调用绑定会产生 SyntaxError。",
+            "关键字参数按参数名绑定，能让调用意图清晰并减少位置顺序错误。位置参数必须先于关键字参数；未知名称、重复传值和漏掉必需参数都会在调用阶段报 TypeError。"
+          ],
+          "syntax": "默认参数必须放在无默认参数之后；调用时可写 name(value=...)。",
+          "js_bridge": "JavaScript 常用默认参数和对象参数模拟关键字参数，Python 原生支持 keyword-only/关键字调用。Python 的参数顺序规则更严格，不能把 `name=value` 放到位置参数前面。",
+          "examples": [
+            {
+              "language": "python",
+              "code": "def greet(name, prefix='你好'):\n    return f'{prefix}，{name}'\nprint(greet('林'))",
+              "output": "你好，林",
+              "explanation": "省略 prefix 时使用定义处的默认值你好，输出你好，林。传入空字符串并不是省略参数，因此结果会保留空前缀。",
+              "source_kind": "python",
+              "runnable": true
+            },
+            {
+              "language": "python",
+              "code": "def greet(name, prefix='你好'):\n    return f'{prefix}，{name}'\nprint(greet('林', prefix='早上好'))",
+              "output": "早上好，林",
+              "explanation": "调用 greet('林', prefix='早上好') 用关键字覆盖默认 prefix，输出早上好，林。关键字名拼错会得到 TypeError，而不是静默使用默认值。",
+              "source_kind": "python",
+              "runnable": true
+            }
+          ],
+          "common_errors": [
+            {
+              "error": "只传姓名时报缺少参数",
+              "symptom": "只传姓名时报缺少参数",
+              "cause": "greeting 没有声明默认值",
+              "fix": "定义时设置 greeting='你好'",
+              "example": {
+                "code": "def greet(name, greeting):\n    return name",
+                "symptom": "只传姓名时报缺少参数",
+                "fix": "定义时设置 greeting='你好'"
+              }
+            },
+            {
+              "error": "问候语的逗号不一致",
+              "symptom": "问候语的逗号不一致",
+              "cause": "使用了英文逗号而题目约定中文逗号",
+              "fix": "逐字核对输出契约，使用中文逗号",
+              "example": {
+                "code": "return greeting + ',' + name",
+                "symptom": "问候语的逗号不一致",
+                "fix": "逐字核对输出契约，使用中文逗号"
+              }
+            }
+          ],
+          "guided_practice": {
+            "goal": "用一个默认值支持两种调用方式。",
+            "starter": "def greet(name, greeting='你好'):\n    pass\n",
+            "steps": [
+              {
+                "action": "使用输入：greet('小林')",
+                "expected": "你好，小林"
+              },
+              {
+                "action": "使用输入：greet('阿青', greeting='欢迎')",
+                "expected": "欢迎，阿青"
+              }
+            ],
+            "check": "greet('小林') → 你好，小林；传入 早上好 → 早上好，小林。"
+          },
+          "practice": {
+            "kind": "code",
+            "file_name": "main.py",
+            "scenario": "用一个默认值支持两种调用方式。",
+            "instructions": "定义 greet(name, greeting='你好')，返回 greeting + 中文逗号 + name。支持 greet('小林') 和 greet('小林', greeting='早上好')。",
+            "starter_content": "def greet(name, greeting='你好'):\n    pass\n",
+            "starter_policy": "complete",
+            "expected_behavior": "greet('小林') → 你好，小林；传入 早上好 → 早上好，小林。",
+            "hints": "默认值写在定义中，关键字参数写在调用中。",
+            "input_examples": [
+              {
+                "label": "练习输入 1",
+                "value": "greet('小林')",
+                "expected": "你好，小林"
+              },
+              {
+                "label": "练习输入 2",
+                "value": "greet('阿青', greeting='欢迎')",
+                "expected": "欢迎，阿青"
+              }
+            ]
+          },
+          "key_points": [
+            "用一个默认值支持两种调用方式。",
+            "默认值写在定义中，关键字参数写在调用中。",
+            "greet('小林') → 你好，小林；传入 早上好 → 早上好，小林。"
+          ],
+          "frontend_bridge": "前端经验只作辅助：默认参数与关键字参数 必须先按 Python 3 的执行、类型和错误规则完成。",
+          "example": {
+            "language": "python",
+            "code": "def greet(name, prefix='你好'):\n    return f'{prefix}，{name}'\nprint(greet('林'))",
+            "output": "你好，林",
+            "explanation": "省略 prefix 时使用定义处的默认值你好，输出你好，林。传入空字符串并不是省略参数，因此结果会保留空前缀。",
+            "source_kind": "python",
+            "runnable": true
+          },
+          "steps": [
+            "先用第一个输入检查正常结果",
+            "独立补全代码，再检查边界输入",
+            "读懂失败反馈，修改后重新验证"
+          ],
+          "optional": true,
+          "practice_first": {
+            "goal": "定义 greet(name, greeting='你好')，返回 greeting + 中文逗号 + name。支持 greet('小林') 和 greet('小林', greeting='早上好')。",
+            "rules": [
+              "默认参数必须放在无默认参数之后；调用时可写 name(value=...)。",
+              "先写返回值，再打印观察；参数、默认值、作用域分开练，不把输入校验混进第一题。"
+            ],
+            "prerequisites": [
+              "D03-if",
+              "D02-string-methods"
+            ],
+            "cards": [],
+            "drills": [
+              {
+                "id": "fill-0",
+                "title": "补全练习 1",
+                "instructions": "替换 TODO 指出的占位 None，保留其他输入；运行后对比每一行输出，再完成下方独立作业。",
+                "starter": "# TODO：补全下面第 3 行的 None，使输出与右侧预期一致。\ndef greet(name, prefix='你好'):\n    return None\nprint(greet('林'))",
+                "output": "你好，林",
+                "reference": "def greet(name, prefix='你好'):\n    return f'{prefix}，{name}'\nprint(greet('林'))",
+                "source_kind": "python",
+                "runnable": true
+              },
+              {
+                "id": "fill-1",
+                "title": "补全练习 2",
+                "instructions": "替换 TODO 指出的占位 None，保留其他输入；运行后对比每一行输出，再完成下方独立作业。",
+                "starter": "# TODO：补全下面第 3 行的 None，使输出与右侧预期一致。\ndef greet(name, prefix='你好'):\n    return None\nprint(greet('林', prefix='早上好'))",
+                "output": "早上好，林",
+                "reference": "def greet(name, prefix='你好'):\n    return f'{prefix}，{name}'\nprint(greet('林', prefix='早上好'))",
+                "source_kind": "python",
+                "runnable": true
+              }
+            ],
+            "provided": "主作业只提交当前编辑器内容。独立实验在临时目录运行，不覆盖作业和项目。"
+          }
+        },
+        {
+          "id": "D04-convert",
+          "title": "加练 · 温度换算",
+          "catalog_refs": [
+            "py-47",
+            "py-48",
+            "py-49",
+            "py-50",
+            "py-69"
+          ],
+          "objective": "把公式写成只依赖参数的函数。",
+          "explanation": [
+            "摄氏度转华氏度的公式是 c * 9 / 5 + 32；运算符优先级决定先乘除再加。函数不需要读取全局变量，每次调用都应使用本次传入的 c，负温度和零温度也属于正常输入。",
+            "def 语句创建函数对象并绑定到一个名字，函数体只有在调用时才执行。参数是调用者传入的局部名字，return 把一个值交给调用者并立即结束当前调用。",
+            "没有 return 或只写 return 时，函数结果是 None；print 是输出副作用，不等于返回值。把计算和显示分开，函数才容易被测试、复用和组合。"
+          ],
+          "syntax": "def name(parameters) -> return_type:；return 立即结束函数，省略时返回 None。",
+          "js_bridge": "JavaScript 用 function 或箭头函数，Python 用 def 和缩进；两者都有 return，但 Python 函数省略 return 明确得到 None。Python 没有 JS 自动插入分号，缩进决定函数体范围。",
+          "examples": [
+            {
+              "language": "python",
+              "code": "def area(width, height):\n    return width * height\nprint(area(3, 4))",
+              "output": "12",
+              "explanation": "area(3, 4) 把两个实参绑定到 width、height，return 计算并交回 12。函数体只有调用时执行；传入缺少参数会得到 TypeError。",
+              "source_kind": "python",
+              "runnable": true
+            },
+            {
+              "language": "python",
+              "code": "def greet(name):\n    print('你好', name)\nprint(greet('林'))",
+              "output": "你好 林\nNone",
+              "explanation": "greet 通过 print 输出你好 林，但没有 return，所以外层 print 又输出 None。函数打印和返回是两种不同的可观察结果。",
+              "source_kind": "python",
+              "runnable": true
+            }
+          ],
+          "common_errors": [
+            {
+              "error": "华氏度换算斜率错误",
+              "symptom": "华氏度换算斜率错误",
+              "cause": "整除把 9/5 截成了 1",
+              "fix": "使用普通除法 /",
+              "example": {
+                "code": "return c * (9 // 5) + 32",
+                "symptom": "华氏度换算斜率错误",
+                "fix": "使用普通除法 /"
+              }
+            },
+            {
+              "error": "温度返回文本",
+              "symptom": "温度返回文本",
+              "cause": "把计算结果提前格式化，不再是可计算数值",
+              "fix": "直接返回计算结果，单位交给显示层",
+              "example": {
+                "code": "return str(c * 9 / 5 + 32)",
+                "symptom": "温度返回文本",
+                "fix": "直接返回计算结果，单位交给显示层"
+              }
+            }
+          ],
+          "guided_practice": {
+            "goal": "把公式写成只依赖参数的函数。",
+            "starter": "def to_fahrenheit(c):\n    pass\n",
+            "steps": [
+              {
+                "action": "使用输入：to_fahrenheit(0)",
+                "expected": "32.0"
+              },
+              {
+                "action": "使用输入：to_fahrenheit(-40)",
+                "expected": "-40.0"
+              }
+            ],
+            "check": "0 → 32；100 → 212；-40 → -40。"
+          },
+          "practice": {
+            "kind": "code",
+            "file_name": "main.py",
+            "scenario": "把公式写成只依赖参数的函数。",
+            "instructions": "定义 to_fahrenheit(c)，返回 c * 9 / 5 + 32 的数值结果，不要返回带单位的字符串。",
+            "starter_content": "def to_fahrenheit(c):\n    pass\n",
+            "starter_policy": "complete",
+            "expected_behavior": "0 → 32；100 → 212；-40 → -40。",
+            "hints": "先计算数值，显示单位留给调用者。",
+            "input_examples": [
+              {
+                "label": "练习输入 1",
+                "value": "to_fahrenheit(0)",
+                "expected": "32.0"
+              },
+              {
+                "label": "练习输入 2",
+                "value": "to_fahrenheit(-40)",
+                "expected": "-40.0"
+              }
+            ]
+          },
+          "key_points": [
+            "把公式写成只依赖参数的函数。",
+            "先计算数值，显示单位留给调用者。",
+            "0 → 32；100 → 212；-40 → -40。"
+          ],
+          "frontend_bridge": "前端经验只作辅助：函数定义、调用与 return 必须先按 Python 3 的执行、类型和错误规则完成。",
+          "example": {
+            "language": "python",
+            "code": "def area(width, height):\n    return width * height\nprint(area(3, 4))",
+            "output": "12",
+            "explanation": "area(3, 4) 把两个实参绑定到 width、height，return 计算并交回 12。函数体只有调用时执行；传入缺少参数会得到 TypeError。",
+            "source_kind": "python",
+            "runnable": true
+          },
+          "steps": [
+            "先用第一个输入检查正常结果",
+            "独立补全代码，再检查边界输入",
+            "读懂失败反馈，修改后重新验证"
+          ],
+          "optional": true,
+          "practice_first": {
+            "goal": "定义 to_fahrenheit(c)，返回 c * 9 / 5 + 32 的数值结果，不要返回带单位的字符串。",
+            "rules": [
+              "def name(parameters) -> return_type:；return 立即结束函数，省略时返回 None。",
+              "先写返回值，再打印观察；参数、默认值、作用域分开练，不把输入校验混进第一题。"
+            ],
+            "prerequisites": [
+              "D03-if",
+              "D02-string-methods"
+            ],
+            "cards": [],
+            "drills": [
+              {
+                "id": "fill-0",
+                "title": "补全练习 1",
+                "instructions": "替换 TODO 指出的占位 None，保留其他输入；运行后对比每一行输出，再完成下方独立作业。",
+                "starter": "# TODO：补全下面第 3 行的 None，使输出与右侧预期一致。\ndef area(width, height):\n    return None\nprint(area(3, 4))",
+                "output": "12",
+                "reference": "def area(width, height):\n    return width * height\nprint(area(3, 4))",
+                "source_kind": "python",
+                "runnable": true
+              }
+            ],
+            "provided": "主作业只提交当前编辑器内容。独立实验在临时目录运行，不覆盖作业和项目。"
+          }
         }
       ]
     },
@@ -6561,6 +7891,468 @@
             ],
             "provided": "主作业只提交当前编辑器内容。独立实验在临时目录运行，不覆盖作业和项目。"
           }
+        },
+        {
+          "id": "D05-tags",
+          "title": "加练 · 保持顺序的去重",
+          "catalog_refs": [
+            "py-55",
+            "py-56",
+            "py-57",
+            "py-58",
+            "py-59",
+            "py-61"
+          ],
+          "objective": "同时考虑唯一性、顺序和原数据。",
+          "explanation": [
+            "set 可以去重，但不能用于承诺按首次出现的次序输出。这里用结果列表记录第一次见到的元素，重复项不再加入；输入列表属于调用者，不应在遍历时删除其中的元素。",
+            "dict 用可哈希键映射到值，读取/更新写作 d[key]；set 只保存不重复的可哈希元素。dict 适合带名称的字段，set 适合去重、成员测试和集合运算。",
+            "访问不存在的 dict 键会 KeyError，get 可以提供默认值；set.add 添加元素，discard 删除而不因不存在报错。列表不能作为键，因为它是可变且不可哈希的。"
+          ],
+          "syntax": "d[key] 读写字典；set.add/discard 修改集合；字典键必须可哈希。",
+          "js_bridge": "JavaScript object/Map 和 Set 能表达类似结构，但 Python dict 的 `d[key]` 缺键会抛 KeyError，JS 属性缺失常得到 undefined；Python set 也不承诺迭代顺序，不能按 Array 经验取下标。",
+          "examples": [
+            {
+              "language": "python",
+              "code": "task = {'title': '买书', 'done': False}\ntask['done'] = True\nprint(task)",
+              "output": "{'title': '买书', 'done': True}",
+              "explanation": "task['done'] = True 用键更新 dict 的值，print 输出 done 为 True 的字典。访问不存在的键会得到 KeyError，需决定是否使用 get。",
+              "source_kind": "python",
+              "runnable": true
+            },
+            {
+              "language": "python",
+              "code": "tags = {'python', 'python', 'test'}\ntags.add('cli')\nprint(sorted(tags))",
+              "output": "['cli', 'python', 'test']",
+              "explanation": "set 字面量自动去掉重复的 python，add('cli') 再加入一个元素，sorted 后输出稳定的标签。set 没有索引，不能用 tags[0] 取值。",
+              "source_kind": "python",
+              "runnable": true
+            }
+          ],
+          "common_errors": [
+            {
+              "error": "标签顺序不稳定",
+              "symptom": "标签顺序不稳定",
+              "cause": "集合去重没有承诺首次出现的列表顺序",
+              "fix": "按原列表遍历，第一次出现才追加",
+              "example": {
+                "code": "return list(set(tags))",
+                "symptom": "标签顺序不稳定",
+                "fix": "按原列表遍历，第一次出现才追加"
+              }
+            },
+            {
+              "error": "原始标签列表被改动",
+              "symptom": "原始标签列表被改动",
+              "cause": "遍历时删除输入元素，既改原数据又容易漏项",
+              "fix": "维护一个新的结果列表",
+              "example": {
+                "code": "tags.remove(tag)",
+                "symptom": "原始标签列表被改动",
+                "fix": "维护一个新的结果列表"
+              }
+            }
+          ],
+          "guided_practice": {
+            "goal": "同时考虑唯一性、顺序和原数据。",
+            "starter": "def unique_tags(tags):\n    result = []\n    # 遍历 tags，把第一次出现的项加入 result\n    return result\n",
+            "steps": [
+              {
+                "action": "使用输入：unique_tags(['py', 'js', 'py'])",
+                "expected": "['py', 'js']"
+              },
+              {
+                "action": "使用输入：unique_tags([])",
+                "expected": "[]"
+              }
+            ],
+            "check": "['py','js','py'] → ['py','js']；[] → []；原列表不变。"
+          },
+          "practice": {
+            "kind": "code",
+            "file_name": "main.py",
+            "scenario": "同时考虑唯一性、顺序和原数据。",
+            "instructions": "定义 unique_tags(tags)，返回按首次出现顺序去重的新列表，且不修改 tags。tags 中均为字符串。",
+            "starter_content": "def unique_tags(tags):\n    result = []\n    # 遍历 tags，把第一次出现的项加入 result\n    return result\n",
+            "starter_policy": "complete",
+            "expected_behavior": "['py','js','py'] → ['py','js']；[] → []；原列表不变。",
+            "hints": "用 not in 检查结果列表；不要直接返回 list(set(tags))。",
+            "input_examples": [
+              {
+                "label": "练习输入 1",
+                "value": "unique_tags(['py', 'js', 'py'])",
+                "expected": "['py', 'js']"
+              },
+              {
+                "label": "练习输入 2",
+                "value": "unique_tags([])",
+                "expected": "[]"
+              }
+            ]
+          },
+          "key_points": [
+            "同时考虑唯一性、顺序和原数据。",
+            "用 not in 检查结果列表；不要直接返回 list(set(tags))。",
+            "['py','js','py'] → ['py','js']；[] → []；原列表不变。"
+          ],
+          "frontend_bridge": "前端经验只作辅助：dict、set 的创建与增删改 必须先按 Python 3 的执行、类型和错误规则完成。",
+          "example": {
+            "language": "python",
+            "code": "task = {'title': '买书', 'done': False}\ntask['done'] = True\nprint(task)",
+            "output": "{'title': '买书', 'done': True}",
+            "explanation": "task['done'] = True 用键更新 dict 的值，print 输出 done 为 True 的字典。访问不存在的键会得到 KeyError，需决定是否使用 get。",
+            "source_kind": "python",
+            "runnable": true
+          },
+          "steps": [
+            "先用第一个输入检查正常结果",
+            "独立补全代码，再检查边界输入",
+            "读懂失败反馈，修改后重新验证"
+          ],
+          "optional": true,
+          "practice_first": {
+            "goal": "定义 unique_tags(tags)，返回按首次出现顺序去重的新列表，且不修改 tags。tags 中均为字符串。",
+            "rules": [
+              "d[key] 读写字典；set.add/discard 修改集合；字典键必须可哈希。",
+              "打印容器修改前后，再写函数处理新数据。空容器用 []、{}、set() 区分。"
+            ],
+            "prerequisites": [
+              "D03-for",
+              "D04-def-return"
+            ],
+            "cards": [],
+            "drills": [
+              {
+                "id": "fill-0",
+                "title": "补全练习 1",
+                "instructions": "替换 TODO 指出的占位 None，保留其他输入；运行后对比每一行输出，再完成下方独立作业。",
+                "starter": "# TODO：补全下面第 3 行的 None，使输出与右侧预期一致。\ntask = {'title': '买书', 'done': False}\ntask['done'] = None\nprint(task)",
+                "output": "{'title': '买书', 'done': True}",
+                "reference": "task = {'title': '买书', 'done': False}\ntask['done'] = True\nprint(task)",
+                "source_kind": "python",
+                "runnable": true
+              },
+              {
+                "id": "fill-1",
+                "title": "补全练习 2",
+                "instructions": "替换 TODO 指出的占位 None，保留其他输入；运行后对比每一行输出，再完成下方独立作业。",
+                "starter": "# TODO：补全下面第 2 行的 None，使输出与右侧预期一致。\ntags = None\ntags.add('cli')\nprint(sorted(tags))",
+                "output": "['cli', 'python', 'test']",
+                "reference": "tags = {'python', 'python', 'test'}\ntags.add('cli')\nprint(sorted(tags))",
+                "source_kind": "python",
+                "runnable": true
+              }
+            ],
+            "provided": "主作业只提交当前编辑器内容。独立实验在临时目录运行，不覆盖作业和项目。"
+          }
+        },
+        {
+          "id": "D05-counts",
+          "title": "加练 · 统计商品数量",
+          "catalog_refs": [
+            "py-55",
+            "py-56",
+            "py-57",
+            "py-58",
+            "py-59",
+            "py-61"
+          ],
+          "objective": "把循环得到的元素累积到字典中。",
+          "explanation": [
+            "字典把商品名映射到出现次数。第一次见到一个商品时没有对应键，可以用 get(name, 0) 取得初始计数，再加一写回；空列表没有任何商品，因此返回空字典。",
+            "遍历嵌套容器前先确认每一层形状：是 dict、list 还是单个值。遍历 dict 默认拿 key，items() 才同时拿 key/value；遍历 list of dict 时，当前元素是记录 dict。",
+            "链式访问 row['user']['name'] 假定每个键都存在，真实数据缺字段时会 KeyError。可以用 get、条件判断或数据校验把外部输入的不完整性转成可理解结果。"
+          ],
+          "syntax": "for key, value in mapping.items()；链式访问前先确认容器形状。",
+          "js_bridge": "JavaScript 遍历 object 常用 Object.entries，Python 对应 dict.items；JS 缺属性通常给 undefined，Python 下标缺键会 KeyError。Python 访问嵌套 dict 没有可选链语法，需显式 get 或判断。",
+          "examples": [
+            {
+              "language": "python",
+              "code": "scores = {'安': 90, '博': 80}\nfor name, score in scores.items():\n    print(name, score)",
+              "output": "安 90\n博 80",
+              "explanation": "scores.items() 每轮提供 name 和 score 两个值，所以输出安 90、博 80。把 items 改成普通字典迭代只会得到键，解包数量就不再匹配。",
+              "source_kind": "python",
+              "runnable": true
+            },
+            {
+              "language": "python",
+              "code": "rows = [{'title': 'A'}, {'title': 'B'}]\nfor row in rows:\n    print(row['title'])",
+              "output": "A\nB",
+              "explanation": "每个 row 都用 row['title'] 读取标题，因此输出 A、B。任一字典缺 title 会抛 KeyError，这是外部数据的边界。",
+              "source_kind": "python",
+              "runnable": true
+            }
+          ],
+          "common_errors": [
+            {
+              "error": "首次遇到商品就 KeyError",
+              "symptom": "首次遇到商品就 KeyError",
+              "cause": "字典没有该商品的初始计数",
+              "fix": "使用 get(item,0) 再加一",
+              "example": {
+                "code": "counts[item] += 1",
+                "symptom": "首次遇到商品就 KeyError",
+                "fix": "使用 get(item,0) 再加一"
+              }
+            },
+            {
+              "error": "只保留了最后一个商品",
+              "symptom": "只保留了最后一个商品",
+              "cause": "每一轮都创建新字典替换之前的累计结果",
+              "fix": "只更新 counts[item] 这一个键",
+              "example": {
+                "code": "counts = {item: 1}",
+                "symptom": "只保留了最后一个商品",
+                "fix": "只更新 counts[item] 这一个键"
+              }
+            }
+          ],
+          "guided_practice": {
+            "goal": "把循环得到的元素累积到字典中。",
+            "starter": "def count_items(items):\n    counts = {}\n    # 每遇到一次商品，把其计数加一\n    return counts\n",
+            "steps": [
+              {
+                "action": "使用输入：count_items(['茶','水','茶'])",
+                "expected": "{'茶': 2, '水': 1}"
+              },
+              {
+                "action": "使用输入：count_items([])",
+                "expected": "{}"
+              }
+            ],
+            "check": "['茶','水','茶'] → {'茶':2,'水':1}；[] → {}。"
+          },
+          "practice": {
+            "kind": "code",
+            "file_name": "main.py",
+            "scenario": "把循环得到的元素累积到字典中。",
+            "instructions": "定义 count_items(items)，返回每个字符串出现次数的字典；不改变输入列表。",
+            "starter_content": "def count_items(items):\n    counts = {}\n    # 每遇到一次商品，把其计数加一\n    return counts\n",
+            "starter_policy": "complete",
+            "expected_behavior": "['茶','水','茶'] → {'茶':2,'水':1}；[] → {}。",
+            "hints": "每次更新一个键，不要把整个字典替换为当前商品。",
+            "input_examples": [
+              {
+                "label": "练习输入 1",
+                "value": "count_items(['茶','水','茶'])",
+                "expected": "{'茶': 2, '水': 1}"
+              },
+              {
+                "label": "练习输入 2",
+                "value": "count_items([])",
+                "expected": "{}"
+              }
+            ]
+          },
+          "key_points": [
+            "把循环得到的元素累积到字典中。",
+            "每次更新一个键，不要把整个字典替换为当前商品。",
+            "['茶','水','茶'] → {'茶':2,'水':1}；[] → {}。"
+          ],
+          "frontend_bridge": "前端经验只作辅助：嵌套容器遍历与安全访问 必须先按 Python 3 的执行、类型和错误规则完成。",
+          "example": {
+            "language": "python",
+            "code": "scores = {'安': 90, '博': 80}\nfor name, score in scores.items():\n    print(name, score)",
+            "output": "安 90\n博 80",
+            "explanation": "scores.items() 每轮提供 name 和 score 两个值，所以输出安 90、博 80。把 items 改成普通字典迭代只会得到键，解包数量就不再匹配。",
+            "source_kind": "python",
+            "runnable": true
+          },
+          "steps": [
+            "先用第一个输入检查正常结果",
+            "独立补全代码，再检查边界输入",
+            "读懂失败反馈，修改后重新验证"
+          ],
+          "optional": true,
+          "practice_first": {
+            "goal": "定义 count_items(items)，返回每个字符串出现次数的字典；不改变输入列表。",
+            "rules": [
+              "for key, value in mapping.items()；链式访问前先确认容器形状。",
+              "打印容器修改前后，再写函数处理新数据。空容器用 []、{}、set() 区分。"
+            ],
+            "prerequisites": [
+              "D03-for",
+              "D04-def-return"
+            ],
+            "cards": [],
+            "drills": [
+              {
+                "id": "fill-0",
+                "title": "补全练习 1",
+                "instructions": "替换 TODO 指出的占位 None，保留其他输入；运行后对比每一行输出，再完成下方独立作业。",
+                "starter": "# TODO：补全下面第 2 行的 None，使输出与右侧预期一致。\nscores = None\nfor name, score in scores.items():\n    print(name, score)",
+                "output": "安 90\n博 80",
+                "reference": "scores = {'安': 90, '博': 80}\nfor name, score in scores.items():\n    print(name, score)",
+                "source_kind": "python",
+                "runnable": true
+              },
+              {
+                "id": "fill-1",
+                "title": "补全练习 2",
+                "instructions": "替换 TODO 指出的占位 None，保留其他输入；运行后对比每一行输出，再完成下方独立作业。",
+                "starter": "# TODO：补全下面第 2 行的 None，使输出与右侧预期一致。\nrows = None\nfor row in rows:\n    print(row['title'])",
+                "output": "A\nB",
+                "reference": "rows = [{'title': 'A'}, {'title': 'B'}]\nfor row in rows:\n    print(row['title'])",
+                "source_kind": "python",
+                "runnable": true
+              }
+            ],
+            "provided": "主作业只提交当前编辑器内容。独立实验在临时目录运行，不覆盖作业和项目。"
+          }
+        },
+        {
+          "id": "D05-cart",
+          "title": "加练 · 独立写购物车汇总",
+          "catalog_refs": [
+            "py-55",
+            "py-56",
+            "py-57",
+            "py-58",
+            "py-59",
+            "py-61"
+          ],
+          "objective": "将列表、字典、函数和循环组合为一个小功能。",
+          "explanation": [
+            "购物车是由商品字典组成的列表，每项有 price 和 quantity。先计算单项金额，再把每项金额累加；不要只求单价之和，也不要把最后一项金额直接当作总价。空购物车的总金额是 0。",
+            "遍历嵌套容器前先确认每一层形状：是 dict、list 还是单个值。遍历 dict 默认拿 key，items() 才同时拿 key/value；遍历 list of dict 时，当前元素是记录 dict。",
+            "链式访问 row['user']['name'] 假定每个键都存在，真实数据缺字段时会 KeyError。可以用 get、条件判断或数据校验把外部输入的不完整性转成可理解结果。"
+          ],
+          "syntax": "for key, value in mapping.items()；链式访问前先确认容器形状。",
+          "js_bridge": "JavaScript 遍历 object 常用 Object.entries，Python 对应 dict.items；JS 缺属性通常给 undefined，Python 下标缺键会 KeyError。Python 访问嵌套 dict 没有可选链语法，需显式 get 或判断。",
+          "examples": [
+            {
+              "language": "python",
+              "code": "scores = {'安': 90, '博': 80}\nfor name, score in scores.items():\n    print(name, score)",
+              "output": "安 90\n博 80",
+              "explanation": "scores.items() 每轮提供 name 和 score 两个值，所以输出安 90、博 80。把 items 改成普通字典迭代只会得到键，解包数量就不再匹配。",
+              "source_kind": "python",
+              "runnable": true
+            },
+            {
+              "language": "python",
+              "code": "rows = [{'title': 'A'}, {'title': 'B'}]\nfor row in rows:\n    print(row['title'])",
+              "output": "A\nB",
+              "explanation": "每个 row 都用 row['title'] 读取标题，因此输出 A、B。任一字典缺 title 会抛 KeyError，这是外部数据的边界。",
+              "source_kind": "python",
+              "runnable": true
+            }
+          ],
+          "common_errors": [
+            {
+              "error": "购物车忽略数量",
+              "symptom": "购物车忽略数量",
+              "cause": "累计了单价而不是每项的金额",
+              "fix": "每次先乘 quantity 再相加",
+              "example": {
+                "code": "total += item['price']",
+                "symptom": "购物车忽略数量",
+                "fix": "每次先乘 quantity 再相加"
+              }
+            },
+            {
+              "error": "购物车只有末项金额",
+              "symptom": "购物车只有末项金额",
+              "cause": "赋值覆盖已有总额，没有执行累加",
+              "fix": "用 += 保留前面各项金额",
+              "example": {
+                "code": "for item in items:\n    total = item['price'] * item['quantity']",
+                "symptom": "购物车只有末项金额",
+                "fix": "用 += 保留前面各项金额"
+              }
+            }
+          ],
+          "guided_practice": {
+            "goal": "将列表、字典、函数和循环组合为一个小功能。",
+            "starter": "def cart_total(items):\n    total = 0\n    # 读取每项的 price 与 quantity\n    return total\n",
+            "steps": [
+              {
+                "action": "使用输入：cart_total([{'price':10,'quantity':2}])",
+                "expected": "20"
+              },
+              {
+                "action": "使用输入：cart_total([])",
+                "expected": "0"
+              }
+            ],
+            "check": "价格 10 数量 2 加价格 3 数量 4 → 32；空列表 → 0。"
+          },
+          "practice": {
+            "kind": "code",
+            "file_name": "main.py",
+            "scenario": "将列表、字典、函数和循环组合为一个小功能。",
+            "instructions": "定义 cart_total(items)，每项含数值 price 和整数 quantity，返回 sum(price * quantity) 的金额。不要改写输入数据。",
+            "starter_content": "def cart_total(items):\n    total = 0\n    # 读取每项的 price 与 quantity\n    return total\n",
+            "starter_policy": "complete",
+            "expected_behavior": "价格 10 数量 2 加价格 3 数量 4 → 32；空列表 → 0。",
+            "hints": "先用一项商品验证，再增加第二项和数量为零的项。",
+            "input_examples": [
+              {
+                "label": "练习输入 1",
+                "value": "cart_total([{'price':10,'quantity':2}])",
+                "expected": "20"
+              },
+              {
+                "label": "练习输入 2",
+                "value": "cart_total([])",
+                "expected": "0"
+              }
+            ]
+          },
+          "key_points": [
+            "将列表、字典、函数和循环组合为一个小功能。",
+            "先用一项商品验证，再增加第二项和数量为零的项。",
+            "价格 10 数量 2 加价格 3 数量 4 → 32；空列表 → 0。"
+          ],
+          "frontend_bridge": "前端经验只作辅助：嵌套容器遍历与安全访问 必须先按 Python 3 的执行、类型和错误规则完成。",
+          "example": {
+            "language": "python",
+            "code": "scores = {'安': 90, '博': 80}\nfor name, score in scores.items():\n    print(name, score)",
+            "output": "安 90\n博 80",
+            "explanation": "scores.items() 每轮提供 name 和 score 两个值，所以输出安 90、博 80。把 items 改成普通字典迭代只会得到键，解包数量就不再匹配。",
+            "source_kind": "python",
+            "runnable": true
+          },
+          "steps": [
+            "先用第一个输入检查正常结果",
+            "独立补全代码，再检查边界输入",
+            "读懂失败反馈，修改后重新验证"
+          ],
+          "optional": true,
+          "practice_first": {
+            "goal": "定义 cart_total(items)，每项含数值 price 和整数 quantity，返回 sum(price * quantity) 的金额。不要改写输入数据。",
+            "rules": [
+              "for key, value in mapping.items()；链式访问前先确认容器形状。",
+              "打印容器修改前后，再写函数处理新数据。空容器用 []、{}、set() 区分。"
+            ],
+            "prerequisites": [
+              "D03-for",
+              "D04-def-return"
+            ],
+            "cards": [],
+            "drills": [
+              {
+                "id": "fill-0",
+                "title": "补全练习 1",
+                "instructions": "替换 TODO 指出的占位 None，保留其他输入；运行后对比每一行输出，再完成下方独立作业。",
+                "starter": "# TODO：补全下面第 2 行的 None，使输出与右侧预期一致。\nscores = None\nfor name, score in scores.items():\n    print(name, score)",
+                "output": "安 90\n博 80",
+                "reference": "scores = {'安': 90, '博': 80}\nfor name, score in scores.items():\n    print(name, score)",
+                "source_kind": "python",
+                "runnable": true
+              },
+              {
+                "id": "fill-1",
+                "title": "补全练习 2",
+                "instructions": "替换 TODO 指出的占位 None，保留其他输入；运行后对比每一行输出，再完成下方独立作业。",
+                "starter": "# TODO：补全下面第 2 行的 None，使输出与右侧预期一致。\nrows = None\nfor row in rows:\n    print(row['title'])",
+                "output": "A\nB",
+                "reference": "rows = [{'title': 'A'}, {'title': 'B'}]\nfor row in rows:\n    print(row['title'])",
+                "source_kind": "python",
+                "runnable": true
+              }
+            ],
+            "provided": "主作业只提交当前编辑器内容。独立实验在临时目录运行，不覆盖作业和项目。"
+          }
         }
       ]
     },
@@ -7450,6 +9242,418 @@
                 "starter": "# TODO：补全下面第 3 行的 None，使输出与右侧预期一致。\nfrom pathlib import Path\npath = None\nwith path.open('w', encoding='utf-8') as stream:\n    stream.write('你好')\nprint(path.read_text(encoding='utf-8'))\npath.unlink()",
                 "output": "你好",
                 "reference": "from pathlib import Path\npath = Path('demo.txt')\nwith path.open('w', encoding='utf-8') as stream:\n    stream.write('你好')\nprint(path.read_text(encoding='utf-8'))\npath.unlink()",
+                "source_kind": "python",
+                "runnable": true
+              }
+            ],
+            "provided": "主作业只提交当前编辑器内容。独立实验在临时目录运行，不覆盖作业和项目。"
+          }
+        },
+        {
+          "id": "D06-parse",
+          "title": "加练 · 识别无效整数",
+          "catalog_refs": [
+            "py-81",
+            "py-82",
+            "py-83"
+          ],
+          "objective": "只捕获题目规定的转换错误。",
+          "explanation": [
+            "int('12') 成功，而 int('abc') 抛 ValueError；这表示文本无法按整数解析。题目约定对这种输入返回 None，保留 0 作为真实数值；只捕获 ValueError 可以避免掩盖其他编程错误。",
+            "try 块只应包含可能失败且需要恢复的最小语句，except 负责把特定异常转成返回值或用户反馈。把太多正常逻辑塞进 try 会让错误来源不清楚。",
+            "`except ValueError as error` 可以读取异常对象；多个 except 按顺序匹配，子类异常应放在更具体的位置。处理后要决定返回默认值、再次 raise 还是记录并终止。"
+          ],
+          "syntax": "try 包含可能失败的语句；except SomeError 只捕获预期异常。",
+          "js_bridge": "JavaScript try/catch 也包围可能失败的代码，但 Python 用多个 except 类型分支，且异常类是普通类层次。Python 没有 JS 的 catch 绑定语法，`as error` 才取得异常对象。",
+          "examples": [
+            {
+              "language": "python",
+              "code": "try:\n    value = int('42')\nexcept ValueError:\n    value = 0\nprint(value)",
+              "output": "42",
+              "explanation": "int('42') 成功，所以 except 不执行，value 保留整数 42 并被 print 输出。若改成 int('x')，才会走 value = 0 的恢复分支。",
+              "source_kind": "python",
+              "runnable": true
+            },
+            {
+              "language": "python",
+              "code": "try:\n    int('x')\nexcept ValueError as error:\n    print(f'输入无效: {error}')",
+              "output": "输入无效: invalid literal for int() with base 10: 'x'",
+              "explanation": "int('x') 抛 ValueError，except 把 error 插入 f-string，输出包含输入无效和 Python 的原因文本。传入对象类型不对时可能是 TypeError，不应假定所有失败都是 ValueError。",
+              "source_kind": "python",
+              "runnable": true
+            }
+          ],
+          "common_errors": [
+            {
+              "error": "无效数量文本直接崩溃",
+              "symptom": "无效数量文本直接崩溃",
+              "cause": "没有按约定捕获整数转换产生的 ValueError",
+              "fix": "用 try/except ValueError 返回 None",
+              "example": {
+                "code": "return int(text)",
+                "symptom": "无效数量文本直接崩溃",
+                "fix": "用 try/except ValueError 返回 None"
+              }
+            },
+            {
+              "error": "有效的零被当作失败",
+              "symptom": "有效的零被当作失败",
+              "cause": "or 使用真值规则，0 会选择 None",
+              "fix": "转换成功后直接返回整数，包括 0",
+              "example": {
+                "code": "return int(text) or None",
+                "symptom": "有效的零被当作失败",
+                "fix": "转换成功后直接返回整数，包括 0"
+              }
+            }
+          ],
+          "guided_practice": {
+            "goal": "只捕获题目规定的转换错误。",
+            "starter": "def parse_quantity(text):\n    # 在 try 中转换，只捕获 ValueError\n    pass\n",
+            "steps": [
+              {
+                "action": "使用输入：parse_quantity(' 12 ')",
+                "expected": "12"
+              },
+              {
+                "action": "使用输入：parse_quantity('x')",
+                "expected": "None"
+              }
+            ],
+            "check": "' 12 ' → 12；'abc' → None；'0' → 0；'-2' → -2。"
+          },
+          "practice": {
+            "kind": "code",
+            "file_name": "main.py",
+            "scenario": "只捕获题目规定的转换错误。",
+            "instructions": "定义 parse_quantity(text)，整数文本返回 int；无效整数文本返回 None。输入保证是字符串，允许负数和首尾空白。",
+            "starter_content": "def parse_quantity(text):\n    # 在 try 中转换，只捕获 ValueError\n    pass\n",
+            "starter_policy": "complete",
+            "expected_behavior": "' 12 ' → 12；'abc' → None；'0' → 0；'-2' → -2。",
+            "hints": "不要用 if not result 判断失败，因为 0 是有效数量。",
+            "input_examples": [
+              {
+                "label": "练习输入 1",
+                "value": "parse_quantity(' 12 ')",
+                "expected": "12"
+              },
+              {
+                "label": "练习输入 2",
+                "value": "parse_quantity('x')",
+                "expected": "None"
+              }
+            ]
+          },
+          "key_points": [
+            "只捕获题目规定的转换错误。",
+            "不要用 if not result 判断失败，因为 0 是有效数量。",
+            "' 12 ' → 12；'abc' → None；'0' → 0；'-2' → -2。"
+          ],
+          "frontend_bridge": "前端经验只作辅助：try/except 精确捕获 必须先按 Python 3 的执行、类型和错误规则完成。",
+          "example": {
+            "language": "python",
+            "code": "try:\n    value = int('42')\nexcept ValueError:\n    value = 0\nprint(value)",
+            "output": "42",
+            "explanation": "int('42') 成功，所以 except 不执行，value 保留整数 42 并被 print 输出。若改成 int('x')，才会走 value = 0 的恢复分支。",
+            "source_kind": "python",
+            "runnable": true
+          },
+          "steps": [
+            "先用第一个输入检查正常结果",
+            "独立补全代码，再检查边界输入",
+            "读懂失败反馈，修改后重新验证"
+          ],
+          "optional": true,
+          "practice_first": {
+            "goal": "定义 parse_quantity(text)，整数文本返回 int；无效整数文本返回 None。输入保证是字符串，允许负数和首尾空白。",
+            "rules": [
+              "try 包含可能失败的语句；except SomeError 只捕获预期异常。",
+              "先制造一次错误，再处理它。预期要求抛异常时，正确抛出也会显示为通过。"
+            ],
+            "prerequisites": [
+              "D03-if",
+              "D04-def-return"
+            ],
+            "cards": [],
+            "drills": [],
+            "provided": "主作业只提交当前编辑器内容。独立实验在临时目录运行，不覆盖作业和项目。"
+          }
+        },
+        {
+          "id": "D06-positive",
+          "title": "加练 · 明确拒绝非法数量",
+          "catalog_refs": [
+            "py-81",
+            "py-82",
+            "py-83"
+          ],
+          "objective": "用异常表达业务输入不符合规则。",
+          "explanation": [
+            "转换成功只说明输入是整数，不代表符合业务规则。正整数数量不能为 0 或负数，应在转换后额外判断；主动 raise ValueError 让调用者知道失败，返回 0 则会把失败伪装成合法数量。",
+            "raise 是程序主动拒绝不符合契约的输入，而不是让解释器偶然崩溃。异常消息应说明实际值违反了什么规则，调用者才能决定显示、重试或记录。",
+            "捕获底层异常后可以抛出更有业务意义的新异常；`raise NewError(...) from exc` 保留 __cause__，traceback 能同时显示业务层和根因。裸 `raise` 只能在 except 内重新抛出当前异常。"
+          ],
+          "syntax": "raise ValueError('...')；raise NewError(...) from exc 建立异常链。",
+          "js_bridge": "JavaScript 用 throw new Error 表达主动失败，Python 用 raise 加异常实例；Python 的 `from` 可以显式建立异常链，JS 通常需要手动设置 cause。",
+          "examples": [
+            {
+              "language": "python",
+              "code": "def positive(value):\n    if value <= 0:\n        raise ValueError('必须为正数')\n    return value\nprint(positive(3))",
+              "output": "3",
+              "explanation": "positive(3) 通过 value > 0 检查并返回 3，所以 print 输出 3。传入 0 或负数会得到消息为必须为正数的 ValueError。",
+              "source_kind": "python",
+              "runnable": true
+            },
+            {
+              "language": "python",
+              "code": "try:\n    int('x')\nexcept ValueError as error:\n    raise RuntimeError('解析失败') from error",
+              "output": "（抛出 RuntimeError，并保留 __cause__）",
+              "explanation": "int('x') 产生 ValueError，from error 把它链接到新的 RuntimeError；本例没有正常输出而是保留异常链供上层诊断。",
+              "source_kind": "python",
+              "runnable": true
+            }
+          ],
+          "common_errors": [
+            {
+              "error": "负数数量也被接受",
+              "symptom": "负数数量也被接受",
+              "cause": "只检查了格式，没有检查正数约束",
+              "fix": "转换后在 quantity<=0 时 raise ValueError",
+              "example": {
+                "code": "return int(text)",
+                "symptom": "负数数量也被接受",
+                "fix": "转换后在 quantity<=0 时 raise ValueError"
+              }
+            },
+            {
+              "error": "非法数量被包装成零",
+              "symptom": "非法数量被包装成零",
+              "cause": "返回正常数值掩盖了应当抛出的业务错误",
+              "fix": "明确 raise ValueError 并说明数量应为正",
+              "example": {
+                "code": "if quantity <= 0: return 0",
+                "symptom": "非法数量被包装成零",
+                "fix": "明确 raise ValueError 并说明数量应为正"
+              }
+            }
+          ],
+          "guided_practice": {
+            "goal": "用异常表达业务输入不符合规则。",
+            "starter": "def positive_quantity(text):\n    quantity = int(text)\n    # 检查正整数约束，最后返回 quantity\n",
+            "steps": [
+              {
+                "action": "使用输入：positive_quantity('3')",
+                "expected": "3"
+              },
+              {
+                "action": "使用输入：positive_quantity('0')",
+                "expected": "抛 ValueError"
+              }
+            ],
+            "check": "'3' → 3；'0'、'-1'、'abc' → ValueError。"
+          },
+          "practice": {
+            "kind": "code",
+            "file_name": "main.py",
+            "scenario": "用异常表达业务输入不符合规则。",
+            "instructions": "定义 positive_quantity(text)：返回转换后的正整数。文本不是整数或数值 <= 0 时必须抛 ValueError。",
+            "starter_content": "def positive_quantity(text):\n    quantity = int(text)\n    # 检查正整数约束，最后返回 quantity\n",
+            "starter_policy": "complete",
+            "expected_behavior": "'3' → 3；'0'、'-1'、'abc' → ValueError。",
+            "hints": "int 本身会拒绝非法文本，你只需补数值范围检查。",
+            "input_examples": [
+              {
+                "label": "练习输入 1",
+                "value": "positive_quantity('3')",
+                "expected": "3"
+              },
+              {
+                "label": "练习输入 2",
+                "value": "positive_quantity('0')",
+                "expected": "抛 ValueError"
+              }
+            ]
+          },
+          "key_points": [
+            "用异常表达业务输入不符合规则。",
+            "int 本身会拒绝非法文本，你只需补数值范围检查。",
+            "'3' → 3；'0'、'-1'、'abc' → ValueError。"
+          ],
+          "frontend_bridge": "前端经验只作辅助：raise、异常链与输入校验 必须先按 Python 3 的执行、类型和错误规则完成。",
+          "example": {
+            "language": "python",
+            "code": "def positive(value):\n    if value <= 0:\n        raise ValueError('必须为正数')\n    return value\nprint(positive(3))",
+            "output": "3",
+            "explanation": "positive(3) 通过 value > 0 检查并返回 3，所以 print 输出 3。传入 0 或负数会得到消息为必须为正数的 ValueError。",
+            "source_kind": "python",
+            "runnable": true
+          },
+          "steps": [
+            "先用第一个输入检查正常结果",
+            "独立补全代码，再检查边界输入",
+            "读懂失败反馈，修改后重新验证"
+          ],
+          "optional": true,
+          "practice_first": {
+            "goal": "定义 positive_quantity(text)：返回转换后的正整数。文本不是整数或数值 <= 0 时必须抛 ValueError。",
+            "rules": [
+              "raise ValueError('...')；raise NewError(...) from exc 建立异常链。",
+              "先制造一次错误，再处理它。预期要求抛异常时，正确抛出也会显示为通过。"
+            ],
+            "prerequisites": [
+              "D03-if",
+              "D04-def-return"
+            ],
+            "cards": [],
+            "drills": [
+              {
+                "id": "fill-0",
+                "title": "补全练习 1",
+                "instructions": "替换 TODO 指出的占位 None，保留其他输入；运行后对比每一行输出，再完成下方独立作业。",
+                "starter": "# TODO：补全下面第 5 行的 None，使输出与右侧预期一致。\ndef positive(value):\n    if value <= 0:\n        raise ValueError('必须为正数')\n    return None\nprint(positive(3))",
+                "output": "3",
+                "reference": "def positive(value):\n    if value <= 0:\n        raise ValueError('必须为正数')\n    return value\nprint(positive(3))",
+                "source_kind": "python",
+                "runnable": true
+              }
+            ],
+            "provided": "主作业只提交当前编辑器内容。独立实验在临时目录运行，不覆盖作业和项目。"
+          }
+        },
+        {
+          "id": "D06-average",
+          "title": "加练 · 空列表与平均值",
+          "catalog_refs": [
+            "py-81",
+            "py-82",
+            "py-83"
+          ],
+          "objective": "分清没有数据和结果恰好为零。",
+          "explanation": [
+            "平均值是总和除以个数；空列表的个数是 0，必须先明确没有数据时的行为。这里约定抛 ValueError，而 [0, 0] 应得到真正的 0；这样的接口才不会混淆缺失与计算结果。",
+            "raise 是程序主动拒绝不符合契约的输入，而不是让解释器偶然崩溃。异常消息应说明实际值违反了什么规则，调用者才能决定显示、重试或记录。",
+            "捕获底层异常后可以抛出更有业务意义的新异常；`raise NewError(...) from exc` 保留 __cause__，traceback 能同时显示业务层和根因。裸 `raise` 只能在 except 内重新抛出当前异常。"
+          ],
+          "syntax": "raise ValueError('...')；raise NewError(...) from exc 建立异常链。",
+          "js_bridge": "JavaScript 用 throw new Error 表达主动失败，Python 用 raise 加异常实例；Python 的 `from` 可以显式建立异常链，JS 通常需要手动设置 cause。",
+          "examples": [
+            {
+              "language": "python",
+              "code": "def positive(value):\n    if value <= 0:\n        raise ValueError('必须为正数')\n    return value\nprint(positive(3))",
+              "output": "3",
+              "explanation": "positive(3) 通过 value > 0 检查并返回 3，所以 print 输出 3。传入 0 或负数会得到消息为必须为正数的 ValueError。",
+              "source_kind": "python",
+              "runnable": true
+            },
+            {
+              "language": "python",
+              "code": "try:\n    int('x')\nexcept ValueError as error:\n    raise RuntimeError('解析失败') from error",
+              "output": "（抛出 RuntimeError，并保留 __cause__）",
+              "explanation": "int('x') 产生 ValueError，from error 把它链接到新的 RuntimeError；本例没有正常输出而是保留异常链供上层诊断。",
+              "source_kind": "python",
+              "runnable": true
+            }
+          ],
+          "common_errors": [
+            {
+              "error": "空数据变成除零错误",
+              "symptom": "空数据变成除零错误",
+              "cause": "尚未判断列表是否为空就做除法",
+              "fix": "空列表先抛题目约定的 ValueError",
+              "example": {
+                "code": "return sum(values) / len(values)",
+                "symptom": "空数据变成除零错误",
+                "fix": "空列表先抛题目约定的 ValueError"
+              }
+            },
+            {
+              "error": "全零数据也被拒绝",
+              "symptom": "全零数据也被拒绝",
+              "cause": "用总和而不是数量判断有没有数据",
+              "fix": "检查 values 是否为空，保留零平均值",
+              "example": {
+                "code": "if not sum(values): raise ValueError()",
+                "symptom": "全零数据也被拒绝",
+                "fix": "检查 values 是否为空，保留零平均值"
+              }
+            }
+          ],
+          "guided_practice": {
+            "goal": "分清没有数据和结果恰好为零。",
+            "starter": "def average(values):\n    # 先处理空列表，再计算平均值\n    pass\n",
+            "steps": [
+              {
+                "action": "使用输入：average([2,4,6])",
+                "expected": "4.0"
+              },
+              {
+                "action": "使用输入：average([])",
+                "expected": "抛 ValueError"
+              }
+            ],
+            "check": "[2,4,6] → 4；[0,0] → 0；[] → ValueError。"
+          },
+          "practice": {
+            "kind": "code",
+            "file_name": "main.py",
+            "scenario": "分清没有数据和结果恰好为零。",
+            "instructions": "定义 average(values)，非空数值列表返回平均值，空列表抛 ValueError；不修改原列表。",
+            "starter_content": "def average(values):\n    # 先处理空列表，再计算平均值\n    pass\n",
+            "starter_policy": "complete",
+            "expected_behavior": "[2,4,6] → 4；[0,0] → 0；[] → ValueError。",
+            "hints": "len(values) 是数量；先处理数量为零的输入。",
+            "input_examples": [
+              {
+                "label": "练习输入 1",
+                "value": "average([2,4,6])",
+                "expected": "4.0"
+              },
+              {
+                "label": "练习输入 2",
+                "value": "average([])",
+                "expected": "抛 ValueError"
+              }
+            ]
+          },
+          "key_points": [
+            "分清没有数据和结果恰好为零。",
+            "len(values) 是数量；先处理数量为零的输入。",
+            "[2,4,6] → 4；[0,0] → 0；[] → ValueError。"
+          ],
+          "frontend_bridge": "前端经验只作辅助：raise、异常链与输入校验 必须先按 Python 3 的执行、类型和错误规则完成。",
+          "example": {
+            "language": "python",
+            "code": "def positive(value):\n    if value <= 0:\n        raise ValueError('必须为正数')\n    return value\nprint(positive(3))",
+            "output": "3",
+            "explanation": "positive(3) 通过 value > 0 检查并返回 3，所以 print 输出 3。传入 0 或负数会得到消息为必须为正数的 ValueError。",
+            "source_kind": "python",
+            "runnable": true
+          },
+          "steps": [
+            "先用第一个输入检查正常结果",
+            "独立补全代码，再检查边界输入",
+            "读懂失败反馈，修改后重新验证"
+          ],
+          "optional": true,
+          "practice_first": {
+            "goal": "定义 average(values)，非空数值列表返回平均值，空列表抛 ValueError；不修改原列表。",
+            "rules": [
+              "raise ValueError('...')；raise NewError(...) from exc 建立异常链。",
+              "先制造一次错误，再处理它。预期要求抛异常时，正确抛出也会显示为通过。"
+            ],
+            "prerequisites": [
+              "D03-if",
+              "D04-def-return"
+            ],
+            "cards": [],
+            "drills": [
+              {
+                "id": "fill-0",
+                "title": "补全练习 1",
+                "instructions": "替换 TODO 指出的占位 None，保留其他输入；运行后对比每一行输出，再完成下方独立作业。",
+                "starter": "# TODO：补全下面第 5 行的 None，使输出与右侧预期一致。\ndef positive(value):\n    if value <= 0:\n        raise ValueError('必须为正数')\n    return None\nprint(positive(3))",
+                "output": "3",
+                "reference": "def positive(value):\n    if value <= 0:\n        raise ValueError('必须为正数')\n    return value\nprint(positive(3))",
                 "source_kind": "python",
                 "runnable": true
               }
@@ -8500,6 +10704,425 @@
             ],
             "provided": "主作业只提交当前编辑器内容。独立实验在临时目录运行，不覆盖作业和项目。"
           }
+        },
+        {
+          "id": "D07-slug",
+          "title": "加练 · 可被导入的文本工具",
+          "catalog_refs": [
+            "py-84",
+            "py-85"
+          ],
+          "objective": "把字符串处理函数交给另一个模块调用。",
+          "explanation": [
+            "模块被 import 时会执行顶层语句，因此可复用工具不应在导入时询问输入或打印演示。定义函数不会立刻运行函数体，调用者之后可多次传入不同标题生成稳定的短标识。",
+            "import module 把模块对象绑定到当前命名空间，使用 module.name 访问成员；from module import name 只绑定指定成员。as 只是当前文件里的别名，不会改模块真实名称。",
+            "导入会执行模块顶层代码并缓存到 sys.modules，因此模块不应在导入时启动服务或修改全局文件。把功能放进函数，导入只建立定义，测试才可安全复用。"
+          ],
+          "syntax": "import module；from module import name；as 只改变当前文件中的别名。",
+          "js_bridge": "JavaScript 的 ES module import/export 也建立模块边界，但 Python 的 import 以文件/包和运行时 sys.path 为基础；Python `from` 导入的是绑定，不是 JS 的解构语法完全替代。",
+          "examples": [
+            {
+              "language": "python",
+              "code": "import math\nprint(math.ceil(2.1))",
+              "output": "3",
+              "explanation": "import math 后通过 math.ceil(2.1) 访问模块成员，ceil 向上取整并输出 3。若写成 math.missing，会在运行时得到 AttributeError。",
+              "source_kind": "python",
+              "runnable": true
+            },
+            {
+              "language": "python",
+              "code": "from pathlib import Path as P\nprint(P('a.txt').name)",
+              "output": "a.txt",
+              "explanation": "from pathlib import Path as P 直接把 Path 绑定为本地别名，P('a.txt').name 输出 a.txt。as 只改变名字，不会改变 Path 对象的行为。",
+              "source_kind": "python",
+              "runnable": true
+            }
+          ],
+          "common_errors": [
+            {
+              "error": "导入工具时出现演示输出",
+              "symptom": "导入工具时出现演示输出",
+              "cause": "模块顶层语句在 import 时就会执行",
+              "fix": "演示调用放入 __main__ 守卫",
+              "example": {
+                "code": "print(slugify('Hello'))",
+                "symptom": "导入工具时出现演示输出",
+                "fix": "演示调用放入 __main__ 守卫"
+              }
+            },
+            {
+              "error": "短标识两端多了连字符",
+              "symptom": "短标识两端多了连字符",
+              "cause": "替换前没有去掉标题两端空白",
+              "fix": "先 strip，再 lower 和 replace",
+              "example": {
+                "code": "return title.lower().replace(' ', '-')",
+                "symptom": "短标识两端多了连字符",
+                "fix": "先 strip，再 lower 和 replace"
+              }
+            }
+          ],
+          "guided_practice": {
+            "goal": "把字符串处理函数交给另一个模块调用。",
+            "starter": "def slugify(title):\n    pass\n\n# 若要演示，放在 __main__ 守卫内\n",
+            "steps": [
+              {
+                "action": "使用输入：slugify(' Hello Python ')",
+                "expected": "hello-python"
+              },
+              {
+                "action": "使用输入：slugify('')",
+                "expected": "空字符串"
+              }
+            ],
+            "check": "' Hello Python ' → 'hello-python'；'' → ''；导入无输出。"
+          },
+          "practice": {
+            "kind": "code",
+            "file_name": "main.py",
+            "scenario": "把字符串处理函数交给另一个模块调用。",
+            "instructions": "定义 slugify(title)：去掉两端空白、转小写，把剩余的普通空格替换为连字符。导入 main 时不得打印内容。",
+            "starter_content": "def slugify(title):\n    pass\n\n# 若要演示，放在 __main__ 守卫内\n",
+            "starter_policy": "complete",
+            "expected_behavior": "' Hello Python ' → 'hello-python'；'' → ''；导入无输出。",
+            "hints": "复用 strip/lower/replace，演示与工具定义分开。",
+            "input_examples": [
+              {
+                "label": "练习输入 1",
+                "value": "slugify(' Hello Python ')",
+                "expected": "hello-python"
+              },
+              {
+                "label": "练习输入 2",
+                "value": "slugify('')",
+                "expected": "空字符串"
+              }
+            ]
+          },
+          "key_points": [
+            "把字符串处理函数交给另一个模块调用。",
+            "复用 strip/lower/replace，演示与工具定义分开。",
+            "' Hello Python ' → 'hello-python'；'' → ''；导入无输出。"
+          ],
+          "frontend_bridge": "前端经验只作辅助：import、from import 与命名空间 必须先按 Python 3 的执行、类型和错误规则完成。",
+          "example": {
+            "language": "python",
+            "code": "import math\nprint(math.ceil(2.1))",
+            "output": "3",
+            "explanation": "import math 后通过 math.ceil(2.1) 访问模块成员，ceil 向上取整并输出 3。若写成 math.missing，会在运行时得到 AttributeError。",
+            "source_kind": "python",
+            "runnable": true
+          },
+          "steps": [
+            "先用第一个输入检查正常结果",
+            "独立补全代码，再检查边界输入",
+            "读懂失败反馈，修改后重新验证"
+          ],
+          "optional": true,
+          "practice_first": {
+            "goal": "定义 slugify(title)：去掉两端空白、转小写，把剩余的普通空格替换为连字符。导入 main 时不得打印内容。",
+            "rules": [
+              "import module；from module import name；as 只改变当前文件中的别名。",
+              "先调用一个模块，再创建一个小对象。平台提供的辅助文件会明确列出。"
+            ],
+            "prerequisites": [
+              "D04-def-return",
+              "D06-try-except"
+            ],
+            "cards": [],
+            "drills": [],
+            "provided": "主作业只提交当前编辑器内容。独立实验在临时目录运行，不覆盖作业和项目。"
+          }
+        },
+        {
+          "id": "D07-counter",
+          "title": "加练 · 两个独立的计数器",
+          "catalog_refs": [
+            "py-84",
+            "py-85"
+          ],
+          "objective": "理解每个对象拥有自己的属性。",
+          "explanation": [
+            "self.value 应在 __init__ 中为每个新对象设置为 0。increment 修改当前对象的属性并返回新值，两个 Counter 实例不应互相影响；使用共享的全局计数会破坏这种隔离。",
+            "class 定义对象的共同结构和行为，调用 Name() 创建实例；__init__ 在创建时接收参数并把状态放到 self 上。self 不是关键字，而是约定的当前实例参数。",
+            "实例属性存储在各自对象中，方法通过 self 读取/修改当前状态。把属性写成类属性会让实例意外共享值，尤其是 list/dict 等可变对象。"
+          ],
+          "syntax": "class Name:；方法首参数 self；Name() 创建实例并拥有独立属性。",
+          "js_bridge": "JavaScript class 也有 constructor、this 和方法，但 Python 方法必须显式写 self，实例属性要通过 self.title 绑定。Python 没有 JS 那种 this 自动注入，漏写 self 会在调用时出现参数错误。",
+          "examples": [
+            {
+              "language": "python",
+              "code": "class Task:\n    def __init__(self, title):\n        self.title = title\n    def label(self):\n        return self.title\ntask = Task('学习')\nprint(task.label())",
+              "output": "学习",
+              "explanation": "Task('学习') 构造实例，__init__ 把 title 保存到 self，task.label() 因而输出学习。另一个 Task 实例会有自己的 title 属性。",
+              "source_kind": "python",
+              "runnable": true
+            },
+            {
+              "language": "python",
+              "code": "class Counter:\n    def __init__(self):\n        self.value = 0\n    def inc(self):\n        self.value += 1\nc = Counter()\nc.inc()\nprint(c.value)",
+              "output": "1",
+              "explanation": "Counter 的 __init__ 把 value 设为 0，inc 方法通过 self.value += 1 后使 print 输出 1。若忘记调用 inc，value 仍是 0。",
+              "source_kind": "python",
+              "runnable": true
+            }
+          ],
+          "common_errors": [
+            {
+              "error": "多个对象共享计数",
+              "symptom": "多个对象共享计数",
+              "cause": "计数放在全局变量中，所有实例访问同一份数据",
+              "fix": "在 __init__ 中设置每个对象的 self.value",
+              "example": {
+                "code": "count = 0\ndef increment(self):\n    global count",
+                "symptom": "多个对象共享计数",
+                "fix": "在 __init__ 中设置每个对象的 self.value"
+              }
+            },
+            {
+              "error": "计数器一直返回零",
+              "symptom": "计数器一直返回零",
+              "cause": "加法只算出了结果，没有重新赋值给属性",
+              "fix": "使用 self.value += 1 更新当前对象",
+              "example": {
+                "code": "self.value + 1\nreturn self.value",
+                "symptom": "计数器一直返回零",
+                "fix": "使用 self.value += 1 更新当前对象"
+              }
+            }
+          ],
+          "guided_practice": {
+            "goal": "理解每个对象拥有自己的属性。",
+            "starter": "class Counter:\n    def __init__(self):\n        self.value = 0\n\n    def increment(self):\n        pass\n",
+            "steps": [
+              {
+                "action": "使用输入：c=Counter(); c.increment()",
+                "expected": "1"
+              },
+              {
+                "action": "使用输入：a=Counter(); b=Counter(); a.increment(); b.value",
+                "expected": "0"
+              }
+            ],
+            "check": "同一对象连续调用 → 1、2；新对象第一次调用 → 1。"
+          },
+          "practice": {
+            "kind": "code",
+            "file_name": "main.py",
+            "scenario": "理解每个对象拥有自己的属性。",
+            "instructions": "定义 Counter 类：初始化 value=0，increment() 加一并返回新值；两个实例各自计数。",
+            "starter_content": "class Counter:\n    def __init__(self):\n        self.value = 0\n\n    def increment(self):\n        pass\n",
+            "starter_policy": "complete",
+            "expected_behavior": "同一对象连续调用 → 1、2；新对象第一次调用 → 1。",
+            "hints": "读取和写入都使用 self.value；不要创建全局 count。",
+            "input_examples": [
+              {
+                "label": "练习输入 1",
+                "value": "c=Counter(); c.increment()",
+                "expected": "1"
+              },
+              {
+                "label": "练习输入 2",
+                "value": "a=Counter(); b=Counter(); a.increment(); b.value",
+                "expected": "0"
+              }
+            ]
+          },
+          "key_points": [
+            "理解每个对象拥有自己的属性。",
+            "读取和写入都使用 self.value；不要创建全局 count。",
+            "同一对象连续调用 → 1、2；新对象第一次调用 → 1。"
+          ],
+          "frontend_bridge": "前端经验只作辅助：类、实例、属性与方法 必须先按 Python 3 的执行、类型和错误规则完成。",
+          "example": {
+            "language": "python",
+            "code": "class Task:\n    def __init__(self, title):\n        self.title = title\n    def label(self):\n        return self.title\ntask = Task('学习')\nprint(task.label())",
+            "output": "学习",
+            "explanation": "Task('学习') 构造实例，__init__ 把 title 保存到 self，task.label() 因而输出学习。另一个 Task 实例会有自己的 title 属性。",
+            "source_kind": "python",
+            "runnable": true
+          },
+          "steps": [
+            "先用第一个输入检查正常结果",
+            "独立补全代码，再检查边界输入",
+            "读懂失败反馈，修改后重新验证"
+          ],
+          "optional": true,
+          "practice_first": {
+            "goal": "定义 Counter 类：初始化 value=0，increment() 加一并返回新值；两个实例各自计数。",
+            "rules": [
+              "class Name:；方法首参数 self；Name() 创建实例并拥有独立属性。",
+              "先调用一个模块，再创建一个小对象。平台提供的辅助文件会明确列出。"
+            ],
+            "prerequisites": [
+              "D04-def-return",
+              "D06-try-except"
+            ],
+            "cards": [],
+            "drills": [
+              {
+                "id": "fill-0",
+                "title": "补全练习 1",
+                "instructions": "替换 TODO 指出的占位 None，保留其他输入；运行后对比每一行输出，再完成下方独立作业。",
+                "starter": "# TODO：补全下面第 6 行的 None，使输出与右侧预期一致。\nclass Task:\n    def __init__(self, title):\n        self.title = title\n    def label(self):\n        return None\ntask = Task('学习')\nprint(task.label())",
+                "output": "学习",
+                "reference": "class Task:\n    def __init__(self, title):\n        self.title = title\n    def label(self):\n        return self.title\ntask = Task('学习')\nprint(task.label())",
+                "source_kind": "python",
+                "runnable": true
+              },
+              {
+                "id": "fill-1",
+                "title": "补全练习 2",
+                "instructions": "替换 TODO 指出的占位 None，保留其他输入；运行后对比每一行输出，再完成下方独立作业。",
+                "starter": "# TODO：补全下面第 4 行的 None，使输出与右侧预期一致。\nclass Counter:\n    def __init__(self):\n        self.value = None\n    def inc(self):\n        self.value += 1\nc = Counter()\nc.inc()\nprint(c.value)",
+                "output": "1",
+                "reference": "class Counter:\n    def __init__(self):\n        self.value = 0\n    def inc(self):\n        self.value += 1\nc = Counter()\nc.inc()\nprint(c.value)",
+                "source_kind": "python",
+                "runnable": true
+              }
+            ],
+            "provided": "主作业只提交当前编辑器内容。独立实验在临时目录运行，不覆盖作业和项目。"
+          }
+        },
+        {
+          "id": "D07-dataclass-total",
+          "title": "加练 · 数据对象与计算",
+          "catalog_refs": [
+            "py-84",
+            "py-85"
+          ],
+          "objective": "为结构化商品数据增加一个小方法。",
+          "explanation": [
+            "dataclass 根据字段声明生成初始化方法，让 price 和 quantity 的来源清晰。方法仍是普通 Python 函数，必须通过 self 读取当前商品字段；不同对象的金额要根据各自数据计算。",
+            "@dataclass 装饰器读取类字段标注，自动生成常用的 __init__、__repr__ 和比较方法。它适合主要保存数据的对象，但不会自动验证 int/str，也不会替你设计业务方法。",
+            "字段写在类体中并带类型标注，构造函数参数顺序按字段顺序生成。可变默认值不能直接写 [] 或 {}，因为所有实例可能共享同一个对象；应使用 field(default_factory=list)。"
+          ],
+          "syntax": "@dataclass 自动生成 __init__/repr；可变默认值要用 field(default_factory=...)。",
+          "js_bridge": "JavaScript class 需要手写 constructor 和 toString，TypeScript interface 只描述结构而不生成运行时构造函数；Python dataclass 同时根据标注生成初始化和 repr，但标注不做运行时类型强制。",
+          "examples": [
+            {
+              "language": "python",
+              "code": "from dataclasses import dataclass\n@dataclass\nclass Point:\n    x: int\n    y: int\nprint(Point(1, 2))",
+              "output": "Point(x=1, y=2)",
+              "explanation": "@dataclass 根据 Point 的 x/y 标注生成初始化方法和 repr，因此 Point(1, 2) 输出 Point(x=1, y=2)。传入缺少坐标会在构造时失败。",
+              "source_kind": "python",
+              "runnable": true
+            },
+            {
+              "language": "python",
+              "code": "from dataclasses import dataclass, field\n@dataclass\nclass Bag:\n    items: list[str] = field(default_factory=list)\nprint(Bag())",
+              "output": "Bag(items=[])",
+              "explanation": "field(default_factory=list) 为每个 Bag 实例单独创建 items，修改一个 Bag 后另一个仍为空。不能写 items=[] 共享同一个 list；标注本身也不会自动校验类型。",
+              "source_kind": "python",
+              "runnable": true
+            }
+          ],
+          "common_errors": [
+            {
+              "error": "无法通过字段参数初始化",
+              "symptom": "无法通过字段参数初始化",
+              "cause": "漏写 @dataclass，普通类型标注不会自动生成初始化方法",
+              "fix": "导入并应用 dataclass 装饰器",
+              "example": {
+                "code": "class LineItem:\n    price: float\n    quantity: int",
+                "symptom": "无法通过字段参数初始化",
+                "fix": "导入并应用 dataclass 装饰器"
+              }
+            },
+            {
+              "error": "商品方法里名字未定义",
+              "symptom": "商品方法里名字未定义",
+              "cause": "字段属于当前对象，不是函数局部变量",
+              "fix": "通过 self.price 和 self.quantity 读取",
+              "example": {
+                "code": "def total(self):\n    return price * quantity",
+                "symptom": "商品方法里名字未定义",
+                "fix": "通过 self.price 和 self.quantity 读取"
+              }
+            }
+          ],
+          "guided_practice": {
+            "goal": "为结构化商品数据增加一个小方法。",
+            "starter": "from dataclasses import dataclass\n\n@dataclass\nclass LineItem:\n    price: float\n    quantity: int\n\n    def total(self):\n        pass\n",
+            "steps": [
+              {
+                "action": "使用输入：LineItem(12.5, 2).total()",
+                "expected": "25.0"
+              },
+              {
+                "action": "使用输入：LineItem(5, 0).total()",
+                "expected": "0"
+              }
+            ],
+            "check": "LineItem(12.5,2).total() → 25；数量 0 → 0。"
+          },
+          "practice": {
+            "kind": "code",
+            "file_name": "main.py",
+            "scenario": "为结构化商品数据增加一个小方法。",
+            "instructions": "用 @dataclass 定义 LineItem，字段 price: float、quantity: int；total() 返回 price * quantity。",
+            "starter_content": "from dataclasses import dataclass\n\n@dataclass\nclass LineItem:\n    price: float\n    quantity: int\n\n    def total(self):\n        pass\n",
+            "starter_policy": "complete",
+            "expected_behavior": "LineItem(12.5,2).total() → 25；数量 0 → 0。",
+            "hints": "字段声明写在类中，计算写在方法中。",
+            "input_examples": [
+              {
+                "label": "练习输入 1",
+                "value": "LineItem(12.5, 2).total()",
+                "expected": "25.0"
+              },
+              {
+                "label": "练习输入 2",
+                "value": "LineItem(5, 0).total()",
+                "expected": "0"
+              }
+            ]
+          },
+          "key_points": [
+            "为结构化商品数据增加一个小方法。",
+            "字段声明写在类中，计算写在方法中。",
+            "LineItem(12.5,2).total() → 25；数量 0 → 0。"
+          ],
+          "frontend_bridge": "前端经验只作辅助：dataclass、字段默认值与标注 必须先按 Python 3 的执行、类型和错误规则完成。",
+          "example": {
+            "language": "python",
+            "code": "from dataclasses import dataclass\n@dataclass\nclass Point:\n    x: int\n    y: int\nprint(Point(1, 2))",
+            "output": "Point(x=1, y=2)",
+            "explanation": "@dataclass 根据 Point 的 x/y 标注生成初始化方法和 repr，因此 Point(1, 2) 输出 Point(x=1, y=2)。传入缺少坐标会在构造时失败。",
+            "source_kind": "python",
+            "runnable": true
+          },
+          "steps": [
+            "先用第一个输入检查正常结果",
+            "独立补全代码，再检查边界输入",
+            "读懂失败反馈，修改后重新验证"
+          ],
+          "optional": true,
+          "practice_first": {
+            "goal": "用 @dataclass 定义 LineItem，字段 price: float、quantity: int；total() 返回 price * quantity。",
+            "rules": [
+              "@dataclass 自动生成 __init__/repr；可变默认值要用 field(default_factory=...)。",
+              "先调用一个模块，再创建一个小对象。平台提供的辅助文件会明确列出。"
+            ],
+            "prerequisites": [
+              "D04-def-return",
+              "D06-try-except"
+            ],
+            "cards": [],
+            "drills": [
+              {
+                "id": "fill-1",
+                "title": "补全练习 2",
+                "instructions": "替换 TODO 指出的占位 None，保留其他输入；运行后对比每一行输出，再完成下方独立作业。",
+                "starter": "# TODO：补全下面第 5 行的 None，使输出与右侧预期一致。\nfrom dataclasses import dataclass, field\n@dataclass\nclass Bag:\n    items: list[str] = None\nprint(Bag())",
+                "output": "Bag(items=[])",
+                "reference": "from dataclasses import dataclass, field\n@dataclass\nclass Bag:\n    items: list[str] = field(default_factory=list)\nprint(Bag())",
+                "source_kind": "python",
+                "runnable": true
+              }
+            ],
+            "provided": "主作业只提交当前编辑器内容。独立实验在临时目录运行，不覆盖作业和项目。"
+          }
         }
       ]
     },
@@ -9112,6 +11735,452 @@
           ],
           "practice_first": {
             "goal": "定义 write_report(rows, path)，统计 total/done/pending，使用 ensure_ascii=False、indent=2、sort_keys=True 写 UTF-8 JSON，并可被再次 load。",
+            "rules": [
+              "json.dump 的 ensure_ascii、indent 和 sort_keys 影响可读性与可重复性。",
+              "每次写文件后立即读回，观察真实内容；实验在临时目录进行，不改你的项目文件。"
+            ],
+            "prerequisites": [
+              "D07-import",
+              "D06-with",
+              "D05-traversal"
+            ],
+            "cards": [],
+            "drills": [
+              {
+                "id": "fill-0",
+                "title": "补全练习 1",
+                "instructions": "替换 TODO 指出的占位 None，保留其他输入；运行后对比每一行输出，再完成下方独立作业。",
+                "starter": "# TODO：补全下面第 4 行的 None，使输出与右侧预期一致。\nimport json\nitems = [{'done': True}, {'done': False}, {'done': False}]\nreport = None\nprint(json.dumps(report, sort_keys=True))",
+                "output": "{\"done\": 1, \"open\": 2}",
+                "reference": "import json\nitems = [{'done': True}, {'done': False}, {'done': False}]\nreport = {'done': sum(item['done'] for item in items), 'open': sum(not item['done'] for item in items)}\nprint(json.dumps(report, sort_keys=True))",
+                "source_kind": "python",
+                "runnable": true
+              },
+              {
+                "id": "fill-1",
+                "title": "补全练习 2",
+                "instructions": "替换 TODO 指出的占位 None，保留其他输入；运行后对比每一行输出，再完成下方独立作业。",
+                "starter": "# TODO：补全下面第 3 行的 None，使输出与右侧预期一致。\nimport json\nreport = None\nprint(json.dumps(report, ensure_ascii=False, indent=2))",
+                "output": "{\n  \"done\": 0,\n  \"open\": 0\n}",
+                "reference": "import json\nreport = {'done': 0, 'open': 0}\nprint(json.dumps(report, ensure_ascii=False, indent=2))",
+                "source_kind": "python",
+                "runnable": true
+              }
+            ],
+            "provided": "主作业只提交当前编辑器内容。独立实验在临时目录运行，不覆盖作业和项目。"
+          }
+        },
+        {
+          "id": "D08-read-lines",
+          "title": "加练 · 整理文本名单",
+          "catalog_refs": [
+            "py-73",
+            "py-74",
+            "py-75"
+          ],
+          "objective": "将文件内容清理为可使用的姓名列表。",
+          "explanation": [
+            "read_text(encoding='utf-8') 明确文本编码，splitlines() 处理换行。每行去掉首尾空白后，仅保留非空姓名；文件不存在应保留 FileNotFoundError，让调用者知道源数据缺失。",
+            "文本文件是字节序列，encoding 决定字节如何还原成字符。UTF-8 能表示中文和常见 Unicode，但只有在读写两端都明确使用同一编码时，内容才可稳定往返。",
+            "Path.read_text/write_text 是方便接口，但默认编码可能受平台设置影响。把 `encoding='utf-8'` 写进边界函数，能让调用者知道协议，也让测试不依赖开发机语言环境。"
+          ],
+          "syntax": "read_text/write_text 显式 encoding='utf-8'，避免依赖系统默认编码。",
+          "js_bridge": "JavaScript 字符串通常以 UTF-16 代码单元表示，Python str 是 Unicode 文本，读写文件时必须显式选编码；不要把 JS 的字符串长度直觉直接套到 Unicode 字素边界。",
+          "examples": [
+            {
+              "language": "python",
+              "code": "from pathlib import Path\np = Path('note.txt')\np.write_text('你好 🌱', encoding='utf-8')\nprint(p.read_text(encoding='utf-8'))",
+              "output": "你好 🌱",
+              "explanation": "write_text 和 read_text 都显式使用 encoding='utf-8'，因此中文和 🌱 写入后可以原样读回并输出。若只省略一端的编码，结果可能依赖系统默认值；本例验证的是文本往返，不是字节长度。",
+              "source_kind": "python",
+              "runnable": true
+            },
+            {
+              "language": "python",
+              "code": "from pathlib import Path\np = Path('note.txt')\np.write_text('第一行\\n第二行', encoding='utf-8')\nprint(len(p.read_text(encoding='utf-8').splitlines()))",
+              "output": "2",
+              "explanation": "写入的字符串包含一个换行，read_text(...).splitlines() 把它分成第一行和第二行，所以 len 输出 2。空文本的 splitlines() 是空列表，不能把字符数直接当作行数。",
+              "source_kind": "python",
+              "runnable": true
+            }
+          ],
+          "common_errors": [
+            {
+              "error": "名单仍有空行和首尾空白",
+              "symptom": "名单仍有空行和首尾空白",
+              "cause": "分行没有完成逐行清理，也未明确编码",
+              "fix": "用 UTF-8 读取后，逐行 strip 并过滤空行",
+              "example": {
+                "code": "return Path(path).read_text().splitlines()",
+                "symptom": "名单仍有空行和首尾空白",
+                "fix": "用 UTF-8 读取后，逐行 strip 并过滤空行"
+              }
+            },
+            {
+              "error": "文件丢失被当成空名单",
+              "symptom": "文件丢失被当成空名单",
+              "cause": "捕获异常后返回正常结果，无法区分缺文件与空文件",
+              "fix": "保留 FileNotFoundError，让调用者处理",
+              "example": {
+                "code": "except FileNotFoundError:\n    return []",
+                "symptom": "文件丢失被当成空名单",
+                "fix": "保留 FileNotFoundError，让调用者处理"
+              }
+            }
+          ],
+          "guided_practice": {
+            "goal": "将文件内容清理为可使用的姓名列表。",
+            "starter": "from pathlib import Path\n\ndef read_names(path):\n    # 读取文件、分行、清理后返回列表\n    pass\n",
+            "steps": [
+              {
+                "action": "使用输入：read_names('names.txt')，文件：小林\\n\\n 阿青 ",
+                "expected": "['小林', '阿青']"
+              },
+              {
+                "action": "使用输入：read_names('empty.txt')，空文件",
+                "expected": "[]"
+              }
+            ],
+            "check": "包含 小林、空白行、阿青 的文件 → ['小林','阿青']；空文件 → []。"
+          },
+          "practice": {
+            "kind": "code",
+            "file_name": "main.py",
+            "scenario": "将文件内容清理为可使用的姓名列表。",
+            "instructions": "定义 read_names(path)，UTF-8 读取文本文件，返回去掉空白行和姓名首尾空白的列表。保留原顺序，文件不存在时让异常传出。",
+            "starter_content": "from pathlib import Path\n\ndef read_names(path):\n    # 读取文件、分行、清理后返回列表\n    pass\n",
+            "starter_policy": "complete",
+            "expected_behavior": "包含 小林、空白行、阿青 的文件 → ['小林','阿青']；空文件 → []。",
+            "hints": "验证器会准备临时文件并传入路径，不需要自己填写电脑上的绝对路径。",
+            "input_examples": [
+              {
+                "label": "练习输入 1",
+                "value": "read_names('names.txt')，文件：小林\\n\\n 阿青 ",
+                "expected": "['小林', '阿青']"
+              },
+              {
+                "label": "练习输入 2",
+                "value": "read_names('empty.txt')，空文件",
+                "expected": "[]"
+              }
+            ]
+          },
+          "key_points": [
+            "将文件内容清理为可使用的姓名列表。",
+            "验证器会准备临时文件并传入路径，不需要自己填写电脑上的绝对路径。",
+            "包含 小林、空白行、阿青 的文件 → ['小林','阿青']；空文件 → []。"
+          ],
+          "frontend_bridge": "前端经验只作辅助：UTF-8 文本读写与编码边界 必须先按 Python 3 的执行、类型和错误规则完成。",
+          "example": {
+            "language": "python",
+            "code": "from pathlib import Path\np = Path('note.txt')\np.write_text('你好 🌱', encoding='utf-8')\nprint(p.read_text(encoding='utf-8'))",
+            "output": "你好 🌱",
+            "explanation": "write_text 和 read_text 都显式使用 encoding='utf-8'，因此中文和 🌱 写入后可以原样读回并输出。若只省略一端的编码，结果可能依赖系统默认值；本例验证的是文本往返，不是字节长度。",
+            "source_kind": "python",
+            "runnable": true
+          },
+          "steps": [
+            "先用第一个输入检查正常结果",
+            "独立补全代码，再检查边界输入",
+            "读懂失败反馈，修改后重新验证"
+          ],
+          "optional": true,
+          "practice_first": {
+            "goal": "定义 read_names(path)，UTF-8 读取文本文件，返回去掉空白行和姓名首尾空白的列表。保留原顺序，文件不存在时让异常传出。",
+            "rules": [
+              "read_text/write_text 显式 encoding='utf-8'，避免依赖系统默认编码。",
+              "每次写文件后立即读回，观察真实内容；实验在临时目录进行，不改你的项目文件。"
+            ],
+            "prerequisites": [
+              "D07-import",
+              "D06-with",
+              "D05-traversal"
+            ],
+            "cards": [],
+            "drills": [
+              {
+                "id": "fill-0",
+                "title": "补全练习 1",
+                "instructions": "替换 TODO 指出的占位 None，保留其他输入；运行后对比每一行输出，再完成下方独立作业。",
+                "starter": "# TODO：补全下面第 3 行的 None，使输出与右侧预期一致。\nfrom pathlib import Path\np = None\np.write_text('你好 🌱', encoding='utf-8')\nprint(p.read_text(encoding='utf-8'))",
+                "output": "你好 🌱",
+                "reference": "from pathlib import Path\np = Path('note.txt')\np.write_text('你好 🌱', encoding='utf-8')\nprint(p.read_text(encoding='utf-8'))",
+                "source_kind": "python",
+                "runnable": true
+              },
+              {
+                "id": "fill-1",
+                "title": "补全练习 2",
+                "instructions": "替换 TODO 指出的占位 None，保留其他输入；运行后对比每一行输出，再完成下方独立作业。",
+                "starter": "# TODO：补全下面第 3 行的 None，使输出与右侧预期一致。\nfrom pathlib import Path\np = None\np.write_text('第一行\\n第二行', encoding='utf-8')\nprint(len(p.read_text(encoding='utf-8').splitlines()))",
+                "output": "2",
+                "reference": "from pathlib import Path\np = Path('note.txt')\np.write_text('第一行\\n第二行', encoding='utf-8')\nprint(len(p.read_text(encoding='utf-8').splitlines()))",
+                "source_kind": "python",
+                "runnable": true
+              }
+            ],
+            "provided": "主作业只提交当前编辑器内容。独立实验在临时目录运行，不覆盖作业和项目。"
+          }
+        },
+        {
+          "id": "D08-json-total",
+          "title": "加练 · 从 JSON 汇总金额",
+          "catalog_refs": [
+            "py-73",
+            "py-74",
+            "py-75"
+          ],
+          "objective": "把文件读取、JSON 解析和容器计算连接起来。",
+          "explanation": [
+            "JSON 文件里存放的是文本，json.loads 后才变成可遍历的 Python 列表。每项 amount 是数值，函数计算所有金额之和；非法 JSON 应保留解析错误，不能改成空列表后报告 0。",
+            "JSON 是文本格式，json.loads 接收字符串并返回 Python 对象：对象变 dict、数组变 list、true/null 分别变 True/None。解析成功不代表业务结构正确。",
+            "读取外部 JSON 后应先判断顶层类型，再检查必需字段和字段类型。直接写 `data['name']` 会把结构错误留到更远处，使用小函数做契约校验能让错误靠近输入边界。"
+          ],
+          "syntax": "json.loads/load 负责解析，解析后仍要检查 list/dict 和字段类型。",
+          "js_bridge": "JavaScript JSON.parse 也只负责语法解析，不能保证字段存在；Python loads 返回 dict/list 等 Python 对象，不能继续使用 JS 的 undefined 检查方式。",
+          "examples": [
+            {
+              "language": "python",
+              "code": "import json\ndata = json.loads('{\"title\": \"买书\", \"done\": false}')\nprint(data['title'], data['done'])",
+              "output": "买书 False",
+              "explanation": "json.loads 把合法 JSON 文本转换为 Python dict，data['title'] 和 data['done'] 读取两个字段，因此输出买书 False。JSON 的 false 会变成 Python 的 False；缺少 title 时按键访问会得到 KeyError。",
+              "source_kind": "python",
+              "runnable": true
+            },
+            {
+              "language": "python",
+              "code": "import json\ntry:\n    json.loads('{bad}')\nexcept json.JSONDecodeError:\n    print('JSON 无法解析')",
+              "output": "JSON 无法解析",
+              "explanation": "json.loads('{bad}') 在语法不合法时抛出 JSONDecodeError，except 只捕获这个明确类型并输出提示。坏 JSON 不能静默变成空字典，否则调用者会误以为数据有效。",
+              "source_kind": "python",
+              "runnable": true
+            }
+          ],
+          "common_errors": [
+            {
+              "error": "把字符当成了账单项",
+              "symptom": "把字符当成了账单项",
+              "cause": "文件文本尚未经 json.loads 解析为列表",
+              "fix": "先解析 JSON，再遍历字典项",
+              "example": {
+                "code": "for item in Path(path).read_text():\n    total += item['amount']",
+                "symptom": "把字符当成了账单项",
+                "fix": "先解析 JSON，再遍历字典项"
+              }
+            },
+            {
+              "error": "损坏账单也报告零支出",
+              "symptom": "损坏账单也报告零支出",
+              "cause": "错误数据被包装成合法空账单结果",
+              "fix": "让解析异常传出，只有真正空列表返回零",
+              "example": {
+                "code": "except json.JSONDecodeError:\n    return 0",
+                "symptom": "损坏账单也报告零支出",
+                "fix": "让解析异常传出，只有真正空列表返回零"
+              }
+            }
+          ],
+          "guided_practice": {
+            "goal": "把文件读取、JSON 解析和容器计算连接起来。",
+            "starter": "from pathlib import Path\nimport json\n\ndef total_expenses(path):\n    pass\n",
+            "steps": [
+              {
+                "action": "使用输入：total_expenses('expenses.json')，内容为两笔 12.5、7.5",
+                "expected": "20.0"
+              },
+              {
+                "action": "使用输入：total_expenses('empty.json')，内容为 []",
+                "expected": "0"
+              }
+            ],
+            "check": "[{'amount':12.5},{'amount':7.5}] → 20；[] → 0。"
+          },
+          "practice": {
+            "kind": "code",
+            "file_name": "main.py",
+            "scenario": "把文件读取、JSON 解析和容器计算连接起来。",
+            "instructions": "定义 total_expenses(path)，读取 UTF-8 JSON 列表，每项有数值 amount，返回金额之和。空列表返回 0；非法 JSON 抛 JSONDecodeError。",
+            "starter_content": "from pathlib import Path\nimport json\n\ndef total_expenses(path):\n    pass\n",
+            "starter_policy": "complete",
+            "expected_behavior": "[{'amount':12.5},{'amount':7.5}] → 20；[] → 0。",
+            "hints": "文件文本 → Python 列表 → 累加；分别检查这三个步骤。",
+            "input_examples": [
+              {
+                "label": "练习输入 1",
+                "value": "total_expenses('expenses.json')，内容为两笔 12.5、7.5",
+                "expected": "20.0"
+              },
+              {
+                "label": "练习输入 2",
+                "value": "total_expenses('empty.json')，内容为 []",
+                "expected": "0"
+              }
+            ]
+          },
+          "key_points": [
+            "把文件读取、JSON 解析和容器计算连接起来。",
+            "文件文本 → Python 列表 → 累加；分别检查这三个步骤。",
+            "[{'amount':12.5},{'amount':7.5}] → 20；[] → 0。"
+          ],
+          "frontend_bridge": "前端经验只作辅助：JSON 读取与类型检查 必须先按 Python 3 的执行、类型和错误规则完成。",
+          "example": {
+            "language": "python",
+            "code": "import json\ndata = json.loads('{\"title\": \"买书\", \"done\": false}')\nprint(data['title'], data['done'])",
+            "output": "买书 False",
+            "explanation": "json.loads 把合法 JSON 文本转换为 Python dict，data['title'] 和 data['done'] 读取两个字段，因此输出买书 False。JSON 的 false 会变成 Python 的 False；缺少 title 时按键访问会得到 KeyError。",
+            "source_kind": "python",
+            "runnable": true
+          },
+          "steps": [
+            "先用第一个输入检查正常结果",
+            "独立补全代码，再检查边界输入",
+            "读懂失败反馈，修改后重新验证"
+          ],
+          "optional": true,
+          "practice_first": {
+            "goal": "定义 total_expenses(path)，读取 UTF-8 JSON 列表，每项有数值 amount，返回金额之和。空列表返回 0；非法 JSON 抛 JSONDecodeError。",
+            "rules": [
+              "json.loads/load 负责解析，解析后仍要检查 list/dict 和字段类型。",
+              "每次写文件后立即读回，观察真实内容；实验在临时目录进行，不改你的项目文件。"
+            ],
+            "prerequisites": [
+              "D07-import",
+              "D06-with",
+              "D05-traversal"
+            ],
+            "cards": [],
+            "drills": [
+              {
+                "id": "fill-0",
+                "title": "补全练习 1",
+                "instructions": "替换 TODO 指出的占位 None，保留其他输入；运行后对比每一行输出，再完成下方独立作业。",
+                "starter": "# TODO：补全下面第 3 行的 None，使输出与右侧预期一致。\nimport json\ndata = None\nprint(data['title'], data['done'])",
+                "output": "买书 False",
+                "reference": "import json\ndata = json.loads('{\"title\": \"买书\", \"done\": false}')\nprint(data['title'], data['done'])",
+                "source_kind": "python",
+                "runnable": true
+              }
+            ],
+            "provided": "主作业只提交当前编辑器内容。独立实验在临时目录运行，不覆盖作业和项目。"
+          }
+        },
+        {
+          "id": "D08-json-report-drill",
+          "title": "加练 · 写出可读的中文报告",
+          "catalog_refs": [
+            "py-73",
+            "py-74",
+            "py-75"
+          ],
+          "objective": "让自己的程序产生一个可再次读取的文件。",
+          "explanation": [
+            "序列化把字典变成 JSON 文本，写文件时仍需要指定 UTF-8。ensure_ascii=False 让中文在文件里直接可读；返回路径或在屏幕上打印字典都不能代替真正写入指定文件。",
+            "报告函数通常经历读取记录、聚合统计、构造结果和序列化四步。先明确输入记录的字段，再决定缺失字段是拒绝、跳过还是使用默认值，不能在 dump 时才发现数据形状错。",
+            "json.dump 的 ensure_ascii、indent 和 sort_keys 影响文件是否易读、是否稳定。`sort_keys=True` 便于比较测试，ensure_ascii=False 能保留中文，但输出格式仍应由项目契约决定。"
+          ],
+          "syntax": "json.dump 的 ensure_ascii、indent 和 sort_keys 影响可读性与可重复性。",
+          "js_bridge": "JavaScript JSON.stringify 的 replacer/space 与 Python dumps/dump 参数有相似作用；Python 的 ensure_ascii 默认会转义非 ASCII，不能假设输出一定直接显示中文。",
+          "examples": [
+            {
+              "language": "python",
+              "code": "import json\nitems = [{'done': True}, {'done': False}, {'done': False}]\nreport = {'done': sum(item['done'] for item in items), 'open': sum(not item['done'] for item in items)}\nprint(json.dumps(report, sort_keys=True))",
+              "output": "{\"done\": 1, \"open\": 2}",
+              "explanation": "两个 sum 分别统计 done 为真和为假的项目，json.dumps(sort_keys=True) 让输出键顺序稳定，因此得到 {\"done\": 1, \"open\": 2}。items 为空时两个计数都应为 0，不应除以项目数。",
+              "source_kind": "python",
+              "runnable": true
+            },
+            {
+              "language": "python",
+              "code": "import json\nreport = {'done': 0, 'open': 0}\nprint(json.dumps(report, ensure_ascii=False, indent=2))",
+              "output": "{\n  \"done\": 0,\n  \"open\": 0\n}",
+              "explanation": "空 report 通过 json.dumps(..., ensure_ascii=False, indent=2) 生成多行 JSON，缩进只改变展示，不改变字段值。若消费者要求单行传输，应去掉 indent，而不是手工删除换行。",
+              "source_kind": "python",
+              "runnable": true
+            }
+          ],
+          "common_errors": [
+            {
+              "error": "报告文件没有生成",
+              "symptom": "报告文件没有生成",
+              "cause": "返回内存字典不等于将文本写入文件",
+              "fix": "序列化字典并用指定路径写文件",
+              "example": {
+                "code": "return {'count': len(names), 'names': names}",
+                "symptom": "报告文件没有生成",
+                "fix": "序列化字典并用指定路径写文件"
+              }
+            },
+            {
+              "error": "中文报告里出现转义序列",
+              "symptom": "中文报告里出现转义序列",
+              "cause": "默认 ensure_ascii=True 会把非 ASCII 字符转义",
+              "fix": "设置 ensure_ascii=False 并以 UTF-8 写入",
+              "example": {
+                "code": "json.dumps(report)",
+                "symptom": "中文报告里出现转义序列",
+                "fix": "设置 ensure_ascii=False 并以 UTF-8 写入"
+              }
+            }
+          ],
+          "guided_practice": {
+            "goal": "让自己的程序产生一个可再次读取的文件。",
+            "starter": "from pathlib import Path\nimport json\n\ndef write_report(path, names):\n    pass\n",
+            "steps": [
+              {
+                "action": "使用输入：write_report('report.json', ['小林'])",
+                "expected": "文件内含中文 小林，count 为 1"
+              },
+              {
+                "action": "使用输入：write_report('report.json', [])",
+                "expected": "count 为 0，names 为 []"
+              }
+            ],
+            "check": "names=['小林'] → 文件可读回 {'count':1,'names':['小林']}。"
+          },
+          "practice": {
+            "kind": "code",
+            "file_name": "main.py",
+            "scenario": "让自己的程序产生一个可再次读取的文件。",
+            "instructions": "定义 write_report(path, names)，写入 {'count': len(names), 'names': names}，UTF-8 且中文不转义。无需返回值；允许覆盖指定报告文件。",
+            "starter_content": "from pathlib import Path\nimport json\n\ndef write_report(path, names):\n    pass\n",
+            "starter_policy": "complete",
+            "expected_behavior": "names=['小林'] → 文件可读回 {'count':1,'names':['小林']}。",
+            "hints": "json.dumps(..., ensure_ascii=False) 生成文本，再 write_text。",
+            "input_examples": [
+              {
+                "label": "练习输入 1",
+                "value": "write_report('report.json', ['小林'])",
+                "expected": "文件内含中文 小林，count 为 1"
+              },
+              {
+                "label": "练习输入 2",
+                "value": "write_report('report.json', [])",
+                "expected": "count 为 0，names 为 []"
+              }
+            ]
+          },
+          "key_points": [
+            "让自己的程序产生一个可再次读取的文件。",
+            "json.dumps(..., ensure_ascii=False) 生成文本，再 write_text。",
+            "names=['小林'] → 文件可读回 {'count':1,'names':['小林']}。"
+          ],
+          "frontend_bridge": "前端经验只作辅助：统计并写回 JSON 报告 必须先按 Python 3 的执行、类型和错误规则完成。",
+          "example": {
+            "language": "python",
+            "code": "import json\nitems = [{'done': True}, {'done': False}, {'done': False}]\nreport = {'done': sum(item['done'] for item in items), 'open': sum(not item['done'] for item in items)}\nprint(json.dumps(report, sort_keys=True))",
+            "output": "{\"done\": 1, \"open\": 2}",
+            "explanation": "两个 sum 分别统计 done 为真和为假的项目，json.dumps(sort_keys=True) 让输出键顺序稳定，因此得到 {\"done\": 1, \"open\": 2}。items 为空时两个计数都应为 0，不应除以项目数。",
+            "source_kind": "python",
+            "runnable": true
+          },
+          "steps": [
+            "先用第一个输入检查正常结果",
+            "独立补全代码，再检查边界输入",
+            "读懂失败反馈，修改后重新验证"
+          ],
+          "optional": true,
+          "practice_first": {
+            "goal": "定义 write_report(path, names)，写入 {'count': len(names), 'names': names}，UTF-8 且中文不转义。无需返回值；允许覆盖指定报告文件。",
             "rules": [
               "json.dump 的 ensure_ascii、indent 和 sort_keys 影响可读性与可重复性。",
               "每次写文件后立即读回，观察真实内容；实验在临时目录进行，不改你的项目文件。"
@@ -9779,6 +12848,449 @@
                 "runnable": true
               }
             ],
+            "drills": [
+              {
+                "id": "fill-1",
+                "title": "补全练习 2",
+                "instructions": "替换 TODO 指出的占位 None，保留其他输入；运行后对比每一行输出，再完成下方独立作业。",
+                "starter": "# TODO：补全下面第 3 行的 None，使输出与右侧预期一致。\ndef main(argv=None):\n    return None\n\nprint(main([]))",
+                "output": "3",
+                "reference": "def main(argv=None):\n    return 3\n\nprint(main([]))",
+                "source_kind": "python",
+                "runnable": true
+              }
+            ],
+            "provided": "主作业只提交当前编辑器内容。独立实验在临时目录运行，不覆盖作业和项目。"
+          }
+        },
+        {
+          "id": "D09-greet-cli",
+          "title": "加练 · 第一个问候命令",
+          "catalog_refs": [
+            "py-87",
+            "linux-06"
+          ],
+          "objective": "在命令行参数中传入姓名。",
+          "explanation": [
+            "argparse 从程序参数读取 --name，required=True 将缺失参数变成明确的用法错误。命令行提示和业务输出应该分开，--help 自动给出帮助；用户无需修改源代码就能传入不同姓名。",
+            "argparse 把 argv 中的字符串转换成 Namespace，add_argument 描述选项名、类型、默认值和是否必需。解析器负责命令行语法，不应把业务数据库操作塞进参数声明。",
+            "`type=int` 会在解析边界完成转换，`--verbose` 这类开关通常使用 action='store_true'。help 文本不是装饰，它决定用户能否知道默认值、输入格式和示例命令。"
+          ],
+          "syntax": "ArgumentParser、add_argument、parse_args 组成最小 CLI。",
+          "js_bridge": "JavaScript 常用 minimist/commander 等库，Python argparse 自带帮助、类型转换和错误退出；不要把 `process.argv` 的字符串数组处理方式原样搬到 Namespace。",
+          "examples": [
+            {
+              "language": "python",
+              "code": "import argparse\nparser = argparse.ArgumentParser()\nparser.add_argument('--limit', type=int, default=20)\nprint(parser.parse_args(['--limit', '3']).limit)",
+              "output": "3",
+              "explanation": "add_argument('--limit', type=int, default=20) 让 argparse 把命令行文本 '3' 转成整数 3，parse_args 后从 Namespace 读取 limit。省略选项会得到默认 20，传入非数字会由 argparse 拒绝。",
+              "source_kind": "python",
+              "runnable": true
+            },
+            {
+              "language": "python",
+              "code": "import argparse\nparser = argparse.ArgumentParser()\nparser.add_argument('title')\nprint(parser.parse_args(['买书']).title)",
+              "output": "买书",
+              "explanation": "位置参数 title 没有前缀，parse_args(['买书']) 会把文本绑定到 args.title 并输出买书。缺少这个必填位置参数时解析失败，不能用默认标题掩盖输入缺失。",
+              "source_kind": "python",
+              "runnable": true
+            }
+          ],
+          "common_errors": [
+            {
+              "error": "缺少姓名时仍可运行",
+              "symptom": "缺少姓名时仍可运行",
+              "cause": "参数没有被标记为 required",
+              "fix": "将 --name 声明为 required=True",
+              "example": {
+                "code": "parser.add_argument('--name')",
+                "symptom": "缺少姓名时仍可运行",
+                "fix": "将 --name 声明为 required=True"
+              }
+            },
+            {
+              "error": "问候命令等待键盘输入",
+              "symptom": "问候命令等待键盘输入",
+              "cause": "题目要求从命令参数读取，而不是 stdin",
+              "fix": "使用 parse_args().name 获取传入姓名",
+              "example": {
+                "code": "name = input()",
+                "symptom": "问候命令等待键盘输入",
+                "fix": "使用 parse_args().name 获取传入姓名"
+              }
+            }
+          ],
+          "guided_practice": {
+            "goal": "在命令行参数中传入姓名。",
+            "starter": "import argparse\n\nparser = argparse.ArgumentParser()\n# 声明必填 --name，解析后打印问候\n",
+            "steps": [
+              {
+                "action": "使用输入：python main.py --name 小林",
+                "expected": "你好，小林"
+              },
+              {
+                "action": "使用输入：python main.py --help",
+                "expected": "显示帮助并成功退出"
+              }
+            ],
+            "check": "--name 小林 → 你好，小林；不传 --name → 参数错误。"
+          },
+          "practice": {
+            "kind": "code",
+            "file_name": "main.py",
+            "scenario": "在命令行参数中传入姓名。",
+            "instructions": "编写 main.py：必填参数 --name，运行时输出 你好，姓名。缺少参数应非零退出，--help 应成功退出。",
+            "starter_content": "import argparse\n\nparser = argparse.ArgumentParser()\n# 声明必填 --name，解析后打印问候\n",
+            "starter_policy": "complete",
+            "expected_behavior": "--name 小林 → 你好，小林；不传 --name → 参数错误。",
+            "hints": "声明参数、parse_args()、使用 args.name，按这三步完成。",
+            "input_examples": [
+              {
+                "label": "练习输入 1",
+                "value": "python main.py --name 小林",
+                "expected": "你好，小林"
+              },
+              {
+                "label": "练习输入 2",
+                "value": "python main.py --help",
+                "expected": "显示帮助并成功退出"
+              }
+            ]
+          },
+          "key_points": [
+            "在命令行参数中传入姓名。",
+            "声明参数、parse_args()、使用 args.name，按这三步完成。",
+            "--name 小林 → 你好，小林；不传 --name → 参数错误。"
+          ],
+          "frontend_bridge": "前端经验只作辅助：argparse 基本参数 必须先按 Python 3 的执行、类型和错误规则完成。",
+          "example": {
+            "language": "python",
+            "code": "import argparse\nparser = argparse.ArgumentParser()\nparser.add_argument('--limit', type=int, default=20)\nprint(parser.parse_args(['--limit', '3']).limit)",
+            "output": "3",
+            "explanation": "add_argument('--limit', type=int, default=20) 让 argparse 把命令行文本 '3' 转成整数 3，parse_args 后从 Namespace 读取 limit。省略选项会得到默认 20，传入非数字会由 argparse 拒绝。",
+            "source_kind": "python",
+            "runnable": true
+          },
+          "steps": [
+            "先用第一个输入检查正常结果",
+            "独立补全代码，再检查边界输入",
+            "读懂失败反馈，修改后重新验证"
+          ],
+          "optional": true,
+          "practice_first": {
+            "goal": "编写 main.py：必填参数 --name，运行时输出 你好，姓名。缺少参数应非零退出，--help 应成功退出。",
+            "rules": [
+              "ArgumentParser、add_argument、parse_args 组成最小 CLI。",
+              "先传一组 argv，再传错误参数；分别观察正常输出、错误输出和退出码。"
+            ],
+            "prerequisites": [
+              "D04-default-keyword",
+              "D07-main",
+              "D06-try-except"
+            ],
+            "cards": [],
+            "drills": [
+              {
+                "id": "fill-0",
+                "title": "补全练习 1",
+                "instructions": "替换 TODO 指出的占位 None，保留其他输入；运行后对比每一行输出，再完成下方独立作业。",
+                "starter": "# TODO：补全下面第 3 行的 None，使输出与右侧预期一致。\nimport argparse\nparser = None\nparser.add_argument('--limit', type=int, default=20)\nprint(parser.parse_args(['--limit', '3']).limit)",
+                "output": "3",
+                "reference": "import argparse\nparser = argparse.ArgumentParser()\nparser.add_argument('--limit', type=int, default=20)\nprint(parser.parse_args(['--limit', '3']).limit)",
+                "source_kind": "python",
+                "runnable": true
+              },
+              {
+                "id": "fill-1",
+                "title": "补全练习 2",
+                "instructions": "替换 TODO 指出的占位 None，保留其他输入；运行后对比每一行输出，再完成下方独立作业。",
+                "starter": "# TODO：补全下面第 3 行的 None，使输出与右侧预期一致。\nimport argparse\nparser = None\nparser.add_argument('title')\nprint(parser.parse_args(['买书']).title)",
+                "output": "买书",
+                "reference": "import argparse\nparser = argparse.ArgumentParser()\nparser.add_argument('title')\nprint(parser.parse_args(['买书']).title)",
+                "source_kind": "python",
+                "runnable": true
+              }
+            ],
+            "provided": "主作业只提交当前编辑器内容。独立实验在临时目录运行，不覆盖作业和项目。"
+          }
+        },
+        {
+          "id": "D09-repeat-cli",
+          "title": "加练 · 命令参数的合法范围",
+          "catalog_refs": [
+            "py-87",
+            "linux-06"
+          ],
+          "objective": "用类型转换和业务检查拒绝错误参数。",
+          "explanation": [
+            "type=int 只保证参数可以转为整数，不会拒绝 0 和负数。解析后检查 count >= 1，不满足时调用 parser.error；这样用户既能看到原因，也能从非零退出码判断失败。",
+            "命令行错误是用户输入协议的一部分，应写到 stderr 并返回非零退出码；成功输出写 stdout。argparse 的 parser.error 会统一格式化 usage、错误原因并以 SystemExit(2) 结束。",
+            "业务错误和参数错误可以有不同退出码，但必须稳定。处理函数不要 catch SystemExit 后返回 0，否则 shell、测试和 CI 会误以为命令成功。"
+          ],
+          "syntax": "parser.error 会退出；业务失败要保持稳定的 exit code。",
+          "js_bridge": "Node CLI 通常手动写 console.error 和 process.exitCode；argparse 已经提供 stderr/退出码约定，但 Python 代码仍要避免把错误打印到 stdout。",
+          "examples": [
+            {
+              "language": "python",
+              "code": "import argparse\nparser = argparse.ArgumentParser()\nparser.add_argument('--count', type=int)\nprint(parser.parse_args(['--count', '2']).count)",
+              "output": "2",
+              "explanation": "--count 的 type=int 在解析阶段把 '2' 转换为整数，print(args.count) 因而输出 2。传入负数是否允许要由业务规则另行检查；type=int 只负责数字格式。",
+              "source_kind": "python",
+              "runnable": true
+            },
+            {
+              "language": "python",
+              "code": "import argparse\nparser = argparse.ArgumentParser()\ntry:\n    parser.parse_args(['--count', 'x'])\nexcept SystemExit as error:\n    print(error.code != 0)",
+              "output": "True",
+              "explanation": "传入 --count x 时，argparse 在 type=int 转换处触发 SystemExit，error.code 非零表示命令失败。捕获退出只适合测试；真实 CLI 应把错误留给用户并返回非零状态。",
+              "source_kind": "python",
+              "runnable": true
+            }
+          ],
+          "common_errors": [
+            {
+              "error": "指定次数后无法传给 range",
+              "symptom": "指定次数后无法传给 range",
+              "cause": "显式命令参数仍是字符串，未声明 type=int",
+              "fix": "为 count 增加 type=int",
+              "example": {
+                "code": "parser.add_argument('--count', default=1)",
+                "symptom": "指定次数后无法传给 range",
+                "fix": "为 count 增加 type=int"
+              }
+            },
+            {
+              "error": "负数次数静默不输出",
+              "symptom": "负数次数静默不输出",
+              "cause": "range 对负数为空，但业务规则要求拒绝",
+              "fix": "循环前对 count<=0 调用 parser.error",
+              "example": {
+                "code": "for _ in range(args.count): print(args.word)",
+                "symptom": "负数次数静默不输出",
+                "fix": "循环前对 count<=0 调用 parser.error"
+              }
+            }
+          ],
+          "guided_practice": {
+            "goal": "用类型转换和业务检查拒绝错误参数。",
+            "starter": "import argparse\n\nparser = argparse.ArgumentParser()\n# 声明参数、校验 count，再逐行输出\n",
+            "steps": [
+              {
+                "action": "使用输入：python main.py --word hi --count 2",
+                "expected": "hi\nhi"
+              },
+              {
+                "action": "使用输入：python main.py --word 茶",
+                "expected": "茶"
+              }
+            ],
+            "check": "--word hi --count 2 → 两行 hi；--count 0 → 非零退出。"
+          },
+          "practice": {
+            "kind": "code",
+            "file_name": "main.py",
+            "scenario": "用类型转换和业务检查拒绝错误参数。",
+            "instructions": "main.py 接收必填 --word 与 --count（整数，默认 1）；逐行输出 word 共 count 次，count <= 0 时用 parser.error 拒绝。",
+            "starter_content": "import argparse\n\nparser = argparse.ArgumentParser()\n# 声明参数、校验 count，再逐行输出\n",
+            "starter_policy": "complete",
+            "expected_behavior": "--word hi --count 2 → 两行 hi；--count 0 → 非零退出。",
+            "hints": "默认值也是合法输入；print 每轮一次，不要一次打印列表。",
+            "input_examples": [
+              {
+                "label": "练习输入 1",
+                "value": "python main.py --word hi --count 2",
+                "expected": "hi\nhi"
+              },
+              {
+                "label": "练习输入 2",
+                "value": "python main.py --word 茶",
+                "expected": "茶"
+              }
+            ]
+          },
+          "key_points": [
+            "用类型转换和业务检查拒绝错误参数。",
+            "默认值也是合法输入；print 每轮一次，不要一次打印列表。",
+            "--word hi --count 2 → 两行 hi；--count 0 → 非零退出。"
+          ],
+          "frontend_bridge": "前端经验只作辅助：参数错误与退出码 必须先按 Python 3 的执行、类型和错误规则完成。",
+          "example": {
+            "language": "python",
+            "code": "import argparse\nparser = argparse.ArgumentParser()\nparser.add_argument('--count', type=int)\nprint(parser.parse_args(['--count', '2']).count)",
+            "output": "2",
+            "explanation": "--count 的 type=int 在解析阶段把 '2' 转换为整数，print(args.count) 因而输出 2。传入负数是否允许要由业务规则另行检查；type=int 只负责数字格式。",
+            "source_kind": "python",
+            "runnable": true
+          },
+          "steps": [
+            "先用第一个输入检查正常结果",
+            "独立补全代码，再检查边界输入",
+            "读懂失败反馈，修改后重新验证"
+          ],
+          "optional": true,
+          "practice_first": {
+            "goal": "main.py 接收必填 --word 与 --count（整数，默认 1）；逐行输出 word 共 count 次，count <= 0 时用 parser.error 拒绝。",
+            "rules": [
+              "parser.error 会退出；业务失败要保持稳定的 exit code。",
+              "先传一组 argv，再传错误参数；分别观察正常输出、错误输出和退出码。"
+            ],
+            "prerequisites": [
+              "D04-default-keyword",
+              "D07-main",
+              "D06-try-except"
+            ],
+            "cards": [],
+            "drills": [
+              {
+                "id": "fill-0",
+                "title": "补全练习 1",
+                "instructions": "替换 TODO 指出的占位 None，保留其他输入；运行后对比每一行输出，再完成下方独立作业。",
+                "starter": "# TODO：补全下面第 3 行的 None，使输出与右侧预期一致。\nimport argparse\nparser = None\nparser.add_argument('--count', type=int)\nprint(parser.parse_args(['--count', '2']).count)",
+                "output": "2",
+                "reference": "import argparse\nparser = argparse.ArgumentParser()\nparser.add_argument('--count', type=int)\nprint(parser.parse_args(['--count', '2']).count)",
+                "source_kind": "python",
+                "runnable": true
+              },
+              {
+                "id": "fill-1",
+                "title": "补全练习 2",
+                "instructions": "替换 TODO 指出的占位 None，保留其他输入；运行后对比每一行输出，再完成下方独立作业。",
+                "starter": "# TODO：补全下面第 3 行的 None，使输出与右侧预期一致。\nimport argparse\nparser = None\ntry:\n    parser.parse_args(['--count', 'x'])\nexcept SystemExit as error:\n    print(error.code != 0)",
+                "output": "True",
+                "reference": "import argparse\nparser = argparse.ArgumentParser()\ntry:\n    parser.parse_args(['--count', 'x'])\nexcept SystemExit as error:\n    print(error.code != 0)",
+                "source_kind": "python",
+                "runnable": true
+              }
+            ],
+            "provided": "主作业只提交当前编辑器内容。独立实验在临时目录运行，不覆盖作业和项目。"
+          }
+        },
+        {
+          "id": "D09-square-cli",
+          "title": "加练 · 可导入的计算命令",
+          "catalog_refs": [
+            "py-87",
+            "linux-06"
+          ],
+          "objective": "同时提供函数接口和终端入口。",
+          "explanation": [
+            "一个文件可以同时服务于其他模块和命令行用户：square(n) 负责计算，守卫中的代码负责解析参数。import main 时应只定义函数，既不读参数也不打印结果，避免导入时触发命令错误。",
+            "可执行入口是从 shell 到 Python 函数的边界：读取 argv、解析参数、调用 main、把返回值映射成退出码。把这些步骤放在 main() 中可以让导入测试不依赖真实命令行。",
+            "`if __name__ == '__main__': raise SystemExit(main())` 让直接运行和导入行为分离。subprocess 测试能观察真实 stdout/stderr/returncode，比只调用内部函数更接近用户体验。"
+          ],
+          "syntax": "__main__ 守卫、sys.argv 与 subprocess 共同构成可回归入口。",
+          "js_bridge": "Node 的 `require.main === module` 解决类似入口分离；Python 用 __name__ 守卫和 SystemExit 承载返回码，不能把 Node 的 process.argv[2] 索引规则直接复制。",
+          "examples": [
+            {
+              "language": "python",
+              "code": "def main(argv=None):\n    return 0\n\nif __name__ == '__main__':\n    raise SystemExit(main())\nelse:\n    print('import safe')",
+              "output": "",
+              "explanation": "main 返回 0，但 if __name__ == '__main__' 只在文件被直接执行时调用它，所以导入模块只打印 import safe。删除守卫会让导入产生输出或副作用，库代码就难以复用。",
+              "source_kind": "python",
+              "runnable": true
+            },
+            {
+              "language": "python",
+              "code": "def main(argv=None):\n    return 3\n\nprint(main([]))",
+              "output": "3",
+              "explanation": "subprocess 用当前 Python 执行 -c 'print(3)'，returncode 为 0 且 stdout.strip() 为 3，所以组合输出是 0 3。子进程失败时应同时检查 returncode 和 stderr，不能只看 stdout。",
+              "source_kind": "python",
+              "runnable": true
+            }
+          ],
+          "common_errors": [
+            {
+              "error": "导入计算模块也读取命令参数",
+              "symptom": "导入计算模块也读取命令参数",
+              "cause": "参数解析放在了守卫外，import 会执行",
+              "fix": "把解析和打印放在 __main__ 守卫内",
+              "example": {
+                "code": "args = parser.parse_args()",
+                "symptom": "导入计算模块也读取命令参数",
+                "fix": "把解析和打印放在 __main__ 守卫内"
+              }
+            },
+            {
+              "error": "平方被算成两倍",
+              "symptom": "平方被算成两倍",
+              "cause": "相乘两次同一个数与乘二是不同运算",
+              "fix": "用 n*n 或 n**2，并测试负数",
+              "example": {
+                "code": "def square(n):\n    return n * 2",
+                "symptom": "平方被算成两倍",
+                "fix": "用 n*n 或 n**2，并测试负数"
+              }
+            }
+          ],
+          "guided_practice": {
+            "goal": "同时提供函数接口和终端入口。",
+            "starter": "import argparse\n\ndef square(n):\n    pass\n\nif __name__ == '__main__':\n    # 在这里解析整数参数并调用 square\n    pass\n",
+            "steps": [
+              {
+                "action": "使用输入：python main.py -3",
+                "expected": "9"
+              },
+              {
+                "action": "使用输入：python main.py 0",
+                "expected": "0"
+              }
+            ],
+            "check": "python main.py -3 → 9；import main; main.square(4) → 16。"
+          },
+          "practice": {
+            "kind": "code",
+            "file_name": "main.py",
+            "scenario": "同时提供函数接口和终端入口。",
+            "instructions": "定义 square(n) 返回平方；直接运行 main.py 时接收一个整数位置参数并打印平方。用 __main__ 守卫保护参数解析，import main 不产生输出。",
+            "starter_content": "import argparse\n\ndef square(n):\n    pass\n\nif __name__ == '__main__':\n    # 在这里解析整数参数并调用 square\n    pass\n",
+            "starter_policy": "complete",
+            "expected_behavior": "python main.py -3 → 9；import main; main.square(4) → 16。",
+            "hints": "参数解析只能在直接运行时发生，函数必须始终可导入。",
+            "input_examples": [
+              {
+                "label": "练习输入 1",
+                "value": "python main.py -3",
+                "expected": "9"
+              },
+              {
+                "label": "练习输入 2",
+                "value": "python main.py 0",
+                "expected": "0"
+              }
+            ]
+          },
+          "key_points": [
+            "同时提供函数接口和终端入口。",
+            "参数解析只能在直接运行时发生，函数必须始终可导入。",
+            "python main.py -3 → 9；import main; main.square(4) → 16。"
+          ],
+          "frontend_bridge": "前端经验只作辅助：可执行入口与命令行回归 必须先按 Python 3 的执行、类型和错误规则完成。",
+          "example": {
+            "language": "python",
+            "code": "def main(argv=None):\n    return 0\n\nif __name__ == '__main__':\n    raise SystemExit(main())\nelse:\n    print('import safe')",
+            "output": "",
+            "explanation": "main 返回 0，但 if __name__ == '__main__' 只在文件被直接执行时调用它，所以导入模块只打印 import safe。删除守卫会让导入产生输出或副作用，库代码就难以复用。",
+            "source_kind": "python",
+            "runnable": true
+          },
+          "steps": [
+            "先用第一个输入检查正常结果",
+            "独立补全代码，再检查边界输入",
+            "读懂失败反馈，修改后重新验证"
+          ],
+          "optional": true,
+          "practice_first": {
+            "goal": "定义 square(n) 返回平方；直接运行 main.py 时接收一个整数位置参数并打印平方。用 __main__ 守卫保护参数解析，import main 不产生输出。",
+            "rules": [
+              "__main__ 守卫、sys.argv 与 subprocess 共同构成可回归入口。",
+              "先传一组 argv，再传错误参数；分别观察正常输出、错误输出和退出码。"
+            ],
+            "prerequisites": [
+              "D04-default-keyword",
+              "D07-main",
+              "D06-try-except"
+            ],
+            "cards": [],
             "drills": [
               {
                 "id": "fill-1",

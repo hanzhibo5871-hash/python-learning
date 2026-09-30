@@ -344,6 +344,8 @@ def apply_practice_first(data: dict[str, Any]) -> None:
                 ('D02-bool-none', 0), ('D02-bool-none', 1), ('D03-if', 0), ('D06-try-except', 0),
                 ('D09-entry', 0), ('D10-convert', 0), ('D11-stream', 0),
                 ('D11-stream', 1), ('D11-file', 1), ('D14-service', 1),
+                # Optional drills clone these same demonstration examples.
+                ('D03-delivery', 0), ('D06-parse', 0), ('D09-square-cli', 0),
             }
             if s['practice']['kind'] == 'code':
                 for i, e in enumerate(s['examples']):

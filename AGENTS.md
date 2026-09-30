@@ -4,7 +4,7 @@
 
 ## 事实来源
 
-当前为 schema 3、curriculum 3.0.0、practice_first_revision 1：4 阶段、28 任务、122 小节，39 张前置知识卡和124道补全练习。旧 CLAUDE.md 和 v2 构建脚本不是当前主线。以 README、生成数据和实际测试为准。
+当前为 schema 3、curriculum 3.0.0、practice_first_revision 1：4 阶段、28 任务、146 小节（含 D02–D09 的24节选修加练），39 张前置知识卡和159道补全练习。旧 CLAUDE.md 和 v2 构建脚本不是当前主线。以 README、生成数据和实际测试为准。
 
 ## 构建与测试
 
