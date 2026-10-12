@@ -41,7 +41,7 @@ def _session() -> AiSession:
 
 
 def _ok_response(content: str) -> bytes:
-    return json.dumps({"choices": [{"message": {"content": content}}]}).encode("utf-8")
+    return json.dumps({"choices": [{"finish_reason": "stop", "message": {"role": "assistant", "content": content}}]}).encode("utf-8")
 
 
 def test_chat_uses_official_endpoint_and_model(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -124,7 +124,7 @@ def test_request_rejects_oversized_response_at_read(monkeypatch: pytest.MonkeyPa
             return self._body[:n] if n and n >= 0 else self._body
 
     big = b"x" * (ai.MAX_RESPONSE_BYTES + 100)
-    monkeypatch.setattr(ai.urllib.request, "urlopen", lambda req, timeout=None: FakeResponse(big))
+    monkeypatch.setattr(ai, "_open_request", lambda req, timeout=None: FakeResponse(big))
     with pytest.raises(AiError, match="超长"):
         ai._request("http://x", {"messages": []}, "k")
 
@@ -136,7 +136,7 @@ def test_request_rejects_oversized_http_error_at_read(monkeypatch: pytest.Monkey
         big = b"y" * (ai.MAX_RESPONSE_BYTES + 100)
         raise HTTPError("http://x", 500, "Internal", {}, io.BytesIO(big))
 
-    monkeypatch.setattr(ai.urllib.request, "urlopen", raise_err)
+    monkeypatch.setattr(ai, "_open_request", raise_err)
     with pytest.raises(AiError, match="超长"):
         ai._request("http://x", {"messages": []}, "k")
 

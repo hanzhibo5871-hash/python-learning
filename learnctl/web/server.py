@@ -699,7 +699,10 @@ class LearnctlRequestHandler(BaseHTTPRequestHandler):
         key = key.strip()
         if not 8 <= len(key) <= 512:
             raise UsageError("API Key 长度必须在 8 到 512 之间")
-        self.app_server.ai_session.set_key(key)
+        try:
+            self.app_server.ai_session.set_key(key)
+        except AiError as exc:
+            raise UsageError(str(exc)) from None
         return {"ok": True, "configured": True, "key_source": "session"}
 
     def _ai_test(self) -> dict[str, Any]:

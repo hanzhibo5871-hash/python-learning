@@ -123,7 +123,7 @@ python -m learnctl serve --host 127.0.0.1 --port 8765 --open
 
 ## AI 助教（可选）
 
-AI 助教默认且唯一的 provider 为 DeepSeek 官方 API（`https://api.deepseek.com`，`deepseek-chat`，Bearer 鉴权，`urllib` 实现，无 SDK）。无 Key 也能完成全部固定课程与本地验证。
+AI 助教默认且唯一的 provider 为 DeepSeek 官方 API（`https://api.deepseek.com`，`deepseek-flash`，显式关闭思考模式，Bearer 鉴权，`urllib` 实现，无 SDK）。无 Key 也能完成全部固定课程与本地验证。
 
 - Key 优先保存在本次服务内存，其次读取环境变量 `DEEPSEEK_API_KEY`；绝不写磁盘、不进日志。
 - `GET /api/ai/status` 不返回 Key；前端用 password 输入框。
@@ -133,6 +133,8 @@ AI 助教默认且唯一的 provider 为 DeepSeek 官方 API（`https://api.deep
 - 当前课时助教默认简洁中文，先回答问题，必要时才给短代码；明确要求详细时再展开。课程目标、实践规则、前置卡片和起始代码由服务端按当前小节读取，不采信客户端伪造的课程正文。
 - 提问会携带当前编辑器最多 8000 字符、本课时最近验证摘要，以及最近 3 轮（6 条）成功对话。历史按完整轮次保留，总计最多 12000 字符；不会读取其他文件或发送隐藏参考答案。
 - 对话仅存在当前浏览器内存，按任务和小节隔离；刷新页面或清空对话可重新开始。失败问题保留在输入框供重试，不加入历史；重复点击不会重复请求，切换课时或清空后迟到的回答不会串入新会话。
+- 旧 `deepseek-chat` 已由官方公告退役；当前助教使用 `deepseek-flash`，文本/结构化输出分别最多 1024/4096 token。只接收正常结束的非空回答；HTTP、网络、超时或截断错误不自动重试。
+- 无密钥测试通过不等于真实 API 可用。参见 [Windows 真实 API 最小验收与审计说明](docs/deepseek-api-acceptance.md)，覆盖连接、问答、错误密钥与恢复，并说明 60 秒阻塞超时的边界。
 
 
 ## 数据与状态

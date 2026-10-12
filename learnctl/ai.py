@@ -2,7 +2,9 @@ from __future__ import annotations
 
 import json
 import os
+import ssl
 import urllib.request
+from http.client import HTTPException
 from typing import Any
 from urllib.error import HTTPError, URLError
 
@@ -10,8 +12,10 @@ from .errors import UsageError
 
 BASE_URL = "https://api.deepseek.com"
 CHAT_PATH = "/chat/completions"
-MODEL = "deepseek-chat"
+MODEL = "deepseek-flash"
 TIMEOUT = 60
+TEXT_MAX_TOKENS = 1024
+JSON_MAX_TOKENS = 4096
 MAX_RESPONSE_BYTES = 64_000
 _READ_LIMIT = MAX_RESPONSE_BYTES + 1
 
@@ -39,7 +43,7 @@ class AiSession:
         self._key: str | None = None
 
     def set_key(self, key: str) -> None:
-        self._key = key
+        self._key = _validate_key(key)
 
     def clear_key(self) -> None:
         self._key = None
@@ -51,8 +55,30 @@ class AiSession:
         return bool(self.get_key())
 
 
+def _validate_key(key: str) -> str:
+    if not isinstance(key, str):
+        raise AiError("DeepSeek API Key 必须是文本")
+    key = key.strip()
+    if not key or len(key) > 512 or any(not 33 <= ord(char) <= 126 for char in key):
+        raise AiError("DeepSeek API Key 格式无效：请粘贴不含空白的 ASCII 密钥")
+    return key
+
+
+class _NoRedirect(urllib.request.HTTPRedirectHandler):
+    def redirect_request(self, req, fp, code, msg, headers, newurl):
+        # urllib 的默认重定向可能把 Authorization 转发到另一个主机。
+        fp.close()
+        raise AiError("DeepSeek 返回重定向，已拒绝转发密钥；请检查网络或代理")
+
+
+def _open_request(req: urllib.request.Request, timeout: int):
+    # 保留系统代理与默认 TLS 证书校验，不接受重定向或跳过证书校验。
+    return urllib.request.build_opener(_NoRedirect()).open(req, timeout=timeout)
+
+
 def _request(url: str, payload: dict[str, Any], api_key: str, timeout: int = TIMEOUT) -> tuple[int, bytes]:
     """POST 请求，最多读取 MAX_RESPONSE_BYTES+1 字节；超出立即 AiError，绝不先读入无限响应。"""
+    api_key = _validate_key(api_key)
     body = json.dumps(payload, ensure_ascii=False).encode("utf-8")
     req = urllib.request.Request(
         url,
@@ -61,14 +87,27 @@ def _request(url: str, payload: dict[str, Any], api_key: str, timeout: int = TIM
         method="POST",
     )
     try:
-        with urllib.request.urlopen(req, timeout=timeout) as resp:
+        try:
+            response = _open_request(req, timeout)
+        except HTTPError as exc:
+            response = exc
+        # 错误响应也必须关闭；读取阶段的超时/断流与连接阶段统一处理。
+        with response as resp:
             raw = resp.read(_READ_LIMIT)
             status = resp.status
-    except HTTPError as exc:
-        raw = exc.read(_READ_LIMIT)
-        status = exc.code
+    except TimeoutError:
+        raise AiError("DeepSeek 请求超时：请检查网络，稍后手动重试") from None
     except URLError as exc:
-        raise AiError(f"网络错误：{exc.reason}") from exc
+        if isinstance(exc.reason, TimeoutError):
+            raise AiError("DeepSeek 请求超时：请检查网络，稍后手动重试") from None
+        if isinstance(exc.reason, ssl.SSLError):
+            raise AiError("DeepSeek TLS 连接失败：请检查系统时间、证书或代理") from None
+        # 不回传原始 reason：代理 URL/第三方异常文本可能包含凭据。
+        raise AiError("DeepSeek 网络错误：请检查网络、DNS 或代理后手动重试") from None
+    except ssl.SSLError:
+        raise AiError("DeepSeek TLS 连接失败：请检查系统时间、证书或代理") from None
+    except (OSError, HTTPException):
+        raise AiError("DeepSeek 网络错误：连接中断或响应不完整，请手动重试") from None
     if len(raw) > MAX_RESPONSE_BYTES:
         raise AiError("DeepSeek 响应超长，已拒绝解析")
     return status, raw
@@ -88,6 +127,8 @@ def chat(session: AiSession, messages: list[dict[str, str]], *, temperature: flo
         "messages": messages,
         "stream": False,
         "temperature": temperature,
+        "thinking": {"type": "disabled"},
+        "max_tokens": JSON_MAX_TOKENS if json_output else TEXT_MAX_TOKENS,
     }
     if json_output:
         payload["response_format"] = {"type": "json_object"}
@@ -95,17 +136,44 @@ def chat(session: AiSession, messages: list[dict[str, str]], *, temperature: flo
     if len(raw) > MAX_RESPONSE_BYTES:
         raise AiError("DeepSeek 响应超长，已拒绝解析")
     if status != 200:
-        raise AiError(f"DeepSeek API 错误：HTTP {status}")
+        hint = {
+            400: "请求格式无效，请检查客户端版本",
+            401: "鉴权失败，请重新保存有效的 API Key",
+            402: "余额不足，请检查 DeepSeek API 账户余额",
+            404: "接口或模型不可用，请检查客户端版本与官方模型文档",
+            422: "请求参数无效，请检查客户端版本",
+            429: "请求过快，请稍后手动重试",
+            500: "服务端错误，请稍后手动重试",
+            503: "服务繁忙，请稍后手动重试",
+        }.get(status, "请检查网络或官方服务状态后手动重试")
+        # 不展示上游响应体，避免服务器/代理回显密钥或学习内容。
+        raise AiError(f"DeepSeek API 错误：HTTP {status}，{hint}")
     try:
         data = json.loads(raw.decode("utf-8"))
     except (UnicodeError, json.JSONDecodeError) as exc:
         raise AiError("DeepSeek 响应不是合法 JSON") from exc
     try:
-        content = data["choices"][0]["message"]["content"]
+        choice = data["choices"][0]
+        message = choice["message"]
+        content = message["content"]
     except (KeyError, IndexError, TypeError) as exc:
         raise AiError("DeepSeek 响应缺少 content 字段") from exc
     if not isinstance(content, str):
         raise AiError("DeepSeek 响应 content 不是字符串")
+    if not isinstance(choice, dict) or not isinstance(message, dict) or message.get("role") != "assistant":
+        raise AiError("DeepSeek 响应 message 格式无效")
+    reason = choice.get("finish_reason")
+    if reason != "stop":
+        hint = {
+            "length": "回答被截断，请缩短问题或要求更短回答后手动重试",
+            "content_filter": "回答被内容过滤，请调整问题",
+            "tool_calls": "返回了当前助教不支持的工具调用",
+            "insufficient_system_resource": "生成因服务资源不足而中断，请稍后手动重试",
+            "aborted": "生成被中断，请稍后手动重试",
+        }.get(reason if isinstance(reason, str) else "", "缺少或无效的 finish_reason")
+        raise AiError(f"DeepSeek 响应未正常完成：{hint}")
+    if not content.strip():
+        raise AiError("DeepSeek 回答为空")
     return content
 
 
@@ -207,7 +275,7 @@ def build_tutor_messages(
             raise AiError("history 每项必须是对象")
         role = item.get("role")
         content = item.get("content")
-        if role not in {"user", "assistant"}:
+        if not isinstance(role, str) or role not in {"user", "assistant"}:
             raise AiError("history role 只能是 user 或 assistant")
         if not isinstance(content, str) or not content.strip():
             raise AiError("history content 必须是非空字符串")

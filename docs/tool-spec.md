@@ -144,9 +144,11 @@ python -m learnctl serve --host 127.0.0.1 --port 8765 [--open]
 
 ## 7. DeepSeek AI 助教边界
 
-- 官方固定：`https://api.deepseek.com`，`POST /chat/completions`，`model=deepseek-chat`，Bearer 鉴权；使用 `urllib.request`，不引入 SDK。
+- 官方固定：`https://api.deepseek.com`，`POST /chat/completions`，`model=deepseek-flash`，`thinking.type=disabled`，Bearer 鉴权；使用 `urllib.request`，不引入 SDK。
 - Key 优先服务器内存 session key，其次环境变量 `DEEPSEEK_API_KEY`；无 Key / 401 / 429 / 网络 / 超时 / 非 JSON / schema 错误都明确报错，无 fallback、不切换模型。
 - Key 绝不写入磁盘 / progress / 日志；`GET /api/ai/status` 不返回 Key；前端用 password 输入框，仅保存到本次服务。
 - 生成/评审提示词必须带当前小节 `catalog_refs` 的真实标题、`supplemental` 标记、目标、公开要求与完成状态；明确声明“索引仅代表标题知识范围，不代表视频正文”。
 - 评审只发送当前可见练习内容、实践要求、相关索引标题与最近本地验证摘要（限长）；禁止发送其他文件、笔记、历史与环境变量。
 - AI 只指导，不完成小节、不改代码；本地 validator 通过是完成小节的唯一依据。
+
+助教传输/错误/上下文审计、无密钥测试边界与 Windows 真实 API 验收步骤见 [DeepSeek 验收说明](deepseek-api-acceptance.md)。60 秒为底层阻塞超时，不是严格的整次请求墙钟时限。

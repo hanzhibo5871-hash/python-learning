@@ -23,12 +23,25 @@ def assert_tutor_chat(page, expect, server):
         if fail_next:
             fail_next = False
             return 429, b'{"error":{"message":"test rate limit"}}'
-        return 200, json.dumps({'choices': [{'message': {'content': f'简短答复 {number}'}}]}).encode()
+        return 200, json.dumps({'choices': [{'finish_reason': 'stop', 'message': {'role': 'assistant', 'content': f'简短答复 {number}'}}]}).encode()
 
     server.ai_session.set_key('browser-test-only')
     with patch.object(ai, '_request', provider):
         try:
             page.locator('#ai-tutor-trigger').click()
+            # The local API deliberately returns HTTP 200 with ok:false for
+            # provider errors. All AI actions must show failure, never success.
+            for action in ('testAi', 'generateVariation', 'reviewSubmission'):
+                fail_next = True
+                before = len(calls)
+                page.evaluate(f'() => {action}()')
+                expect(page.locator('#ai-result')).to_contain_text('HTTP 429')
+                assert page.locator('#ai-result .passed').count() == 0
+                assert len(calls) == before + 1
+                assert page.evaluate('() => state.variationId') is None
+            page.evaluate('() => testAi()')
+            expect(page.locator('#ai-result')).to_contain_text('连接成功')
+            calls.clear()
             for i in range(4):
                 page.locator('#ai-chat-input').fill(f'问题 {i}')
                 page.locator('#ai-chat-send').click()
