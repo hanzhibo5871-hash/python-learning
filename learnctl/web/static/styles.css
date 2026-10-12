@@ -272,7 +272,7 @@ th, td { border: 1px solid var(--line); padding: 6px 8px; text-align: left; }
 th { background: var(--code-bg); }
 
 /* Practice-first: output is adjacent to code; long theory remains opt-in. */
-.brief-rules { padding: 12px 0; }
+.brief-rules { padding: 12px 0; overflow-wrap:anywhere; }
 .brief-rules .small { white-space: pre-line; }
 .practice-grid { display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1fr); gap:20px; align-items:start; }
 .practice-writing, .practice-output { min-width:0; }
@@ -280,7 +280,7 @@ th { background: var(--code-bg); }
 .practice-writing textarea { min-height:300px; font-size:15px; line-height:1.65; tab-size:4; }
 .experiment-grid { display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1fr); gap:16px; }
 .experiment-editor { display:block; width:100%; min-height:170px; font-size:14px; line-height:1.6; tab-size:4; }
-.mini-example { margin:12px 0; padding:12px; border:1px solid #dce2e8; border-radius:8px; }
+.mini-example { overflow-wrap:anywhere; margin:12px 0; padding:12px; border:1px solid #dce2e8; border-radius:8px; }
 summary { cursor:pointer; line-height:1.7; }
 .long-reference, .examples-reference { margin-top:20px; padding:12px; border-top:1px solid #dce2e8; }
 .drill-section { margin-top:22px; }
@@ -296,3 +296,9 @@ button:focus-visible, summary:focus-visible, textarea:focus-visible { outline:3p
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { transition: none !important; scroll-behavior: auto !important; }
 }
+
+/* Task-specific analysis uses bounded, wrap-safe evidence on mobile. */
+.ai-grading { overflow-wrap: anywhere; }
+.ai-grading li { margin: .65rem 0; }
+.grading-evidence pre { white-space: pre-wrap; overflow-wrap: anywhere; max-height: 10rem; overflow: auto; }
+.grading-issue { margin-top: 1rem; border-top: 1px solid var(--border); }

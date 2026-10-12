@@ -2805,7 +2805,7 @@ PROJECT_TEACHING.update({
 
 
 SECTION_EXAMPLES: dict[str, list[tuple[str, str]]] = {
-    "D08-pathlib": [("from pathlib import Path\nroot = Path('workspace')\nfile = root / 'notes.txt'\nprint(file.name, file.suffix)", "notes.txt .txt"), ("from pathlib import Path\nroot = Path('tmp')\nroot.mkdir()\n(root / 'main.py').write_text('x = 1', encoding='utf-8')\n(root / 'readme.txt').write_text('docs', encoding='utf-8')\nprint([p.name for p in sorted(root.glob('*.py'))])", "['main.py']")],
+    "D08-pathlib": [("from pathlib import Path\nroot = Path('workspace')\nfile = root / 'notes.txt'\nprint(file.name, file.suffix)", "notes.txt .txt"), ("from pathlib import Path\nroot = Path('tmp')\nroot.mkdir(exist_ok=True)\n(root / 'main.py').write_text('x = 1', encoding='utf-8')\n(root / 'readme.txt').write_text('docs', encoding='utf-8')\nprint([p.name for p in sorted(root.glob('*.py'))])", "['main.py']")],
     "D08-utf8": [("from pathlib import Path\np = Path('note.txt')\np.write_text('你好 🌱', encoding='utf-8')\nprint(p.read_text(encoding='utf-8'))", "你好 🌱"), ("from pathlib import Path\np = Path('note.txt')\np.write_text('第一行\\n第二行', encoding='utf-8')\nprint(len(p.read_text(encoding='utf-8').splitlines()))", "2")],
     "D08-json-read": [("import json\ndata = json.loads('{\"title\": \"买书\", \"done\": false}')\nprint(data['title'], data['done'])", "买书 False"), ("import json\ntry:\n    json.loads('{bad}')\nexcept json.JSONDecodeError:\n    print('JSON 无法解析')", "JSON 无法解析")],
     "D08-json-report": [("import json\nitems = [{'done': True}, {'done': False}, {'done': False}]\nreport = {'done': sum(item['done'] for item in items), 'open': sum(not item['done'] for item in items)}\nprint(json.dumps(report, sort_keys=True))", '{"done": 1, "open": 2}'), ("import json\nreport = {'done': 0, 'open': 0}\nprint(json.dumps(report, ensure_ascii=False, indent=2))", '{\n  "done": 0,\n  "open": 0\n}')],
@@ -3162,7 +3162,7 @@ SECTION_EXAMPLE_NOTES: dict[str, list[str]] = {
 DEV_EXAMPLE_EXPLANATIONS: dict[str, list[str]] = {
     "D08-pathlib": [
         "Path('workspace') / 'notes.txt' 组合出一个路径对象，name 和 suffix 分别读取文件名与扩展名，所以输出 notes.txt .txt。相对路径仍受 cwd 影响；换到不存在的根目录时这里只是描述路径，不代表文件已经存在。",
-        "root.glob('*.py') 只匹配 root 这一层的 Python 文件，列表推导式取 name 后排序，唯一结果是 main.py。没有匹配文件时结果应是 []，目录名也不应被误当成可读文件。",
+        "root.mkdir(exist_ok=True) 允许 tmp 目录已经存在，便于反复修改试跑。root.glob('*.py') 只匹配 root 这一层的 Python 文件，列表推导式取 name 后排序，唯一结果是 main.py。没有匹配文件时结果应是 []，目录名也不应被误当成可读文件。",
     ],
     "D08-utf8": [
         "write_text 和 read_text 都显式使用 encoding='utf-8'，因此中文和 🌱 写入后可以原样读回并输出。若只省略一端的编码，结果可能依赖系统默认值；本例验证的是文本往返，不是字节长度。",
@@ -3735,6 +3735,11 @@ def enrich_d01(section: dict[str, Any]) -> dict[str, Any]:
 
 def build() -> None:
     data = json.loads(DATA.read_text(encoding="utf-8"))
+    # Additive D29 is authored separately and rebuilt after the stable D01-D28
+    # overlay. Do not treat its previous generated copy as an input lesson.
+    data['tasks'] = [task for task in data['tasks'] if task['id'] != 'D29']
+    for stage in data['stages']:
+        stage['task_ids'] = [tid for tid in stage['task_ids'] if tid != 'D29']
     old_tasks = {task["id"]: task for task in data["tasks"]}
     core = core_specs()
     common = common_specs()
@@ -3799,7 +3804,22 @@ def build() -> None:
     data["stages"][3].update({"title": "AI 应用（D24 后）", "prerequisites": ["S3"]})
     from practice_first_content import apply_practice_first
     apply_practice_first(data)
-    DATA.write_text(json.dumps(data, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    # 先生成补全题，再更新公开教学示例，避免注释改变已有作业与练习内容。
+    teaching_comments = json.loads((ROOT / "scripts" / "teaching_comments.json").read_text(encoding="utf-8"))
+    lesson_by_id = {section["id"]: section for task in data["tasks"] for section in task["lesson"]}
+    for teaching in teaching_comments:
+        section = lesson_by_id[teaching["id"]]
+        section["explanation"] = teaching["explanation"]
+        section["examples"] = teaching["examples"]
+        section["example"] = section["examples"][0]
+        section["practice_first"]["cards"] = teaching["practice_first"]["cards"]
+    # Publish only a schema-valid, complete generation; preserve the current
+    # course on failure and replace it atomically for active local readers.
+    from copy import deepcopy
+    from learnctl.curriculum import validate_curriculum
+    from learnctl.progress import atomic_write_json
+    validate_curriculum(deepcopy(data))
+    atomic_write_json(DATA, data)
 
 
 if __name__ == "__main__":

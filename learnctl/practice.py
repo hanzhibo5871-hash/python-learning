@@ -427,25 +427,25 @@ _register("D20-init", {
         ("重复 init 安全", "M.init_db(conn) is None"),
     ],
 })
-_D20_CRUD_SETUP = (
-    "import sqlite3, os\n"
-    "DB = '_check.db'\n"
-    "if os.path.exists(DB): os.remove(DB)\n"
-    "conn = sqlite3.connect(DB)\n"
-    "conn.execute('CREATE TABLE IF NOT EXISTS tasks (id INTEGER PRIMARY KEY AUTOINCREMENT, title TEXT NOT NULL, done INTEGER NOT NULL DEFAULT 0)')\n"
-    "conn.commit()\n"
-    "def _table_ok(c):\n"
-    "    cols = [r[1] for r in c.execute('PRAGMA table_info(tasks)').fetchall()]\n"
-    "    return set(cols) >= {'id', 'title', 'done'}\n"
-    "def _complete_ok():\n"
-    "    tid = M.list_tasks(conn)[0]['id']\n"
-    "    M.complete_task(conn, tid)\n"
-    "    return M.list_tasks(conn)[0]['done'] is True\n"
-    "def _delete_ok():\n"
-    "    before = len(M.list_tasks(conn))\n"
-    "    M.delete_task(conn, M.list_tasks(conn)[0]['id'])\n"
-    "    return len(M.list_tasks(conn)) == before - 1\n"
-)
+_D20_CRUD_SETUP = r'''import sqlite3, os
+DB = '_check.db'
+if os.path.exists(DB): os.remove(DB)
+conn = M.create_connection(DB)
+M.init_db(conn)
+conn.execute('CREATE TABLE IF NOT EXISTS tasks (id INTEGER PRIMARY KEY AUTOINCREMENT, title TEXT NOT NULL, done INTEGER NOT NULL DEFAULT 0)')
+conn.commit()
+def _table_ok(c):
+    cols = [r[1] for r in c.execute('PRAGMA table_info(tasks)').fetchall()]
+    return set(cols) >= {'id', 'title', 'done'}
+def _complete_ok():
+    tid = M.list_tasks(conn)[0]['id']
+    M.complete_task(conn, tid)
+    return M.list_tasks(conn)[0]['done'] is True
+def _delete_ok():
+    before = len(M.list_tasks(conn))
+    M.delete_task(conn, M.list_tasks(conn)[0]['id'])
+    return len(M.list_tasks(conn)) == before - 1
+'''
 _register("D20-crud", {
     "file": "taskproj/db.py", "module": "taskproj.db", "scaffold": _TASKPROJ_PACKAGE,
     "setup": _D20_CRUD_SETUP,
@@ -823,48 +823,8 @@ def _v_d25_errors(code: str, ctx: PracticeContext, section: dict[str, Any]) -> d
     return _run_with_server(_DeepSeekMockHandler, harness, ctx)
 
 
-_AI_REFERENCE_FIXTURES: list[tuple[str, str]] = [
-    (
-        "deepseek_client.py",
-        "import json\n"
-        "import urllib.request\n"
-        "from urllib.error import HTTPError, URLError\n"
-        "\n"
-        "class ApiError(RuntimeError):\n"
-        "    def __init__(self, message, status_code=None):\n"
-        "        super().__init__(message)\n"
-        "        self.status_code = status_code\n"
-        "\n"
-        "def call_chat(api_key, messages, *, base_url='https://api.deepseek.com'):\n"
-        "    body = json.dumps({'model': 'deepseek-chat', 'messages': messages, 'stream': False}).encode('utf-8')\n"
-        "    req = urllib.request.Request(\n"
-        "        f'{base_url}/chat/completions', data=body,\n"
-        "        headers={'Authorization': f'Bearer {api_key}', 'Content-Type': 'application/json'}, method='POST')\n"
-        "    try:\n"
-        "        with urllib.request.urlopen(req, timeout=60) as r:\n"
-        "            return json.loads(r.read())['choices'][0]['message']['content']\n"
-        "    except HTTPError as e:\n"
-        "        raise ApiError('API 错误', e.code)\n"
-        "    except URLError as e:\n"
-        "        raise ApiError('网络错误')\n",
-    ),
-    (
-        "prompt.py",
-        "def build_prompt(catalog_titles, goal, instructions, completed):\n"
-        "    scope = '；'.join(catalog_titles)\n"
-        "    return (f'知识范围标题：{scope}\\n'\n"
-        "            f'索引仅代表标题知识范围，不代表视频正文。\\n'\n"
-        "            f'目标：{goal}\\n要求：{instructions}\\n已完成：{completed}')\n"
-        "\n"
-        "def parse_ai_json(text):\n"
-        "    import json\n"
-        "    start = text.find('{')\n"
-        "    end = text.rfind('}')\n"
-        "    if start == -1 or end == -1 or end <= start:\n"
-        "        raise ValueError('没有 JSON')\n"
-        "    return json.loads(text[start:end + 1])\n",
-    ),
-]
+from .ai_practice_fixtures import ai_reference_fixtures
+_AI_REFERENCE_FIXTURES = ai_reference_fixtures()
 
 
 def _v_d26_prompt(code: str, ctx: PracticeContext, section: dict[str, Any]) -> dict[str, Any]:
@@ -1525,7 +1485,7 @@ def find_section(curriculum: dict[str, Any], task_id: str, section_id: str) -> t
     raise UsageError(f"课程小节 ID 不存在：{section_id}")
 
 
-def validate_code(section: dict[str, Any], submission: str, project_root: Path) -> dict[str, Any]:
+def validate_code(section: dict[str, Any], submission: str, project_root: Path, *, support_files: dict[str, str] | None = None) -> dict[str, Any]:
     practice = section["practice"]
     if practice.get("kind") != "code":
         raise DataError("validate_code 只接受 code 实践")
@@ -1551,6 +1511,10 @@ def validate_code(section: dict[str, Any], submission: str, project_root: Path) 
     with PracticeContext(project_root) as ctx:
         ctx.ws_deps = {rel for rel, _ in ws_scaffolds}
         for rel, content in ws_scaffolds:
+            ctx.write(rel, content)
+        # 编辑器课程已准备的教学文件使用磁盘快照，不能被标准夹具覆盖。
+        for rel, content in (support_files or {}).items():
+            ctx.ws_deps.add(rel)
             ctx.write(rel, content)
         return validator(submission, ctx, section)
 
@@ -1639,7 +1603,12 @@ def validate_command(section: dict[str, Any], submission: str) -> dict[str, Any]
         {"name": "包含运行测试命令", "passed": "pytest" in raw, "detail": ""},
         {"name": "包含启动网页命令", "passed": "uvicorn" in raw and "taskproj.api:app" in raw, "detail": ""},
     ]
-    positions = [raw.find(token) for token in ("venv", "pip install", "pytest", "uvicorn")]
+    tokens = ("venv", "pip install", "pytest", "uvicorn")
+    if section["id"] == "D24-rebuild":
+        checks = checks[:3]
+        checks[1]["passed"] = checks[1]["passed"] and ".[dev]" in raw
+        tokens = tokens[:3]
+    positions = [raw.find(token) for token in tokens]
     ordered = all(pos >= 0 for pos in positions) and positions == sorted(positions)
     checks.append({"name": "命令按顺序书写", "passed": ordered, "detail": f"位置 {positions}"})
     passed = all(item["passed"] for item in checks)
@@ -1805,14 +1774,14 @@ def _read_workspace_deps(section: dict[str, Any], project_root: Path) -> tuple[l
     return scaffolds, missing
 
 
-def run_validation(curriculum: dict[str, Any], task_id: str, section_id: str, submission: str, project_root: Path) -> dict[str, Any]:
+def run_validation(curriculum: dict[str, Any], task_id: str, section_id: str, submission: str, project_root: Path, *, write_artifact: bool = True, support_files: dict[str, str] | None = None) -> dict[str, Any]:
     _, section = find_section(curriculum, task_id, section_id)
     practice = section["practice"]
     kind = practice["kind"]
 
     result: dict[str, Any]
     if kind == "code":
-        result = validate_code(section, submission, project_root)
+        result = validate_code(section, submission, project_root, support_files=support_files)
     elif kind == "json":
         result = validate_json(section, submission)
     elif kind == "text":
@@ -1830,7 +1799,7 @@ def run_validation(curriculum: dict[str, Any], task_id: str, section_id: str, su
         raise DataError(f"未知实践类型 {kind!r}")
 
     project_file = practice.get("project_file")
-    if result.get("passed") and isinstance(project_file, str) and project_file:
+    if write_artifact and result.get("passed") and isinstance(project_file, str) and project_file:
         _write_project_artifact(project_file, submission, project_root)
 
     if not result.get("passed"):
@@ -1947,43 +1916,43 @@ os.environ["TASKPROJ_DB"] = os.path.join(os.getcwd(), "_accept_api.db")
 try:
     from fastapi.testclient import TestClient
     from taskproj.api import app
-    client = TestClient(app)
-    r = client.get("/health")
-    _check("GET /health 200", r.status_code == 200, "status={}".format(r.status_code))
-    r = client.get("/")
-    page = r.text or ""
-    _check("GET / 200", r.status_code == 200, "status={}".format(r.status_code))
-    _check("页面含 fetch(/api/tasks)", "fetch(" in page and "/api/tasks" in page, "")
-    _check(
-        "页面含任务 UI 标志",
-        any(mark in page for mark in ("<input", "<button", "createElement", "innerHTML")),
-        "",
-    )
-    r = client.get("/api/tasks")
-    _check("GET /api/tasks 200", r.status_code == 200, "status={}".format(r.status_code))
-    r = client.post("/api/tasks", json={"title": "验收任务"})
-    tid = None
-    if r.status_code in (200, 201):
-        try:
-            tid = r.json().get("id")
-        except Exception:
-            tid = None
-    _check(
-        "POST /api/tasks 新建",
-        r.status_code in (200, 201) and isinstance(tid, int) and tid > 0,
-        "status={} body={!r}".format(r.status_code, (r.text or "")[:120]),
-    )
-    if isinstance(tid, int):
-        r = client.patch("/api/tasks/{}/done".format(tid))
-        _check("PATCH 完成 200", r.status_code == 200, "status={}".format(r.status_code))
-        r = client.delete("/api/tasks/{}".format(tid))
-        _check("DELETE 删除 200", r.status_code == 200, "status={}".format(r.status_code))
-    r = client.patch("/api/tasks/999999/done")
-    _check("PATCH 不存在任务 404", r.status_code == 404, "status={}".format(r.status_code))
-    r = client.delete("/api/tasks/999999")
-    _check("DELETE 不存在任务 404", r.status_code == 404, "status={}".format(r.status_code))
-    r = client.post("/api/tasks", json={"title": ""})
-    _check("POST 空标题 422", r.status_code == 422, "status={}".format(r.status_code))
+    with TestClient(app) as client:
+        r = client.get("/health")
+        _check("GET /health 200", r.status_code == 200, "status={}".format(r.status_code))
+        r = client.get("/")
+        page = r.text or ""
+        _check("GET / 200", r.status_code == 200, "status={}".format(r.status_code))
+        _check("页面含 fetch(/api/tasks)", "fetch(" in page and "/api/tasks" in page, "")
+        _check(
+            "页面含任务 UI 标志",
+            any(mark in page for mark in ("<input", "<button", "createElement", "innerHTML")),
+            "",
+        )
+        r = client.get("/api/tasks")
+        _check("GET /api/tasks 200", r.status_code == 200, "status={}".format(r.status_code))
+        r = client.post("/api/tasks", json={"title": "验收任务"})
+        tid = None
+        if r.status_code == 201:
+            try:
+                tid = r.json().get("id")
+            except Exception:
+                tid = None
+        _check(
+            "POST /api/tasks 新建",
+            r.status_code == 201 and isinstance(tid, int) and tid > 0,
+            "status={} body={!r}".format(r.status_code, (r.text or "")[:120]),
+        )
+        if isinstance(tid, int):
+            r = client.patch("/api/tasks/{}/done".format(tid))
+            _check("PATCH 完成 200", r.status_code == 200, "status={}".format(r.status_code))
+            r = client.delete("/api/tasks/{}".format(tid))
+            _check("DELETE 删除 200", r.status_code == 200, "status={}".format(r.status_code))
+        r = client.patch("/api/tasks/999999/done")
+        _check("PATCH 不存在任务 404", r.status_code == 404, "status={}".format(r.status_code))
+        r = client.delete("/api/tasks/999999")
+        _check("DELETE 不存在任务 404", r.status_code == 404, "status={}".format(r.status_code))
+        r = client.post("/api/tasks", json={"title": ""})
+        _check("POST 空标题 422", r.status_code == 422, "status={}".format(r.status_code))
 except Exception as exc:
     _check("FastAPI 验收异常", False, "{}: {}".format(type(exc).__name__, exc))
 with open("_result.json", "w", encoding="utf-8") as f:

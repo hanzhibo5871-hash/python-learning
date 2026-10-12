@@ -1,0 +1,118 @@
+{
+  "provenance": {
+    "synthetic_submission": true,
+    "normal_production_prompt": true,
+    "received_validation_revision": 2,
+    "replay_only": true
+  },
+  "submission": "def rectangle_area(width, height):\n    width + height\n",
+  "local_result": {
+    "passed": false,
+    "exit_code": 0,
+    "stdout": "",
+    "errors": [],
+    "checks": [
+      {
+        "name": "rectangle_area(3,4)",
+        "input": "rectangle_area(3,4)",
+        "expected": "12",
+        "actual": "None",
+        "passed": false,
+        "detail": "对照输入、预期结果和实际结果检查本节实现。"
+      },
+      {
+        "name": "rectangle_area(0,4)",
+        "input": "rectangle_area(0,4)",
+        "expected": "0",
+        "actual": "None",
+        "passed": false,
+        "detail": "对照输入、预期结果和实际结果检查本节实现。"
+      },
+      {
+        "name": "rectangle_area(2.5,4)",
+        "input": "rectangle_area(2.5,4)",
+        "expected": "10.0",
+        "actual": "None",
+        "passed": false,
+        "detail": "对照输入、预期结果和实际结果检查本节实现。"
+      }
+    ],
+    "cases": [
+      {
+        "name": "rectangle_area(3,4)",
+        "input": "rectangle_area(3,4)",
+        "expected": "12",
+        "actual": "None",
+        "passed": false,
+        "detail": "对照输入、预期结果和实际结果检查本节实现。"
+      },
+      {
+        "name": "rectangle_area(0,4)",
+        "input": "rectangle_area(0,4)",
+        "expected": "0",
+        "actual": "None",
+        "passed": false,
+        "detail": "对照输入、预期结果和实际结果检查本节实现。"
+      },
+      {
+        "name": "rectangle_area(2.5,4)",
+        "input": "rectangle_area(2.5,4)",
+        "expected": "10.0",
+        "actual": "None",
+        "passed": false,
+        "detail": "对照输入、预期结果和实际结果检查本节实现。"
+      }
+    ]
+  },
+  "analysis": {
+    "judgement": "needs_work",
+    "requirements": [
+      {
+        "id": "r1",
+        "requirement": "定义名为 rectangle_area 的函数，接收 width 与 height 两个参数，并返回两数相乘的结果。",
+        "status": "unmet",
+        "explanation": "提交中函数体只写了加法表达式，没有把乘积交给调用方，因此调用得到 None；运行证据 checks1、checks2、checks3 的 actual 均为 None，与预期 12、0、10.0 不符。",
+        "evidence": [
+          "submission:1",
+          "submission:2",
+          "checks1",
+          "checks2"
+        ]
+      },
+      {
+        "id": "r2",
+        "requirement": "第一轮只处理非负数字输入，不要求类型判断或抛异常。",
+        "status": "met",
+        "explanation": "提交没有加入类型判断或异常处理，符合本轮不要求校验的边界；但该要求只是范围约束，不能弥补 r1 未返回结果。",
+        "evidence": [
+          "submission:1",
+          "submission:2"
+        ]
+      }
+    ],
+    "issues": [
+      {
+        "requirement_ids": [
+          "r1"
+        ],
+        "cause": "函数体中的表达式只做了加法运算，没有使用 return 语句把乘积结果交给调用方，所以函数默认返回 None。",
+        "evidence": [
+          "submission:2",
+          "checks1",
+          "checks2",
+          "checks3"
+        ],
+        "hints": [
+          "调用函数后拿到的结果是什么？这个结果和函数体里最后一行表达式有关系吗？",
+          "如果函数体只计算但不把结果交出去，调用方还能得到这个结果吗？",
+          "要让 rectangle_area(3,4) 得到 12，函数体里缺少哪个关键字或语句？"
+        ]
+      }
+    ],
+    "limitations": [
+      "本地运行 passed 为 false，不能判定通过。",
+      "提交内容完整，未截断，可进行代码复查。",
+      "缺少对非数字输入的测试，但本轮不要求类型判断。"
+    ]
+  }
+}

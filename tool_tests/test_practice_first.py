@@ -18,10 +18,10 @@ CARDS = [(s['id'], i, c) for s in SECTIONS.values() for i,c in enumerate(s['prac
 DRILLS = [(s['id'], i, c) for s in SECTIONS.values() for i,c in enumerate(s['practice_first']['drills'])]
 
 
-def test_all_28_tasks_have_short_practice_and_safe_prerequisites():
+def test_all_tasks_have_short_practice_and_safe_prerequisites():
     r = validate_curriculum(copy.deepcopy(DATA))
-    assert len(r['tasks']) == 28
-    assert len(SECTIONS) == 146
+    assert len(r['tasks']) == 29
+    assert len(SECTIONS) == 149
     assert len(DRILLS) > 100
     for s in SECTIONS.values():
         brief=s['practice_first']

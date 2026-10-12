@@ -1,0 +1,556 @@
+{
+  "id": "D29",
+  "stage_id": "S4",
+  "title": "受限Agent与FDE交付",
+  "prerequisites": [
+    "D28"
+  ],
+  "learning_goal": "用本地假模型搭建只读工具、有限控制循环和真实离线验收，交付可复现的业务证据。",
+  "module_mapping": [
+    {
+      "module_id": "ai-api",
+      "relationship": "depends_on"
+    }
+  ],
+  "concepts": [
+    "工具契约",
+    "允许的工具与参数",
+    "Agent决策/观察循环",
+    "步数上限",
+    "离线行为验收",
+    "FDE交付证据"
+  ],
+  "frontend_bridge": "像受控状态机：模型提出动作，程序检查权限和输入，再把观察用于下一轮；行为证据与用户验收相连。",
+  "coding_task": "实现只读订单Agent，并交付自己的工具、循环和真实测试。",
+  "actions": [
+    "检查工具契约",
+    "实现有限循环",
+    "运行离线验收与交付说明"
+  ],
+  "artifacts": [
+    "agentlab/tools.py",
+    "agentlab/runner.py",
+    "tests/test_agentlab.py"
+  ],
+  "exercise_ids": [],
+  "acceptance": [
+    "无效工具/参数不执行",
+    "工具观察确实进入下一轮",
+    "模型/工具次数遵守预算",
+    "正常、限制与拒绝三类真实测试及行为变异验收通过",
+    "交付字段与实际业务边界和命令一致"
+  ],
+  "lesson": [
+    {
+      "id": "D29-tools",
+      "title": "只读工具契约与执行边界",
+      "objective": "实现 execute_tool(call, lookup_order) -> dict，检查调用契约后只执行允许的订单查询。",
+      "explanation": [
+        "Agent的工具调用是模型提出的数据请求；由程序检查工具名和参数，真正的工具函数仍是普通Python函数。",
+        "本课业务范围是只读订单查询。允许的工具只有lookup_order，参数只有非空字符串order_id；其它工具、字段或类型要在调用前明确拒绝。",
+        "先练注册表与参数形状，再写当前执行函数。题目提供lookup_order回调，不需要数据库、HTTP、Key或模型。"
+      ],
+      "syntax": "dict读取请求；set检查严格键；isinstance与strip检查参数；lookup_order(order_id)调用已提供回调。",
+      "practice": {
+        "kind": "code",
+        "scenario": "业务同事只允许查询订单状态，不能让模型请求删除或修改数据。",
+        "instructions": "实现 execute_tool(call, lookup_order) -> dict。call必须是恰含name/arguments的dict；name必须为lookup_order；arguments必须是恰含order_id的dict；order_id必须是去首尾空白后非空的str。无效时抛ValueError且不调用lookup_order。有效时调用lookup_order(clean_order_id)一次并原样返回其dict结果。不要修改输入；工具函数自身异常继续向上传递。",
+        "expected_behavior": "合法订单ID得到实际回调结果；未知工具/参数错误被执行前拒绝；失败不能变成空dict成功。",
+        "starter_content": "def execute_tool(call, lookup_order):\n    raise NotImplementedError(\"实现当前函数\")\n",
+        "starter_policy": "function_body",
+        "file_name": "tools.py",
+        "project_file": "agentlab/tools.py",
+        "workspace_deps": [],
+        "input_examples": [
+          {
+            "label": "合法查询",
+            "value": "lookup_order / order_id=\" O-42 \"",
+            "expected": "回调收到O-42且只执行一次，返回真实结果。"
+          },
+          {
+            "label": "未知工具",
+            "value": "delete_order",
+            "expected": "ValueError；回调次数为0。"
+          },
+          {
+            "label": "额外参数",
+            "value": "arguments含order_id与force",
+            "expected": "ValueError；回调次数为0。"
+          }
+        ],
+        "catalog_refs": [],
+        "hints": "先核第一处失败的输入与实际结果，再记录回调、历史和调用次数；按当前规则修正该边界。"
+      },
+      "practice_first": {
+        "goal": "先检查，再执行，只允许本题工具。",
+        "rules": [
+          "模型输出是待验证的数据。",
+          "只读工具与参数边界来自业务契约。"
+        ],
+        "prerequisites": [
+          "D14-model",
+          "D27-flow",
+          "D28-test"
+        ],
+        "cards": [
+          {
+            "title": "工具注册表：名字到函数",
+            "rule": "作用：字典把允许的工具名映射到已写好的函数。用途：限制模型能请求的能力。写法：先 name in handlers，再 handlers[name](...)；工具请求只是数据，由程序检查后调用。 先定义普通函数；把函数名放入字典时不加括号，保存的是函数本身，后续加括号才执行。",
+            "code": "def double(number):\n    return number * 2\nhandlers = {\"double\": double}\nprint(\"double\" in handlers)\nprint(\"delete_all\" in handlers)\nprint(handlers[\"double\"](4))",
+            "output": "True\nFalse\n8",
+            "runnable": true,
+            "source_kind": "python",
+            "verified": "本机实际离线执行stdout"
+          },
+          {
+            "title": "参数必须符合接口形状",
+            "rule": "作用：检查必需键和各值类型。用途：在工具执行前拒绝未知字段或错误值。写法：set(data) == required 确认键齐全且无额外键；isinstance(value, type) 检查已声明类型。",
+            "code": "data = {\"distance\": 5, \"unit\": \"km\"}\nrequired = {\"distance\", \"unit\"}\nprint(set(data) == required)\nprint(isinstance(data[\"distance\"], int))",
+            "output": "True\nTrue",
+            "runnable": true,
+            "source_kind": "python",
+            "verified": "本机实际离线执行stdout"
+          }
+        ],
+        "drills": [
+          {
+            "id": "allowed-name",
+            "title": "补全：判断工具是否允许",
+            "instructions": "补全成员判断；delete_all没有注册，不能执行。",
+            "starter": "def double(number):\n    return number * 2\nhandlers = {\"double\": double}\nname = \"delete_all\"\nallowed = None\nprint(allowed)",
+            "reference": "def double(number):\n    return number * 2\nhandlers = {\"double\": double}\nname = \"delete_all\"\nallowed = name in handlers\nprint(allowed)",
+            "output": "False",
+            "source_kind": "python",
+            "runnable": true
+          },
+          {
+            "id": "parameter-shape",
+            "title": "补全：参数键检查",
+            "instructions": "参数带额外字段，补全严格键比较。",
+            "starter": "data = {\"distance\": 5, \"unit\": \"km\", \"extra\": True}\nrequired = {\"distance\", \"unit\"}\nvalid = None\nprint(valid)",
+            "reference": "data = {\"distance\": 5, \"unit\": \"km\", \"extra\": True}\nrequired = {\"distance\", \"unit\"}\nvalid = set(data) == required\nprint(valid)",
+            "output": "False",
+            "source_kind": "python",
+            "runnable": true
+          }
+        ],
+        "provided": "验证器提供只读lookup_order(order_id)回调。正式作业写入新的agentlab/tools.py，不覆盖旧D01-D28作业。"
+      },
+      "frontend_bridge": "把受控状态机、接口契约与验收证据连接起来；模型决策只提供数据，程序负责边界和停止。",
+      "js_bridge": "把受控状态机、接口契约与验收证据连接起来；模型决策只提供数据，程序负责边界和停止。",
+      "key_points": [
+        "实现 execute_tool(call, lookup_order) -> dict，检查调用契约后只执行允许的订单查询。",
+        "dict读取请求；set检查严格键；isinstance与strip检查参数；lookup_order(order_id)调用已提供回调。",
+        "只用离线模型与只读回调验证，不需要真实Key。"
+      ],
+      "examples": [
+        {
+          "language": "python",
+          "code": "def double(number):\n    return number * 2\nhandlers = {\"double\": double}\nprint(\"double\" in handlers)\nprint(\"delete_all\" in handlers)\nprint(handlers[\"double\"](4))",
+          "output": "True\nFalse\n8",
+          "explanation": "作用：字典把允许的工具名映射到已写好的函数。用途：限制模型能请求的能力。写法：先 name in handlers，再 handlers[name](...)；工具请求只是数据，由程序检查后调用。 先定义普通函数；把函数名放入字典时不加括号，保存的是函数本身，后续加括号才执行。",
+          "source_kind": "python",
+          "runnable": true
+        },
+        {
+          "language": "python",
+          "code": "data = {\"distance\": 5, \"unit\": \"km\"}\nrequired = {\"distance\", \"unit\"}\nprint(set(data) == required)\nprint(isinstance(data[\"distance\"], int))",
+          "output": "True\nTrue",
+          "explanation": "作用：检查必需键和各值类型。用途：在工具执行前拒绝未知字段或错误值。写法：set(data) == required 确认键齐全且无额外键；isinstance(value, type) 检查已声明类型。",
+          "source_kind": "python",
+          "runnable": true
+        }
+      ],
+      "example": {
+        "language": "python",
+        "code": "def double(number):\n    return number * 2\nhandlers = {\"double\": double}\nprint(\"double\" in handlers)\nprint(\"delete_all\" in handlers)\nprint(handlers[\"double\"](4))",
+        "output": "True\nFalse\n8",
+        "explanation": "作用：字典把允许的工具名映射到已写好的函数。用途：限制模型能请求的能力。写法：先 name in handlers，再 handlers[name](...)；工具请求只是数据，由程序检查后调用。 先定义普通函数；把函数名放入字典时不加括号，保存的是函数本身，后续加括号才执行。",
+        "source_kind": "python",
+        "runnable": true
+      },
+      "common_errors": [
+        {
+          "error": "未知工具执行了",
+          "symptom": "回调不应收到调用",
+          "cause": "只检查字段存在，未限定工具名",
+          "fix": "先核工具名与参数形状，再调用允许的回调。",
+          "example": {
+            "code": "# 比较实际请求、结果与调用记录",
+            "symptom": "回调不应收到调用",
+            "fix": "先核工具名与参数形状，再调用允许的回调。"
+          }
+        },
+        {
+          "error": "修改原调用数据",
+          "symptom": "复用请求时内容改变",
+          "cause": "直接修改arguments中的order_id",
+          "fix": "创建清理后的局部值，保留原请求。",
+          "example": {
+            "code": "# 比较实际请求、结果与调用记录",
+            "symptom": "复用请求时内容改变",
+            "fix": "创建清理后的局部值，保留原请求。"
+          }
+        }
+      ],
+      "guided_practice": {
+        "goal": "实现 execute_tool(call, lookup_order) -> dict。call必须是恰含name/arguments的dict；name必须为lookup_order；arguments必须是恰含order_id的dict；order_id必须是去首尾空白后非空的str。无效时抛ValueError且不调用lookup_order。有效时调用lookup_order(clean_order_id)一次并原样返回其dict结果。不要修改输入；工具函数自身异常继续向上传递。",
+        "starter": "def execute_tool(call, lookup_order):\n    raise NotImplementedError(\"实现当前函数\")\n",
+        "steps": [
+          {
+            "action": "先运行不同业务的注册表与字段形状小例，比较合法与拒绝路径。",
+            "expected": "合法订单ID得到实际回调结果；未知工具/参数错误被执行前拒绝；失败不能变成空dict成功。"
+          },
+          {
+            "action": "按本节回调协议执行两种合法订单ID，再核未知工具和错误字段完全不调用回调。",
+            "expected": "合法订单ID得到实际回调结果；未知工具/参数错误被执行前拒绝；失败不能变成空dict成功。"
+          }
+        ],
+        "check": "合法订单ID得到实际回调结果；未知工具/参数错误被执行前拒绝；失败不能变成空dict成功。"
+      },
+      "steps": [
+        "先运行不同业务的注册表与字段形状小例，比较合法与拒绝路径。",
+        "按本节回调协议执行两种合法订单ID，再核未知工具和错误字段完全不调用回调。"
+      ],
+      "catalog_refs": [],
+      "supplemental": false
+    },
+    {
+      "id": "D29-loop",
+      "title": "受限Agent控制循环",
+      "objective": "实现 run_agent(question, model, execute_tool, *, max_steps=3) -> dict，用有限步数连接决策与观察。",
+      "explanation": [
+        "本节使用本地归一化决策协议：model(history)返回kind=tool与call，或kind=final与content。这是控制循环的数据接口，HTTP/API协议适配在model回调内部。",
+        "初始历史为user事件；工具决策先交给execute_tool，再追加assistant决策与tool_result观察，下一轮模型才能看到结果。",
+        "每次调用model算一步。得到合法最终文本才完成；用完预算返回step_limit。记录步号、事件类型与工具名，不把原始客户问题/参数/结果或Key放入trace。"
+      ],
+      "syntax": "for step in range(max_steps) 限制决策次数；按kind分支；history.append追加观察；返回明确status与简洁trace。",
+      "practice": {
+        "kind": "code",
+        "scenario": "查询订单的Agent最多决策3步，工具结果必须作为下一轮观察。",
+        "instructions": "实现 run_agent(question, model, execute_tool, *, max_steps=3) -> dict。输入question为字符串，max_steps为1到5正整数（本题无需扩展输入校验）。history初始为[{\"kind\":\"user\",\"content\":question}]。每步调用model(history)一次：若返回{\"kind\":\"tool\",\"call\":call}，调用execute_tool(call)一次，依次追加{\"kind\":\"assistant\",\"decision\":decision}与{\"kind\":\"tool_result\",\"name\":call[\"name\"],\"result\":result}，trace追加{\"step\":从1开始步号,\"kind\":\"tool\",\"name\":工具名}；若返回{\"kind\":\"final\",\"content\":非空字符串}，trace追加{\"step\":步号,\"kind\":\"final\"}并返回{\"status\":\"completed\",\"answer\":content,\"trace\":trace}。无效决策或空最终文本抛ValueError；模型/工具错误向上传递。预算耗尽返回{\"status\":\"step_limit\",\"answer\":None,\"trace\":trace}，不得再调用model或执行工具。不要修改回调返回的决策对象。",
+        "expected_behavior": "先工具后最终答复两步完成；不断要工具在预算时明确停止；未知工具/无效决策不会被当成完成。",
+        "starter_content": "def run_agent(question, model, execute_tool, *, max_steps=3):\n    raise NotImplementedError(\"实现当前函数\")\n",
+        "starter_policy": "function_body",
+        "file_name": "runner.py",
+        "project_file": "agentlab/runner.py",
+        "workspace_deps": [
+          "agentlab/tools.py"
+        ],
+        "input_examples": [
+          {
+            "label": "工具后完成",
+            "value": "假模型依次tool、final",
+            "expected": "model调用2次，工具调用1次；下一轮历史含实际观察，status=completed。"
+          },
+          {
+            "label": "预算耗尽",
+            "value": "假模型一直tool，max_steps=2",
+            "expected": "model/tool均最多2次；status=step_limit，answer=None。"
+          },
+          {
+            "label": "工具失败",
+            "value": "execute_tool抛ValueError",
+            "expected": "继续抛ValueError；不再进入下一轮。"
+          }
+        ],
+        "catalog_refs": [],
+        "hints": "先核第一处失败的输入与实际结果，再记录回调、历史和调用次数；按当前规则修正该边界。"
+      },
+      "practice_first": {
+        "goal": "实现 run_agent(question, model, execute_tool, *, max_steps=3) -> dict。输入question为字符串，max_steps为1到5正整数（本题无需扩展输入校验）。history初始为[{\"kind\":\"user\",\"content\":question}]。每步调用model(history)一次：若返回{\"kind\":\"tool\",\"call\":call}，调用execute_tool(call)一次，依次追加{\"kind\":\"assistant\",\"decision\":decision}与{\"kind\":\"tool_result\",\"name\":call[\"name\"],\"result\":result}，trace追加{\"step\":从1开始步号,\"kind\":\"tool\",\"name\":工具名}；若返回{\"kind\":\"final\",\"content\":非空字符串}，trace追加{\"step\":步号,\"kind\":\"final\"}并返回{\"status\":\"completed\",\"answer\":content,\"trace\":trace}。无效决策或空最终文本抛ValueError；模型/工具错误向上传递。预算耗尽返回{\"status\":\"step_limit\",\"answer\":None,\"trace\":trace}，不得再调用model或执行工具。不要修改回调返回的决策对象。",
+        "rules": [
+          "tool→执行→观察→再决策。",
+          "最终答复与上限停止是两个明确状态。"
+        ],
+        "prerequisites": [
+          "D29-tools"
+        ],
+        "cards": [
+          {
+            "title": "给循环一个明确预算",
+            "rule": "作用：range(limit) 让循环最多执行 limit 次。用途：限制Agent等待模型与执行工具的次数。写法：每次模型决策算一步，到预算后显式返回上限状态；不要把无最终答复称为完成。",
+            "code": "limit = 2\ncalls = 0\nfor step in range(limit):\n    calls += 1\nprint(\"执行次数:\", calls)",
+            "output": "执行次数: 2",
+            "runnable": true,
+            "source_kind": "python",
+            "verified": "本机实际离线执行stdout"
+          },
+          {
+            "title": "工具结果进入下一轮上下文",
+            "rule": "作用：把观察结果追加到历史，下一轮决策才能看到。用途：把工具调用连成控制循环。写法：history.append(event)；本节用本地归一化事件协议，真实接口适配器仍在循环之外。",
+            "code": "history = [{\"kind\": \"user\", \"content\": \"测量温度\"}]\nhistory.append({\"kind\": \"tool_result\", \"name\": \"read_sensor\", \"result\": {\"degrees\": 21}})\nprint(history[-1][\"kind\"], history[-1][\"result\"][\"degrees\"])",
+            "output": "tool_result 21",
+            "runnable": true,
+            "source_kind": "python",
+            "verified": "本机实际离线执行stdout"
+          }
+        ],
+        "drills": [
+          {
+            "id": "read-observation",
+            "title": "补全：从观察取值",
+            "instructions": "从归一化历史中读取传感器值，不重新执行工具。",
+            "starter": "history = [{\"kind\": \"tool_result\", \"result\": {\"degrees\": 21}}]\nvalue = None\nprint(value)",
+            "reference": "history = [{\"kind\": \"tool_result\", \"result\": {\"degrees\": 21}}]\nvalue = history[-1][\"result\"][\"degrees\"]\nprint(value)",
+            "output": "21",
+            "source_kind": "python",
+            "runnable": true
+          }
+        ],
+        "provided": "提供本地model(history)与execute_tool(call)回调；不需要调用真实模型或读取Key。依赖你自己的agentlab/tools.py已存在，验证不提供隐藏标准实现替代旧作业。"
+      },
+      "frontend_bridge": "把受控状态机、接口契约与验收证据连接起来；模型决策只提供数据，程序负责边界和停止。",
+      "js_bridge": "把受控状态机、接口契约与验收证据连接起来；模型决策只提供数据，程序负责边界和停止。",
+      "key_points": [
+        "实现 run_agent(question, model, execute_tool, *, max_steps=3) -> dict，用有限步数连接决策与观察。",
+        "for step in range(max_steps) 限制决策次数；按kind分支；history.append追加观察；返回明确status与简洁trace。",
+        "只用离线模型与只读回调验证，不需要真实Key。"
+      ],
+      "examples": [
+        {
+          "language": "python",
+          "code": "limit = 2\ncalls = 0\nfor step in range(limit):\n    calls += 1\nprint(\"执行次数:\", calls)",
+          "output": "执行次数: 2",
+          "explanation": "作用：range(limit) 让循环最多执行 limit 次。用途：限制Agent等待模型与执行工具的次数。写法：每次模型决策算一步，到预算后显式返回上限状态；不要把无最终答复称为完成。",
+          "source_kind": "python",
+          "runnable": true
+        },
+        {
+          "language": "python",
+          "code": "history = [{\"kind\": \"user\", \"content\": \"测量温度\"}]\nhistory.append({\"kind\": \"tool_result\", \"name\": \"read_sensor\", \"result\": {\"degrees\": 21}})\nprint(history[-1][\"kind\"], history[-1][\"result\"][\"degrees\"])",
+          "output": "tool_result 21",
+          "explanation": "作用：把观察结果追加到历史，下一轮决策才能看到。用途：把工具调用连成控制循环。写法：history.append(event)；本节用本地归一化事件协议，真实接口适配器仍在循环之外。",
+          "source_kind": "python",
+          "runnable": true
+        }
+      ],
+      "example": {
+        "language": "python",
+        "code": "limit = 2\ncalls = 0\nfor step in range(limit):\n    calls += 1\nprint(\"执行次数:\", calls)",
+        "output": "执行次数: 2",
+        "explanation": "作用：range(limit) 让循环最多执行 limit 次。用途：限制Agent等待模型与执行工具的次数。写法：每次模型决策算一步，到预算后显式返回上限状态；不要把无最终答复称为完成。",
+        "source_kind": "python",
+        "runnable": true
+      },
+      "common_errors": [
+        {
+          "error": "观察没有进入下一轮",
+          "symptom": "模型第二次仍看不到工具结果",
+          "cause": "只执行工具没有记录实际观察",
+          "fix": "核对下一轮历史中是否有真实tool_result。",
+          "example": {
+            "code": "# 比较实际请求、结果与调用记录",
+            "symptom": "模型第二次仍看不到工具结果",
+            "fix": "核对下一轮历史中是否有真实tool_result。"
+          }
+        },
+        {
+          "error": "达到预算却称完成",
+          "symptom": "不断请求工具也返回completed",
+          "cause": "把for循环结束视为最终答复",
+          "fix": "区分final与step_limit，检查实际调用次数。",
+          "example": {
+            "code": "# 比较实际请求、结果与调用记录",
+            "symptom": "不断请求工具也返回completed",
+            "fix": "区分final与step_limit，检查实际调用次数。"
+          }
+        }
+      ],
+      "guided_practice": {
+        "goal": "实现 run_agent(question, model, execute_tool, *, max_steps=3) -> dict。输入question为字符串，max_steps为1到5正整数（本题无需扩展输入校验）。history初始为[{\"kind\":\"user\",\"content\":question}]。每步调用model(history)一次：若返回{\"kind\":\"tool\",\"call\":call}，调用execute_tool(call)一次，依次追加{\"kind\":\"assistant\",\"decision\":decision}与{\"kind\":\"tool_result\",\"name\":call[\"name\"],\"result\":result}，trace追加{\"step\":从1开始步号,\"kind\":\"tool\",\"name\":工具名}；若返回{\"kind\":\"final\",\"content\":非空字符串}，trace追加{\"step\":步号,\"kind\":\"final\"}并返回{\"status\":\"completed\",\"answer\":content,\"trace\":trace}。无效决策或空最终文本抛ValueError；模型/工具错误向上传递。预算耗尽返回{\"status\":\"step_limit\",\"answer\":None,\"trace\":trace}，不得再调用model或执行工具。不要修改回调返回的决策对象。",
+        "starter": "def run_agent(question, model, execute_tool, *, max_steps=3):\n    raise NotImplementedError(\"实现当前函数\")\n",
+        "steps": [
+          {
+            "action": "运行预算与历史追加小例，跟踪每一次决策、工具结果和停止原因。",
+            "expected": "先工具后最终答复两步完成；不断要工具在预算时明确停止；未知工具/无效决策不会被当成完成。"
+          },
+          {
+            "action": "组合工具后结束、持续工具、错误决策三条路径，核真实历史、trace与调用次数。",
+            "expected": "先工具后最终答复两步完成；不断要工具在预算时明确停止；未知工具/无效决策不会被当成完成。"
+          }
+        ],
+        "check": "先工具后最终答复两步完成；不断要工具在预算时明确停止；未知工具/无效决策不会被当成完成。"
+      },
+      "steps": [
+        "运行预算与历史追加小例，跟踪每一次决策、工具结果和停止原因。",
+        "组合工具后结束、持续工具、错误决策三条路径，核真实历史、trace与调用次数。"
+      ],
+      "catalog_refs": [],
+      "supplemental": false
+    },
+    {
+      "id": "D29-delivery",
+      "title": "离线Agent验收与FDE交付证据",
+      "objective": "为自己的Agent写真实行为测试，并用HANDOFF说明业务目标、工具边界、验收命令与限制。",
+      "explanation": [
+        "先把业务验收写成三条可重复行为：订单查询后完成、预算耗尽停止、未知工具在执行前拒绝。用顺序假模型和计数回调复现，每次仍执行自己的真实实现。",
+        "测试须发现真实行为损坏：工具结果丢失、超限调用或允许未知工具。只有测试全部通过不足以说明覆盖，验收会验证这些缺陷能被测试发现。",
+        "FDE交付说明沿用D18/D24：解决谁的问题，输入有什么范围，哪些能力允许，如何重建验证，仍有哪些限制。HANDOFF记录契约；工具界面展示实际pytest结果作为证据。"
+      ],
+      "syntax": "Mock(side_effect=[...])提供顺序决策；assert检查结果/调用次数；pytest.raises检查拒绝；HANDOFF是结构化交付dict。",
+      "practice": {
+        "kind": "code",
+        "scenario": "把只读订单Agent交给另一位开发者，需要可复现的离线验收和明确交付边界。",
+        "instructions": "创建tests/test_agentlab.py，导入你自己的agentlab.tools.execute_tool和agentlab.runner.run_agent。写test_order_lookup_done、test_step_limit、test_unknown_tool三个真实测试：分别覆盖订单查询的观察被下一轮读取并返回最终文本；连续工具请求在max_steps时停止且调用次数不超限；未知工具抛ValueError且lookup_order没有执行。允许更多测试。文件还需定义HANDOFF dict，含user_goal（非空str）、accepted_inputs（非空str）、allowed_tools（必须[\"lookup_order\"]）、max_steps（1到5）、verify_command（\"python -m pytest -q tests/test_agentlab.py\"）、known_limit（非空str）。需求文字应说明本地模拟场景与真实模型未接入等实际限制，正式通过证据由真实运行产生。",
+        "expected_behavior": "正确实现下测试全部通过；结果观察丢失、超限调用、未知工具执行这三种行为损坏必须被测试检出；HANDOFF与规定边界一致。",
+        "starter_content": "import pytest\nfrom unittest.mock import Mock\nfrom agentlab.tools import execute_tool\nfrom agentlab.runner import run_agent\n\nHANDOFF = {}  # 按题面补交付字段\n\ndef test_order_lookup_done():\n    raise NotImplementedError(\"填写测试\")\n\ndef test_step_limit():\n    raise NotImplementedError(\"填写测试\")\n\ndef test_unknown_tool():\n    raise NotImplementedError(\"填写测试\")\n",
+        "starter_policy": "function_body",
+        "file_name": "test_agentlab.py",
+        "project_file": "tests/test_agentlab.py",
+        "workspace_deps": [
+          "agentlab/tools.py",
+          "agentlab/runner.py"
+        ],
+        "input_examples": [
+          {
+            "label": "正常验收",
+            "value": "工具查询→最终答复",
+            "expected": "观察真实传递，最终输出与协议一致。"
+          },
+          {
+            "label": "限制验收",
+            "value": "无限请求工具的假模型",
+            "expected": "按预算停止，没有额外调用。"
+          },
+          {
+            "label": "拒绝验收",
+            "value": "delete_order",
+            "expected": "ValueError且只读查询回调0次。"
+          }
+        ],
+        "catalog_refs": [],
+        "hints": "先核第一处失败的输入与实际结果，再记录回调、历史和调用次数；按当前规则修正该边界。"
+      },
+      "practice_first": {
+        "goal": "把可运行功能变成可复现验收与交付证据。",
+        "rules": [
+          "验证真实业务行为，只mock模型和外部工具。",
+          "交付说明必须与实际权限、输入与验证一致。"
+        ],
+        "prerequisites": [
+          "D29-tools",
+          "D29-loop",
+          "D28-test",
+          "D24-review"
+        ],
+        "cards": [
+          {
+            "title": "让假模型按顺序做决策",
+            "rule": "作用：Mock的side_effect列表让多次调用依次返回给定值。用途：离线复现先请求工具、后结束或不断请求工具。写法：Mock(side_effect=[first, second])；call_count检查实际调用次数。",
+            "code": "from unittest.mock import Mock\nreader = Mock(side_effect=[{\"kind\": \"observe\"}, {\"kind\": \"finish\"}])\nprint(reader([])[\"kind\"])\nprint(reader([])[\"kind\"])\nprint(reader.call_count)",
+            "output": "observe\nfinish\n2",
+            "runnable": true,
+            "source_kind": "python",
+            "verified": "本机实际离线执行stdout"
+          },
+          {
+            "title": "交付说明连接用户目标与验收",
+            "rule": "作用：把给谁用、解决什么问题和如何验证放在一起。用途：FDE与业务方对齐验收和下一步。写法：用结构化字段记录用户目标、输入、工具边界、验证命令和限制；通过状态由实际测试提供。",
+            "code": "handoff = {\"recipient\": \"运营同事\", \"goal\": \"查询报表状态\", \"run\": \"python -m pytest -q tests/test_report.py\"}\nprint(handoff[\"recipient\"], handoff[\"goal\"])",
+            "output": "运营同事 查询报表状态",
+            "runnable": true,
+            "source_kind": "python",
+            "verified": "本机实际离线执行stdout"
+          }
+        ],
+        "drills": [
+          {
+            "id": "scripted-result",
+            "title": "补全：顺序假结果",
+            "instructions": "补全side_effect列表，使调用顺序与预期相同。",
+            "starter": "from unittest.mock import Mock\nreader = Mock(side_effect=None)\nprint(reader(), reader())",
+            "reference": "from unittest.mock import Mock\nreader = Mock(side_effect=[\"inspect\", \"finish\"])\nprint(reader(), reader())",
+            "output": "inspect finish",
+            "source_kind": "python",
+            "runnable": true
+          }
+        ],
+        "provided": "使用你自己两份真实工作区文件；正确基线及行为损坏变异均在临时目录运行。校验器不能用标准完整Agent覆盖用户实现。"
+      },
+      "frontend_bridge": "把受控状态机、接口契约与验收证据连接起来；模型决策只提供数据，程序负责边界和停止。",
+      "js_bridge": "把受控状态机、接口契约与验收证据连接起来；模型决策只提供数据，程序负责边界和停止。",
+      "key_points": [
+        "为自己的Agent写真实行为测试，并用HANDOFF说明业务目标、工具边界、验收命令与限制。",
+        "Mock(side_effect=[...])提供顺序决策；assert检查结果/调用次数；pytest.raises检查拒绝；HANDOFF是结构化交付dict。",
+        "只用离线模型与只读回调验证，不需要真实Key。"
+      ],
+      "examples": [
+        {
+          "language": "python",
+          "code": "from unittest.mock import Mock\nreader = Mock(side_effect=[{\"kind\": \"observe\"}, {\"kind\": \"finish\"}])\nprint(reader([])[\"kind\"])\nprint(reader([])[\"kind\"])\nprint(reader.call_count)",
+          "output": "observe\nfinish\n2",
+          "explanation": "作用：Mock的side_effect列表让多次调用依次返回给定值。用途：离线复现先请求工具、后结束或不断请求工具。写法：Mock(side_effect=[first, second])；call_count检查实际调用次数。",
+          "source_kind": "python",
+          "runnable": true
+        },
+        {
+          "language": "python",
+          "code": "handoff = {\"recipient\": \"运营同事\", \"goal\": \"查询报表状态\", \"run\": \"python -m pytest -q tests/test_report.py\"}\nprint(handoff[\"recipient\"], handoff[\"goal\"])",
+          "output": "运营同事 查询报表状态",
+          "explanation": "作用：把给谁用、解决什么问题和如何验证放在一起。用途：FDE与业务方对齐验收和下一步。写法：用结构化字段记录用户目标、输入、工具边界、验证命令和限制；通过状态由实际测试提供。",
+          "source_kind": "python",
+          "runnable": true
+        }
+      ],
+      "example": {
+        "language": "python",
+        "code": "from unittest.mock import Mock\nreader = Mock(side_effect=[{\"kind\": \"observe\"}, {\"kind\": \"finish\"}])\nprint(reader([])[\"kind\"])\nprint(reader([])[\"kind\"])\nprint(reader.call_count)",
+        "output": "observe\nfinish\n2",
+        "explanation": "作用：Mock的side_effect列表让多次调用依次返回给定值。用途：离线复现先请求工具、后结束或不断请求工具。写法：Mock(side_effect=[first, second])；call_count检查实际调用次数。",
+        "source_kind": "python",
+        "runnable": true
+      },
+      "common_errors": [
+        {
+          "error": "空测试也通过",
+          "symptom": "移除观察或多一次调用仍全部通过",
+          "cause": "测试只断言固定状态，没有核实际依赖与次数",
+          "fix": "用假模型和回调记录观察与调用，再执行负路径。",
+          "example": {
+            "code": "# 比较实际请求、结果与调用记录",
+            "symptom": "移除观察或多一次调用仍全部通过",
+            "fix": "用假模型和回调记录观察与调用，再执行负路径。"
+          }
+        },
+        {
+          "error": "交付说明超出实际能力",
+          "symptom": "声称可修改订单或连接生产模型",
+          "cause": "将愿景当作已经验证的功能",
+          "fix": "把只读工具、离线假模型和真实验证命令写入限制。",
+          "example": {
+            "code": "# 比较实际请求、结果与调用记录",
+            "symptom": "声称可修改订单或连接生产模型",
+            "fix": "把只读工具、离线假模型和真实验证命令写入限制。"
+          }
+        }
+      ],
+      "guided_practice": {
+        "goal": "创建tests/test_agentlab.py，导入你自己的agentlab.tools.execute_tool和agentlab.runner.run_agent。写test_order_lookup_done、test_step_limit、test_unknown_tool三个真实测试：分别覆盖订单查询的观察被下一轮读取并返回最终文本；连续工具请求在max_steps时停止且调用次数不超限；未知工具抛ValueError且lookup_order没有执行。允许更多测试。文件还需定义HANDOFF dict，含user_goal（非空str）、accepted_inputs（非空str）、allowed_tools（必须[\"lookup_order\"]）、max_steps（1到5）、verify_command（\"python -m pytest -q tests/test_agentlab.py\"）、known_limit（非空str）。需求文字应说明本地模拟场景与真实模型未接入等实际限制，正式通过证据由真实运行产生。",
+        "starter": "import pytest\nfrom unittest.mock import Mock\nfrom agentlab.tools import execute_tool\nfrom agentlab.runner import run_agent\n\nHANDOFF = {}  # 按题面补交付字段\n\ndef test_order_lookup_done():\n    raise NotImplementedError(\"填写测试\")\n\ndef test_step_limit():\n    raise NotImplementedError(\"填写测试\")\n\ndef test_unknown_tool():\n    raise NotImplementedError(\"填写测试\")\n",
+        "steps": [
+          {
+            "action": "用本节Mock小例建立顺序决策与调用次数断言，再测试自己的两个已有文件。",
+            "expected": "正确实现下测试全部通过；结果观察丢失、超限调用、未知工具执行这三种行为损坏必须被测试检出；HANDOFF与规定边界一致。"
+          },
+          {
+            "action": "补合法查询、预算停止、未知工具三条真实测试和HANDOFF；执行验证并记录未覆盖范围。",
+            "expected": "正确实现下测试全部通过；结果观察丢失、超限调用、未知工具执行这三种行为损坏必须被测试检出；HANDOFF与规定边界一致。"
+          }
+        ],
+        "check": "正确实现下测试全部通过；结果观察丢失、超限调用、未知工具执行这三种行为损坏必须被测试检出；HANDOFF与规定边界一致。"
+      },
+      "steps": [
+        "用本节Mock小例建立顺序决策与调用次数断言，再测试自己的两个已有文件。",
+        "补合法查询、预算停止、未知工具三条真实测试和HANDOFF；执行验证并记录未覆盖范围。"
+      ],
+      "catalog_refs": [],
+      "supplemental": false
+    }
+  ],
+  "snippet": {
+    "language": "python",
+    "code": "def double(number):\n    return number * 2\nhandlers = {\"double\": double}\nprint(\"double\" in handlers)\nprint(\"delete_all\" in handlers)\nprint(handlers[\"double\"](4))"
+  },
+  "references": []
+}

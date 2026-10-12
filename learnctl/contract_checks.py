@@ -198,3 +198,18 @@ def register(registry: dict[str, Any]) -> None:
         ('GET / 页面入口',lambda t:('GET','/') in p._route_paths(t)),
         ('保留 API 列表路由',lambda t:('GET','/api/tasks') in p._route_paths(t)),
         ('页面通过 FileResponse 返回',lambda t:p._has_call(t,'FileResponse'))]})
+
+    from .readiness_checks import register as register_readiness
+    from .project_checks import register as register_project
+    register_readiness(registry)
+    register_project(registry)
+    from .http_async_checks import register_audit_validators
+    register_audit_validators(registry)
+    from .ai_exercise_checks import register as register_ai_exercises
+    from .ai_protocol_checks import register as register_ai_protocol
+    register_ai_exercises(registry)
+    register_ai_protocol(registry)
+    from .artifact_checks import register as register_artifact
+    from .agent_checks import register as register_agent
+    register_artifact(registry)
+    register_agent(registry)

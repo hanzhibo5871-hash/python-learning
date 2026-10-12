@@ -1,0 +1,249 @@
+[
+  {
+    "id": "D09-parser",
+    "explanation": [
+      "命令行参数让用户每次运行时传入不同设置，无需反复改程序。先声明参数，再把一组命令文字解析成可读取的属性。",
+      "本节把具名选项、位置参数和布尔开关分开试跑。代码注释说明每种输入为何这样声明，以及解析后的值在哪里。",
+      "示例主动传入 argv 列表，因此点击运行也能得到固定结果。读完注释后只改末尾指出的输入，观察类型或默认值如何变化。"
+    ],
+    "examples": [
+      {
+        "language": "python",
+        "code": "# 用途：让批量处理工具接收“本次最多处理几条”的设置。\n# 先单独观察参数解析，暂时不读取文件或处理任务。\n# 若文件叫 main.py，真实命令形式是 python main.py --limit 3。\n# 文件名后的两项对应下面的 ['--limit', '3']；本例将它们写进列表供试跑。\nimport argparse\n\n# 创建解析器；它负责理解选项名称、选项的值和帮助信息。\nparser = argparse.ArgumentParser()\n# --limit 是具名选项，后面跟一个值；命令行里的值最初都是文字。\n# type=int 要求把文字转换为整数，后续代码才能把它用于计数。\n# default=20 表示省略 --limit 时使用 20；这项设置不是必填。\nparser.add_argument('--limit', type=int, default=20)\n\n# 列表中的两个字符串分别代表选项名和它的值。\n# 显式传列表，是为了在编辑器里反复试跑；这里不会读取真实终端参数。\n# Namespace 是 argparse 返回的带属性结果对象，不需要自己定义一个类。\n# parse_args 返回 Namespace；.limit 读取其中的 limit 属性，值已经是整数。\n# print 只展示解析结果，不会让工具真的处理 3 条任务。\nprint(parser.parse_args(['--limit', '3']).limit)\n\n# 试改输入：把 ['--limit', '3'] 改成 []，观察输出变成默认值 20。\n",
+        "output": "3",
+        "explanation": "解析器把文字形式的 --limit 3 转成整数属性，最后 print 输出 3。示例显式传入参数列表，便于直接在编辑器试跑；改成空列表时，default=20 会让 limit 取到 20。",
+        "source_kind": "python",
+        "runnable": true
+      },
+      {
+        "language": "python",
+        "code": "# 用途：让“新增任务”这样的命令接收一段必填标题。\nimport argparse\n\nparser = argparse.ArgumentParser()\n# 不带 -- 前缀的 title 是位置参数：文字出现的位置决定它属于哪个参数。\n# 普通位置参数默认要求提供一个值；它的必填性质不是由是否设置 default 决定。\nparser.add_argument('title')\n\n# ['买书'] 是一组模拟命令输入；唯一的字符串交给 title。\n# parse_args 返回 Namespace；.title 读取原字符串，argparse 不会替它起标题。\n# print 输出“买书”，只是确认输入已交给正确属性。\nprint(parser.parse_args(['买书']).title)\n\n# 试改输入：把 ['买书'] 改成 ['整理笔记']，观察输出随标题变化。\n",
+        "output": "买书",
+        "explanation": "title 被声明为必填位置参数，输入列表中的买书会保存在解析结果的 title 属性中。print 读取该属性，因此输出买书；改成其他文字会原样输出，缺少标题则会发生参数错误。",
+        "source_kind": "python",
+        "runnable": true
+      }
+    ],
+    "practice_first": {
+      "cards": [
+        {
+          "title": "store_true：不带值的开关",
+          "rule": "作用：store_true让出现的选项为True，未出现时为False。常用：调试、静默开关。写法：add_argument('--quiet',action='store_true')；命令中只写--quiet，不跟true。",
+          "code": "# 用途：给命令增加一个“静默模式”开关，决定是否减少提示。\nimport argparse\n\nparser = argparse.ArgumentParser()\n# store_true 表示“出现这个选项就记为 True”，没有出现时记为 False。\n# 开关只表达是否启用，因此输入 --quiet 就够了，后面不再跟 true 或 false。\nparser.add_argument('--quiet', action='store_true')\n\n# 第一次输入没有开关，parse_args 返回的 Namespace.quiet 为 False。\nprint(parser.parse_args([]).quiet)\n# 第二次输入包含开关，.quiet 为 True。\n# 两次解析共用同一份声明，分别生成结果，方便比较“未启用”和“启用”。\nprint(parser.parse_args(['--quiet']).quiet)\n\n# 试改输入：把第二次的 ['--quiet'] 改成 []，观察两行都变成 False。\n",
+          "output": "False\nTrue",
+          "source_kind": "python",
+          "runnable": true
+        }
+      ]
+    }
+  },
+  {
+    "id": "D09-subcommands",
+    "explanation": [
+      "一个工具可以同时提供查看和新增动作。子命令先选择动作，再由对应的子解析器接收该动作需要的数据。",
+      "只有新增动作需要标题，就把 title 声明在 add 子解析器里。这样查看列表的动作不会被迫提供无关的标题。",
+      "知识卡进一步把子命令绑定到函数。先保存函数，再解析输入，最后调用函数，避免声明命令时就提前执行动作。"
+    ],
+    "examples": [
+      {
+        "language": "python",
+        "code": "# 用途：让任务工具先辨认用户选择的动作，例如 list。\nimport argparse\n\nparser = argparse.ArgumentParser()\n# add_subparsers 创建子命令入口；各个动作在这里注册自己的解析器。\n# dest='command' 让选中的命令名保存在 args.command。\n# required=True 要求必须选择一个动作，避免空输入时不知道该做什么。\nsub = parser.add_subparsers(dest='command', required=True)\n# 注册 list 这个名称；本例只声明语法，还没有真正读取或打印任务列表。\nsub.add_parser('list')\n\n# parse_args(['list']) 选中 list，返回 Namespace(command='list')。\n# .command 读取动作名称；print 输出 list，方便核对分派的依据。\nprint(parser.parse_args(['list']).command)\n\n# 试改输入：把 ['list'] 改成 []，观察解析器拒绝缺少子命令的输入。\n",
+        "output": "list",
+        "explanation": "子命令入口把选中的动作名称保存在 command 属性中，输入 list 因而输出 list。required=True 要求用户明确选择动作；本例只是确认命令选择结果，还没有执行查看任务的业务操作。",
+        "source_kind": "python",
+        "runnable": true
+      },
+      {
+        "language": "python",
+        "code": "# 用途：声明“新增任务需要标题”这一条命令语法。\nimport argparse\n\nparser = argparse.ArgumentParser()\n# 父解析器先判断用户选择了哪个子命令。\nsub = parser.add_subparsers(dest='command', required=True)\n# add 是新增动作专用的解析器，后面的参数声明只属于该动作。\nadd = sub.add_parser('add')\n# 把 title 放在 add 中，因为新增需要标题；其他动作不一定需要。\nadd.add_argument('title')\n\n# 第一个字符串 add 选择动作，第二个字符串买书交给该动作的 title。\n# 返回结果同时含有 command='add' 和 title='买书'。\n# 此处只打印 title，用来确认动作后面的文字被正确接收。\nprint(parser.parse_args(['add', '买书']).title)\n\n# 试改输入：把 ['add', '买书'] 改成 ['add']，观察新增动作缺少标题的错误。\n",
+        "output": "买书",
+        "explanation": "父解析器先选择 add，再由 add 的子解析器接收必填标题，最后读取 title 属性输出买书。标题只属于新增动作，放在子解析器中能准确表达这个要求；删掉输入中的标题会被 argparse 拒绝。",
+        "source_kind": "python",
+        "runnable": true
+      }
+    ],
+    "practice_first": {
+      "cards": [
+        {
+          "title": "set_defaults 绑定处理函数",
+          "rule": "作用：set_defaults给解析结果附加字段。常用：把子命令绑定到处理函数。写法：子解析器.set_defaults(func=处理函数)，解析后调用args.func(args)；绑定时不加调用括号。",
+          "code": "# 用途：把 ping 子命令交给通知函数，练习从“解析参数”进入“执行动作”。\nimport argparse\n\ndef notify(args):\n    # args 是解析后的 Namespace；message 属性来自 ping 的位置参数。\n    # 先返回一段结果文字，由调用它的代码决定怎样展示。\n    return f'已收到 {args.message}'\n\nparser = argparse.ArgumentParser()\ncommands = parser.add_subparsers(dest='command', required=True)\nping = commands.add_parser('ping')\nping.add_argument('message')\n# func 是附加在解析结果上的字段，值为 notify 这个函数。\n# 这里不写 notify()：声明阶段还没有解析好的 args，不应提前发送通知。\nping.set_defaults(func=notify)\n\n# 先取得输入数据，结果里同时有 command、message 和绑定的 func。\nargs = parser.parse_args(['ping', '测试'])\n# args.func 取出 notify；args.func(args) 此时才调用它。\n# 内层调用返回“已收到 测试”，外层 print 再把返回的文字打印出来。\nprint(args.func(args))\n\n# 试改输入：把 ['ping', '测试'] 改成 ['ping', '开始备份']，观察通知内容变化。\n",
+          "output": "已收到 测试",
+          "source_kind": "python",
+          "runnable": true
+        }
+      ]
+    }
+  },
+  {
+    "id": "D09-errors",
+    "explanation": [
+      "命令需要区分正常结果与错误提示。正常结果放在 stdout，参数错误由 argparse 写到 stderr，并请求以状态 2 结束。",
+      "type=int 检查文字能否变成整数，parser.error 则可以拒绝已经是整数但不符合要求的值。两种检查发生在不同阶段。",
+      "示例捕获 SystemExit 是为了看清错误对象和状态值。正式命令不能借这个捕获把失败变成成功，阅读时要分清两种用途。"
+    ],
+    "examples": [
+      {
+        "language": "python",
+        "code": "# 用途：先观察计数选项的正常输入，为下一例定位错误阶段。\nimport argparse\n\nparser = argparse.ArgumentParser()\n# 注册 --count，并要求后面的文字可以转换为整数。\n# type=int 只处理格式，不会自动拒绝 0 或负数。\nparser.add_argument('--count', type=int)\n\n# ['--count', '2'] 中的 '2' 是字符串，解析后 .count 才是整数 2。\n# print 读取 Namespace.count；它不会修改传入的列表。\nprint(parser.parse_args(['--count', '2']).count)\n\n# 试改输入：把 '2' 改成 'x'，观察整数转换失败的提示，而不是得到一个计数。\n",
+        "output": "2",
+        "explanation": "先声明 --count 的整数类型，再解析输入中的文字 2，得到 count=2 并打印出来。改成 x 会在解析阶段发生整数转换错误；这里没有增加范围限制，因此正常示例只说明参数格式怎样被处理。",
+        "source_kind": "python",
+        "runnable": true
+      },
+      {
+        "language": "python",
+        "code": "# 用途：观察“选项已声明，但值不能转换为整数”时的错误状态。\nimport argparse\n\nparser = argparse.ArgumentParser()\n# 必须先注册 --count；这样下面的失败确实来自 'x' 不是整数。\nparser.add_argument('--count', type=int)\ntry:\n    # 解析器先认识 --count，再尝试 int('x')；转换失败后不会返回 Namespace。\n    # argparse 会把用法和错误原因写到 stderr，并抛出 SystemExit(2)。\n    parser.parse_args(['--count', 'x'])\nexcept SystemExit as error:\n    # 捕获仅用于教学观察：error.code 是这次退出请求携带的状态值 2。\n    # print 把状态值展示在 stdout；这不等于保留了真实命令的失败退出。\n    # 因为异常被处理，当前示例后续会正常结束；正式命令不要这样吞掉失败。\n    print(error.code)\n\n# 试改输入：把 'x' 改成 '2'，解析成功后不会进入 except，因此不再打印状态值。\n",
+        "output": "2",
+        "explanation": "该选项已经注册，所以 x 引发的是整数转换错误，argparse 会提示原因并抛出 SystemExit(2)。示例为观察状态值而捕获异常并打印 2；整个示例随后正常结束，不能把这段捕获当成正式命令的错误处理。",
+        "source_kind": "python",
+        "runnable": true
+      }
+    ],
+    "practice_first": {
+      "cards": [
+        {
+          "title": "parser.error：拒绝业务范围",
+          "rule": "作用：parser.error把原因写到stderr并以SystemExit(2)结束。常用：类型转换后再拒绝业务范围。写法：parser.error(提示文本)；不要把错误改成成功退出。",
+          "code": "# 用途：在整数格式正确之后，再拒绝不符合业务要求的年龄。\n# 本卡的负年龄规则仅是范围检查示范；正式 limit 题允许任意整数，不要照搬这个限制。\nimport argparse\n\nparser = argparse.ArgumentParser()\nparser.add_argument('--age', type=int)\n# -1 能转换成整数，因此这一步解析成功，args.age 的值为 -1。\nargs = parser.parse_args(['--age', '-1'])\ntry:\n    # 年龄不能为负数是这里明确写出的业务规则，不是 type=int 的功能。\n    if args.age < 0:\n        # parser.error 把原因和用法写到 stderr，并抛出 SystemExit(2)。\n        # 复用解析器的错误格式，调用者就能获得一致的提示和失败状态。\n        parser.error('age不能为负数')\nexcept SystemExit as error:\n    # 本卡捕获是为了打印观察值 2；正式命令应让失败状态继续传给终端。\n    print(error.code)\n\n# 试改输入：把 '-1' 改成 '18'，观察范围检查通过后不会进入 except，也没有输出。\n",
+          "output": "2",
+          "source_kind": "python",
+          "runnable": true
+        }
+      ]
+    }
+  },
+  {
+    "id": "D09-entry",
+    "explanation": [
+      "main 把命令的执行步骤集中在函数中，返回值则留给入口决定怎样结束进程。这样也能从测试代码直接调用这个函数。",
+      "守卫只在文件直接运行时调用 main，导入时只定义函数。本节第一例保留这个边界，既不在导入时解析参数，也不打印提示。",
+      "print(main([])) 展示的是函数返回值，SystemExit(main()) 才把返回值交给终端。知识卡用真实子进程分别观察输出和退出状态。"
+    ],
+    "examples": [
+      {
+        "language": "python",
+        "code": "# 用途：为一个可以直接运行、也可以被其他代码导入的命令建立入口。\ndef main(argv=None):\n    # argv 参数为以后传入一组命令文字预留位置。\n    # 这个最小示例尚未读取 argv；return 0 表达本次执行成功。\n    return 0\n\n# 文件直接运行时，Python 将 __name__ 设为 '__main__'。\n# 文件被导入时，__name__ 是模块名，因此守卫内的调用不会执行。\n# 导入只定义 main；这里没有额外的打印分支，以便其他代码安静地复用它。\nif __name__ == '__main__':\n    # 先执行 main，再把返回的 0 交给 SystemExit 作为进程退出状态。\n    # 没有 print，所以直接运行也不会打印一个“0”。\n    raise SystemExit(main())\n\n# 试改：把 return 0 改成 return 3；仍没有打印输出，但进程退出状态会变为 3。\n",
+        "output": "",
+        "explanation": "直接运行文件时守卫调用 main，并用 SystemExit 将返回的 0 作为进程退出状态，因此没有打印输出。导入时守卫不成立，只会定义 main，其他模块可复用函数而不触发命令执行。",
+        "source_kind": "python",
+        "runnable": true
+      },
+      {
+        "language": "python",
+        "code": "# 用途：分清“函数返回一个数字”与“程序用这个数字退出”。\ndef main(argv=None):\n    # 此例固定返回 3，不读取 argv；传入 [] 是一次普通的函数调用。\n    return 3\n\n# 执行顺序：先调用 main([])，得到整数 3，再由 print 把 3 写到 stdout。\n# 这里没有 subprocess，也没有 raise SystemExit；返回值尚未成为进程退出状态。\n# 代码正常执行结束，所以终端看到的是输出 3，但该示例进程成功退出。\nprint(main([]))\n\n# 试改：把 return 3 改成 return 5；stdout 会显示 5，正常结束的进程退出状态仍为 0。\n",
+        "output": "3",
+        "explanation": "main([]) 在当前进程中返回整数 3，print 接着把这个返回值显示出来，所以输出为 3。示例没有启动子进程，也没有把返回值传给 SystemExit；数字 3 在这里是输出内容，正常结束的进程状态仍为 0。",
+        "source_kind": "python",
+        "runnable": true
+      }
+    ],
+    "practice_first": {
+      "cards": [
+        {
+          "title": "入口与退出码",
+          "rule": "main 返回整数，由 SystemExit 交给终端。0 表示成功；不要在导入模块时调用 main。",
+          "code": "# 用途：让终端得到命令的完成提示，同时拿到明确的成功状态。\ndef main(argv=None):\n    # print 写出供用户阅读的结果文字；这行文字不是退出状态。\n    print('命令完成')\n    # return 0 把成功状态交还给调用方，不会打印一个 0。\n    return 0\n\n# 直接运行才执行 main；导入此文件时只定义函数，不会打印“命令完成”。\nif __name__ == '__main__':\n    # main 先打印并返回 0；SystemExit 再用这个返回值结束进程。\n    # 因此 stdout 是“命令完成”，终端获得的退出状态为 0。\n    raise SystemExit(main())\n\n# 试改：把 return 0 改成 return 3；stdout 仍是“命令完成”，退出状态则变为 3。\n",
+          "output": "命令完成",
+          "source_kind": "python",
+          "runnable": true
+        },
+        {
+          "title": "subprocess：观察真正的退出码",
+          "rule": "作用：subprocess.run启动并等待子进程。常用：检查命令输出与退出码。写法：参数用列表；sys.executable为当前Python；capture_output=True捕获输出，text=True得到字符串。这里-c后的文本是本卡固定示例。",
+          "code": "# 用途：从另一个进程运行小命令，分别检查它的状态、正常输出和错误输出。\nimport subprocess\nimport sys\n\n# sys.executable 是当前运行此示例的 Python 路径，子进程使用同一个解释器。\n# 参数用列表分别传递；-c 告诉 Python 执行紧随其后的固定代码文字。\n# capture_output=True 把 stdout/stderr 收集起来，避免直接混到当前终端输出里。\n# text=True 让收集结果是字符串，便于下一步读取文字内容。\n# run 会等待子进程结束，再返回包含状态与输出的结果对象。\nresult = subprocess.run([sys.executable, '-c', \"print('ready')\"], capture_output=True, text=True)\n\n# returncode 是子进程真正的退出状态；正常执行 print 后结束，状态为 0。\nprint(result.returncode)\n# stdout 保存子进程打印的 ready 和换行；strip 去掉外围换行，便于展示文字。\nprint(result.stdout.strip())\n# stderr 保存错误输出；本例没有错误文字，因此与空字符串比较得到 True。\nprint(result.stderr == '')\n\n# 试改输入：把子进程代码 \"print('ready')\" 改成 \"raise SystemExit(3)\"，观察状态为 3、stdout 为空。\n",
+          "output": "0\nready\nTrue",
+          "source_kind": "python",
+          "runnable": true
+        }
+      ]
+    }
+  },
+  {
+    "id": "D09-greet-cli",
+    "explanation": [
+      "问候命令需要从用户输入得到姓名，关键是把一段文字交给正确参数。这里先借已有数字选项与标题示例看清解析过程。",
+      "具名选项要写选项名称，位置参数则按位置接收文字。两个示例沿用 limit 和 title，正式作业仍要求声明必填的 --name。",
+      "parse_args 显式接收列表时，编辑器运行就能复现输入。先确认属性中的值，再把它用于自己的问候输出，避免把解析和展示混在一起。"
+    ],
+    "examples": [
+      {
+        "language": "python",
+        "code": "# 用途：先观察“选项名后面跟一个值”的解析形式，为声明 --name 做准备。\n# 本例沿用数字选项 --limit；问候作业的姓名参数仍应按题目声明为 --name。\nimport argparse\n\nparser = argparse.ArgumentParser()\n# --limit 按名称接收一个值，type=int 将那个值从文字转换成整数。\n# default=20 表示未传选项时采用 20；这个示例没有演示必填姓名。\nparser.add_argument('--limit', type=int, default=20)\n\n# 显式输入 ['--limit', '3']，所以在编辑器中运行也能重复观察同一个结果。\n# parse_args 返回的 Namespace 里有 .limit，print 读取该属性得到整数 3。\n# 参数名称决定结果属性的名称：以后声明 --name 时，对应属性才会叫 .name。\nprint(parser.parse_args(['--limit', '3']).limit)\n\n# 试改输入：把 '3' 改成 '5'，观察输入值先被解析，再变成输出的整数 5。\n",
+        "output": "3",
+        "explanation": "本例沿用 --limit 演示具名选项如何接收值，并把文字 3 转成整数属性后输出。它为理解姓名参数的输入形式做准备，没有声明 --name；正式问候作业仍需按题目要求声明并读取姓名。",
+        "source_kind": "python",
+        "runnable": true
+      },
+      {
+        "language": "python",
+        "code": "# 用途：观察用户输入的一段文字怎样原样进入解析结果。\n# 这里沿用 title 作位置参数示范；正式问候作业要求的是具名选项 --name。\nimport argparse\n\nparser = argparse.ArgumentParser()\n# title 没有 -- 前缀，因此解析器按位置收集文字，不要求用户先写参数名称。\n# 没有 type=int 等转换要求，title 会保留为字符串。\nparser.add_argument('title')\n\n# 输入列表中一个元素代表一份文字值，本例传入“买书”。\n# 返回的 Namespace.title 保存这段文字，print 随后将它原样输出。\nprint(parser.parse_args(['买书']).title)\n\n# 试改输入：把 ['买书'] 改成 ['小 林']，观察一个列表元素中的空格仍保留在文字中。\n",
+        "output": "买书",
+        "explanation": "位置参数 title 接收输入列表中的一段文字，解析后读取 title 属性会原样输出买书。一个列表元素可以包含空格，本例用于观察文字传递；正式问候命令要求 --name，不要将这个位置参数声明照搬成作业接口。",
+        "source_kind": "python",
+        "runnable": true
+      }
+    ],
+    "practice_first": {
+      "cards": []
+    }
+  },
+  {
+    "id": "D09-repeat-cli",
+    "explanation": [
+      "重复输出需要一个合法次数，整数格式与次数范围是两个要求。type=int 先处理格式，count 是否大于零还要再明确检查。",
+      "第一个示例只展示计数文字怎样转换为整数，第二个示例观察未声明选项的失败。注释指出边界，避免把两类错误混为一谈。",
+      "正式作业遇到 count 小于等于零时应调用 parser.error，再按题目输出文字。先分清解析步骤与范围规则，再独立完成循环。"
+    ],
+    "examples": [
+      {
+        "language": "python",
+        "code": "# 用途：为“重复输出多少次”接收一个计数，先单独观察整数转换。\nimport argparse\n\nparser = argparse.ArgumentParser()\n# type=int 确保输入文字能够转换成整数，但整数也可能是 0 或负数。\n# “重复次数必须大于零”是另外一条业务规则，当前示例尚未执行它。\nparser.add_argument('--count', type=int)\n\n# '2' 是输入文字；parse_args 返回 Namespace 后，.count 的值才是整数 2。\n# print 只是展示这个值，当前还没有循环输出，也没有检查次数范围。\nprint(parser.parse_args(['--count', '2']).count)\n\n# 试改输入：把 '2' 改成 '0'，观察仍会输出 0，确认 type=int 没有替你检查正数范围。\n",
+        "output": "2",
+        "explanation": "这里先把 --count 的文字值转换成整数，读取 count 属性后输出 2。type=int 只处理格式，传 0 也能解析成功；重复输出工具要求的正数范围，需要在解析之后再用明确规则检查。",
+        "source_kind": "python",
+        "runnable": true
+      },
+      {
+        "language": "python",
+        "code": "# 用途：观察“传入了没有声明的选项”时，解析器怎样报告失败。\nimport argparse\n\nparser = argparse.ArgumentParser()\n# 此示例没有 add_argument('--count', type=int)。\n# 因此解析器不认识 --count；失败原因是未知选项，尚未进行整数转换。\ntry:\n    parser.parse_args(['--count', 'x'])\n    # 解析失败会抛出 SystemExit(2)，不会继续走到正常解析结果。\nexcept SystemExit as error:\n    # error.code 是退出请求的状态值；!= 0 将“请求失败退出”变成布尔观察值。\n    # print 输出 True。捕获只用于观察：此示例本身随后正常结束。\n    # 正式命令不能用这一捕获把失败悄悄变成成功。\n    print(error.code != 0)\n\n# 试改输入：把 ['--count', 'x'] 改成 []，解析成功后不进入 except，因此没有输出。\n",
+        "output": "True",
+        "explanation": "这段代码没有声明 --count，因此输入 --count x 引发的是未知选项错误，并不是整数转换失败。argparse 抛出 SystemExit(2) 后，示例打印状态值非零的比较结果 True；该捕获仅用于观察错误请求。",
+        "source_kind": "python",
+        "runnable": true
+      }
+    ],
+    "practice_first": {
+      "cards": []
+    }
+  },
+  {
+    "id": "D09-square-cli",
+    "explanation": [
+      "计算命令既要能直接运行，也要允许其他代码导入计算函数。入口守卫先解决运行与导入的边界，再由正式作业补上整数计算。",
+      "第一例是最小入口，直接运行时把 main 的返回值交给终端，导入时保持安静。它尚未接收整数或计算平方，注释会明确这一点。",
+      "第二例只观察普通函数返回数字后的打印结果。输出的数字不自动等于进程退出码，后续写计算工具时应分别处理结果与状态。"
+    ],
+    "examples": [
+      {
+        "language": "python",
+        "code": "# 用途：先搭好计算工具的入口边界，让它被导入时保持安静。\n# 这是入口骨架；当前还没有 square 函数，也没有整数参数解析。\ndef main(argv=None):\n    # 为后续命令输入预留 argv；此例尚未读取它，只表示成功返回。\n    return 0\n\n# 直接运行此文件时名称为 '__main__'，导入时则是模块名。\n# 把命令执行放在守卫内，其他模块导入时就不会自动计算或打印结果。\nif __name__ == '__main__':\n    # main 的返回值 0 被交给 SystemExit，成为成功退出状态。\n    # 没有 print，所以直接运行的正常输出也为空。\n    raise SystemExit(main())\n\n# 试改：把 return 0 改成 return 3；stdout 仍为空，SystemExit 会把进程退出状态改为 3。\n",
+        "output": "",
+        "explanation": "本例只提供入口骨架，直接运行时将 main 返回的 0 交给 SystemExit，因此没有打印输出。导入时守卫不执行，函数可以安静地被复用；它还没有定义 square 或解析整数，计算步骤仍由正式作业实现。",
+        "source_kind": "python",
+        "runnable": true
+      },
+      {
+        "language": "python",
+        "code": "# 用途：观察数字从函数返回给调用方后，由谁把它展示出来。\n# 先看清返回与打印的区别，之后才能让计算函数返回结果、命令负责展示。\ndef main(argv=None):\n    # 这里固定返回 3，还没有读取输入，也不是在计算某个数的平方。\n    return 3\n\n# 先调用 main([]) 取得整数 3，外层 print 再将它写到 stdout。\n# print 不会把数字交给终端作为退出状态；本例也没有启动子进程。\n# 所以“打印 3”与“以状态 3 退出”是两个行为，当前示例只做了前一个。\nprint(main([]))\n\n# 试改：把 return 3 改成 return 5；print 会显示 5，但没有 SystemExit，进程仍正常结束为 0。\n",
+        "output": "3",
+        "explanation": "main([]) 在当前进程中固定返回整数 3，print 随后展示这个返回值，因此输出 3。示例没有计算平方、启动子进程或调用 SystemExit，正常结束的状态为 0；它只演示函数返回值如何成为显示结果。",
+        "source_kind": "python",
+        "runnable": true
+      }
+    ],
+    "practice_first": {
+      "cards": []
+    }
+  }
+]
