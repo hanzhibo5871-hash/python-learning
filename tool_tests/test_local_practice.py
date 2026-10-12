@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import json
-from pathlib import Path
+from pathlib import Path, PurePosixPath
 
 import pytest
 
@@ -170,6 +170,20 @@ def test_paths_reject_traversal_and_absolute_paths(course, field, value):
     section = {**section, "practice": {**section["practice"], field: value}}
     with pytest.raises(UsageError):
         local_practice.practice_path(task, section)
+
+
+@pytest.mark.parametrize("file_name", ["C:/outside.py", r"C:\outside.py"])
+def test_windows_absolute_file_names_are_rejected_with_posix_path(course, monkeypatch, file_name):
+    # 在 Windows 也复现 Linux 的路径拼接语义，避免原用例只因本机 Path 拒绝而通过。
+    monkeypatch.setattr(local_practice, "Path", PurePosixPath)
+    task, section = find_section(course, "D07", "D07-import")
+    absolute = {**section, "practice": {**section["practice"], "file_name": file_name}}
+    with pytest.raises(UsageError, match="绝对路径"):
+        local_practice.practice_path(task, absolute)
+    relative = {**section, "practice": {**section["practice"], "file_name": "tests/test_project.py"}}
+    assert local_practice.practice_path(task, relative).as_posix() == (
+        "learner_workspace/lessons/D07/D07-import/tests/test_project.py"
+    )
 
 
 def test_missing_file_never_uses_web_draft(course, tmp_path):

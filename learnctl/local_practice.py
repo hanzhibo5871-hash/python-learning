@@ -3,7 +3,7 @@ from __future__ import annotations
 import os
 import re
 import tempfile
-from pathlib import Path
+from pathlib import Path, PureWindowsPath
 from typing import Any
 
 from .errors import BlockedError, DataError, UsageError
@@ -28,6 +28,9 @@ def practice_path(task: dict[str, Any], section: dict[str, Any]) -> Path:
         project_file = normalize_relative_path(practice["project_file"])
         return WORKSPACE_ROOT / project_file
     file_name = practice["file_name"] if "file_name" in practice else "review.md"
+    # POSIX 拼接会把盘符路径当相对片段，先按 Windows 语义拒绝绝对文件名。
+    if PureWindowsPath(file_name).is_absolute():
+        raise UsageError("文件路径不得是绝对路径")
     relative = Path("learner_workspace") / "lessons" / task_id / section["id"] / file_name
     return Path(normalize_relative_path(relative.as_posix()))
 
