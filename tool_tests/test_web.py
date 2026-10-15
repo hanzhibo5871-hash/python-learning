@@ -221,7 +221,7 @@ def test_curriculum_version_and_project_artifact_count(web_server: Any) -> None:
     data = json.loads((web_server.project_root / "data" / "curriculum.json").read_text(encoding="utf-8"))
     assert data["curriculum_version"] == "3.0.0"
     total_sections = sum(len(task["lesson"]) for task in data["tasks"])
-    assert total_sections == 146
+    assert total_sections == 153
     project_files = {
         section.get("practice", {}).get("project_file")
         for task in data["tasks"]

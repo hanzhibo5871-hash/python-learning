@@ -4,11 +4,11 @@
 
 ## 事实来源
 
-当前为 schema 3、curriculum 3.0.0、practice_first_revision 1：4 阶段、28 任务、146 小节（含 D02–D09 的24节选修加练），39 张前置知识卡和159道补全练习。旧 CLAUDE.md 和 v2 构建脚本不是当前主线。以 README、生成数据和实际测试为准。
+当前为 schema 3、curriculum 3.0.0、practice_first_revision 1：4 阶段、28 任务、153 小节（含 D02–D09 的24节选修加练），38 张前置知识卡和174道补全练习。旧 CLAUDE.md 和 v2 构建脚本不是当前主线。以 README、生成数据和实际测试为准。
 
 ## 构建与测试
 
-- `data/curriculum.json` 是生成文件。编辑 `scripts/build_curriculum_v3.py` 和 `scripts/practice_first_content.py`，然后从仓库根运行 `python scripts/build_curriculum_v3.py`。必须同步提交生成结果，重复生成不得漂移。
+- `data/curriculum.json` 是生成文件。编辑 `scripts/build_curriculum_v3.py` 、`scripts/practice_first_content.py` 和 D09 专用的 `scripts/d09_course.py`，然后从仓库根运行 `python scripts/build_curriculum_v3.py`。必须同步提交生成结果与 `teaching-catalog.js`，重复生成不得漂移。
 - `python -m pip install -e ".[dev]"` 安装开发依赖；`python -m pytest -q tool_tests` 运行工具测试。学习者测试仍只经 `python -m learnctl test <exercise_id>` 执行白名单文件。
 - `node --check learnctl/web/static/app.js` 检查前端语法。
 - 可选浏览器回归：安装 playwright/Chromium 后，`python scripts/browser_smoke.py`。只操作临时工作区，不修改学习者进度。

@@ -148,6 +148,27 @@ def main() -> None:
                     if task_id == 'D18':
                         expect(page.locator('.examples-reference .mini-example').first.locator('[data-run-experiment]')).to_have_count(0)
                     assert page.evaluate('() => document.documentElement.scrollWidth <= window.innerWidth + 2')
+                # D09: each new step has its own short teaching and two drills.
+                page.evaluate('() => navigate("#/task/D09")')
+                expect(page.locator('[data-section]')).to_have_count(14)
+                d09_ids = [s['id'] for task in curriculum['tasks'] if task['id'] == 'D09'
+                           for s in task['lesson'] if not s.get('optional')]
+                for sid in d09_ids:
+                    page.locator(f'[data-section="{sid}"]').click()
+                    expect(page.locator('.lesson-intro')).to_have_attribute('data-teaching-section', sid)
+                    assert_teaching(page, expect, 'D09')
+                    expect(page.locator('.drill-section [data-run-experiment]')).to_have_count(2)
+                    assert page.evaluate('() => document.documentElement.scrollWidth <= window.innerWidth + 2')
+                page.locator('[data-section="D09-command-name"]').click()
+                demo = page.locator('.examples-reference .mini-example').first
+                demo.locator('[data-run-experiment]').click()
+                expect(demo.locator('[data-experiment-result]')).to_contain_text('输出符合预期', timeout=30000)
+                if args.screenshots:
+                    page.screenshot(path=str(args.screenshots / 'd09-mobile.png'), full_page=True)
+                    page.set_viewport_size({'width': 1440, 'height': 1050})
+                    page.screenshot(path=str(args.screenshots / 'd09-desktop.png'), full_page=True)
+                    page.set_viewport_size({'width': 390, 'height': 844})
+                assert not json.loads((root / '.learn/progress.json').read_text(encoding='utf-8'))['lesson_progress']['D09']['completed_sections']
                 page.evaluate('() => navigate("#/task/D04")')
                 assert_teaching(page, expect, 'D04')
                 assert page.locator('#editor').input_value() == correct
@@ -157,7 +178,7 @@ def main() -> None:
                     page.screenshot(path=str(args.screenshots / 'tutor-chat.png'), full_page=True)
                 assert not errors, errors
                 browser.close()
-            print('PASS: teaching before example/drills/assignment; five representative lessons; wrong/correct output; isolated experiment; saved solution; mobile width; tutor history/retry/lesson isolation/reset; no JS errors')
+            print('PASS: teaching before example/drills/assignment; representative lessons plus all 11 D09 steps; wrong/correct output; isolated experiment; saved solution; mobile width; tutor history/retry/lesson isolation/reset; no JS errors')
         finally:
             server.shutdown()
             server.server_close()

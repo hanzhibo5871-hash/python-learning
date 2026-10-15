@@ -2098,3 +2098,7 @@ def validate_project_acceptance(project_root: Path) -> dict[str, Any]:
 # Authoritative practice-first contracts supersede incompatible legacy aliases.
 from .contract_checks import register as _register_practice_first
 _register_practice_first(_CODE_VALIDATORS)
+
+# D09 learning steps have explicit behavioral contracts, including SystemExit.
+from .d09_checks import register as _register_d09
+_register_d09(_CODE_VALIDATORS)

@@ -42,3 +42,7 @@ S1（D01–D07）完成环境和基础语法，S2（D08–D17）完成常用开�
 D01 不用编程：写一句目标 → 检测 → 创建 .venv → 安装依赖 → 最终检查。安装可能联网。Windows 启动脚本优先使用项目 .venv 的解释器，避免装好了依赖却用另一个 Python 启动。
 
 工具测试 `python -m pytest -q tool_tests` 与学员练习测试 `python -m learnctl test <exercise_id>` 不混用。更多说明见 [实践优先版维护说明](practice-first.md)。
+
+## D09 小步衔接
+
+D09 不直接把子命令与函数分派塞在同一节：按 argv → 位置参数 → 带值选项 → Namespace/库存 → 布尔开关 → 子命令/dest → if 分派 → 函数作为值 → set_defaults → 错误 → 真实终端推进。共 11 节主线，原有 3 节加练继续选修。详见 [D09 分步指南](d09-step-by-step.md)。

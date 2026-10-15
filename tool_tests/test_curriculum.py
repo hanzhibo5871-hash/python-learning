@@ -22,7 +22,7 @@ def test_curriculum_route_and_counts(curriculum_data: dict) -> None:
     assert [stage["id"] for stage in validated["stages"]] == ["S1", "S2", "S3", "S4"]
     assert len(validated["tasks"]) == 28
     sections = [s for task in validated["tasks"] for s in task["lesson"]]
-    assert len(sections) == 146
+    assert len(sections) == 153
     all_titles = " ".join(
         [stage["title"] for stage in validated["stages"]]
         + [task["title"] for task in validated["tasks"]]
@@ -317,7 +317,12 @@ def test_d08_to_d17_python_examples_run_with_declared_output(curriculum_data: di
     ]
     for section in sections:
         for index, example in enumerate(section["examples"]):
-            assert example["source_kind"] == "python" and example["runnable"] is True
+            is_entry_file = section["id"] == "D09-entry" and index == 1
+            if is_entry_file:
+                assert example["source_kind"] == "file_fragment" and example["runnable"] is False
+                assert example["target_path"] == "main.py"
+            else:
+                assert example["source_kind"] == "python" and example["runnable"] is True
             tree = ast.parse(example["code"], filename=f"{section['id']}-{index}.py")
             imported = {
                 alias.name.split(".", 1)[0]
@@ -330,8 +335,12 @@ def test_d08_to_d17_python_examples_run_with_declared_output(curriculum_data: di
                 if isinstance(node, ast.Call):
                     called = node.func.id if isinstance(node.func, ast.Name) else ""
                     assert called not in forbidden_names, (section["id"], index, called)
+            argv = [sys.executable, "-c", example["code"]]
+            if is_entry_file:
+                (tmp_path / "main.py").write_text(example["code"], encoding="utf-8")
+                argv = [sys.executable, "main.py", "原料", "--delta", "-3"]
             completed = subprocess.run(
-                [sys.executable, "-c", example["code"]],
+                argv,
                 cwd=tmp_path,
                 capture_output=True,
                 text=True,

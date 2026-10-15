@@ -3799,6 +3799,9 @@ def build() -> None:
     data["stages"][3].update({"title": "AI 应用（D24 后）", "prerequisites": ["S3"]})
     from practice_first_content import apply_practice_first
     apply_practice_first(data)
+    from d09_course import apply_d09, write_teaching_catalog
+    apply_d09(data)
+    write_teaching_catalog(data, ROOT)
     DATA.write_text(json.dumps(data, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
 
 
