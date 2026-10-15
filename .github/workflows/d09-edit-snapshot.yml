@@ -22,7 +22,13 @@ jobs:
         run: |
           python - <<'PY'
           import base64, bz2, hashlib, pathlib, subprocess
-          packed = ''.join(pathlib.Path(f'.github/d09-patch-{i:02d}.b64').read_text().strip() for i in range(1, 5))
+          parts = [pathlib.Path(f'.github/d09-patch-{i:02d}.b64').read_text().strip() for i in range(1, 5)]
+          # Recover the single extra transport character only when the complete
+          # original chunk Git hash matches. Never apply an unverified patch.
+          if len(parts[2]) == 8193:
+              s = parts[2]
+              parts[2] = next(c for i in range(len(s)) if hashlib.sha1(b'blob 8193\0' + ((c := s[:i] + s[i+1:]) + '\n').encode()).hexdigest() == 'c2a98bddffa25c834a7f878889ac449fb1bd0a0e')
+          packed = ''.join(parts)
           patch = bz2.decompress(base64.b64decode(packed, validate=True))
           assert hashlib.sha256(patch).hexdigest() == 'b38d178e29f46fc0e2f80ceaca5b1ad41b4bcbf4bc7d08720c45a7b5c8931c3d', 'Source patch integrity mismatch'
           subprocess.run(['git', 'apply', '--check', '-'], input=patch, check=True)
