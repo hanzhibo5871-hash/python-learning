@@ -40,9 +40,9 @@ async function api(method, path, body) {
   try {
     data = await res.json();
   } catch (_e) {
-    data = {};
+    throw new Error("服务响应不是合法 JSON，请稍后重试");
   }
-  if (!res.ok && !data.ok) {
+  if (!res.ok || data.ok === false) {
     throw new Error(data.error || `请求失败（HTTP ${res.status}）`);
   }
   return data;

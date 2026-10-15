@@ -504,7 +504,7 @@ def test_ai_generate_and_review_are_mocked_offline(web_server: Any, monkeypatch:
             {"title": "变式", "scenario": "场景", "instructions": "要求", "starter_content": "起始", "review_rubric": "标准"},
             ensure_ascii=False,
         )
-        return 200, json.dumps({"choices": [{"message": {"content": content}}]}).encode("utf-8")
+        return 200, json.dumps({"choices": [{"finish_reason": "stop", "message": {"role": "assistant", "content": content}}]}).encode("utf-8")
 
     monkeypatch.setattr(ai, "_request", fake_request)
     # 客户端即使谎报 completed: true，服务端也按当前进度派生（D02-names 未完成）
@@ -519,7 +519,7 @@ def test_ai_generate_and_review_are_mocked_offline(web_server: Any, monkeypatch:
         {"summary": "总结", "strengths": ["a"], "issues": ["b"], "next_steps": ["c"]},
         ensure_ascii=False,
     )
-    monkeypatch.setattr(ai, "_request", lambda *a, **k: (200, json.dumps({"choices": [{"message": {"content": content}}]}).encode("utf-8")))
+    monkeypatch.setattr(ai, "_request", lambda *a, **k: (200, json.dumps({"choices": [{"finish_reason": "stop", "message": {"role": "assistant", "content": content}}]}).encode("utf-8")))
     status, result, _ = request(web_server, "POST", "/api/ai/review", {"task_id": "D02", "section_id": "D02-names", "content": "我的代码"})
     assert status == 200
     assert result["ok"] is True
@@ -532,7 +532,7 @@ def test_ai_tutor_chat_is_bound_to_server_curriculum_context(web_server: Any, mo
 
     def fake_request(url, payload, api_key, timeout=60):
         captured["payload"] = payload
-        return 200, json.dumps({"choices": [{"message": {"content": "因为 Python 用缩进定义代码块。"}}]}).encode("utf-8")
+        return 200, json.dumps({"choices": [{"finish_reason": "stop", "message": {"role": "assistant", "content": "因为 Python 用缩进定义代码块。"}}]}).encode("utf-8")
 
     monkeypatch.setattr(ai, "_request", fake_request)
     status, result, _ = request(
@@ -689,7 +689,7 @@ def test_ai_variation_id_binds_review_to_server_context(web_server: Any, monkeyp
 
     def fake_request(url, payload, api_key, timeout=60):
         prompts.append(payload["messages"][0]["content"])
-        return 200, json.dumps({"choices": [{"message": {"content": json.dumps(responses.pop(0), ensure_ascii=False)}}]}).encode("utf-8")
+        return 200, json.dumps({"choices": [{"finish_reason": "stop", "message": {"role": "assistant", "content": json.dumps(responses.pop(0), ensure_ascii=False)}}]}).encode("utf-8")
 
     monkeypatch.setattr(ai, "_request", fake_request)
     status, generated, _ = request(web_server, "POST", "/api/ai/generate", {"task_id": "D02", "section_id": "D02-names"})
@@ -725,7 +725,7 @@ def test_ai_variation_invalid_or_mismatched_id_never_falls_back(web_server: Any,
     def fake_request(url, payload, api_key, timeout=60):
         nonlocal calls
         calls += 1
-        return 200, json.dumps({"choices": [{"message": {"content": json.dumps(variation)}}]}).encode("utf-8")
+        return 200, json.dumps({"choices": [{"finish_reason": "stop", "message": {"role": "assistant", "content": json.dumps(variation)}}]}).encode("utf-8")
 
     monkeypatch.setattr(ai, "_request", fake_request)
     status, generated, _ = request(web_server, "POST", "/api/ai/generate", {"task_id": "D02", "section_id": "D02-names"})
@@ -760,7 +760,7 @@ def test_ai_variation_id_is_lost_after_server_restart(web_server: Any, monkeypat
     monkeypatch.setattr(
         ai,
         "_request",
-        lambda *a, **k: (200, json.dumps({"choices": [{"message": {"content": json.dumps(variation)}}]}).encode("utf-8")),
+        lambda *a, **k: (200, json.dumps({"choices": [{"finish_reason": "stop", "message": {"role": "assistant", "content": json.dumps(variation)}}]}).encode("utf-8")),
     )
     status, generated, _ = request(web_server, "POST", "/api/ai/generate", {"task_id": "D02", "section_id": "D02-names"})
     assert status == 200
@@ -1343,3 +1343,63 @@ def test_project_learning_path_end_to_end(web_server: Any) -> None:
     assert accept["passed"] is True, (
         f"项目验收未通过：{[(c['name'], c['passed'], c.get('detail')) for c in accept['checks']]}"
     )
+
+
+@pytest.mark.parametrize("key", ["dummy\nkey", "dummy\rkey", "dummy key", "八个字符的中文密钥"])
+def test_ai_invalid_key_is_safe_and_previous_session_remains(web_server, monkeypatch, key):
+    monkeypatch.delenv("DEEPSEEK_API_KEY", raising=False)
+    web_server.ai_session.set_key("dummy-previous-key")
+    status, payload, _ = request(web_server, "POST", "/api/ai/session-key", {"key": key})
+    assert status == 400 and payload["ok"] is False
+    assert "格式无效" in payload["error"]
+    assert key not in json.dumps(payload, ensure_ascii=False)
+    assert web_server.ai_session.get_key() == "dummy-previous-key"
+
+
+@pytest.mark.parametrize("path,body", [
+    ("/api/ai/test", {}),
+    ("/api/ai/chat", {"task_id": "D02", "section_id": "D02-names", "question": "解释变量", "history": []}),
+    ("/api/ai/generate", {"task_id": "D02", "section_id": "D02-names"}),
+    ("/api/ai/review", {"task_id": "D02", "section_id": "D02-names", "content": "x = 1"}),
+])
+def test_ai_transport_timeout_returns_failure_and_recovers(web_server, monkeypatch, path, body):
+    web_server.ai_session.set_key("dummy-web-key")
+    before = {str(p.relative_to(web_server.project_root)): p.read_bytes()
+              for p in web_server.project_root.rglob("*") if p.is_file()}
+    calls = []
+
+    def fail(req, timeout):
+        calls.append(req)
+        raise TimeoutError("dummy-web-key")
+
+    monkeypatch.setattr(ai, "_open_request", fail)
+    status, result, _ = request(web_server, "POST", path, body)
+    assert status == 200 and result["ok"] is False
+    assert "超时" in result["error"] and "dummy-web-key" not in json.dumps(result)
+    assert len(calls) == 1
+    assert not web_server.variations
+    # _context may initialize empty progress; failures cannot complete a lesson
+    # or create a draft, and must not change any existing file.
+    for name, raw in before.items():
+        assert (web_server.project_root / name).read_bytes() == raw
+    assert not (web_server.project_root / "learner_workspace").exists()
+    status, configured, _ = request(web_server, "GET", "/api/ai/status")
+    assert status == 200 and configured["configured"] is True
+    import io
+
+    class SuccessfulResponse(io.BytesIO):
+        status = 200
+
+    monkeypatch.setattr(ai, "_open_request", lambda *a: SuccessfulResponse(
+        json.dumps({"choices": [{"finish_reason": "stop", "message": {
+            "role": "assistant", "content": "恢复成功"}}]}).encode()))
+    status, result, _ = request(web_server, "POST", "/api/ai/test", {})
+    assert result == {"ok": True, "content": "恢复成功"}
+
+
+def test_ai_unhashable_history_role_is_json_error(web_server):
+    status, result, _ = request(web_server, "POST", "/api/ai/chat", {
+        "task_id": "D02", "section_id": "D02-names", "question": "hi",
+        "history": [{"role": [], "content": "hi"}]})
+    assert status == 200 and result["ok"] is False
+    assert "role 只能" in result["error"]
