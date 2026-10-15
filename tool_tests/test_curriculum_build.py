@@ -17,6 +17,10 @@ def test_committed_curriculum_rebuilds_without_drift(tmp_path):
     shutil.copyfile(ROOT / "data" / "curriculum.json", target)
     # Git may check out CRLF on Windows; compare the repository text content.
     expected = target.read_text(encoding="utf-8")
+    catalog = tmp_path / "learnctl/web/static/teaching-catalog.js"
+    catalog.parent.mkdir(parents=True)
+    shutil.copyfile(ROOT / "learnctl/web/static/teaching-catalog.js", catalog)
+    expected_catalog = catalog.read_text(encoding="utf-8")
     learner_files = {
         ".learn/progress.json": '{"evidence": "keep progress"}',
         ".learn/lesson-submissions/D02/D02-numbers.py": "# saved learner draft",
@@ -33,6 +37,7 @@ def test_committed_curriculum_rebuilds_without_drift(tmp_path):
             capture_output=True, text=True, encoding="utf-8", timeout=30,
         )
         assert result.returncode == 0, result.stderr
+        assert catalog.read_text(encoding="utf-8") == expected_catalog
         assert target.read_text(encoding="utf-8") == expected, (
             "Rebuild data/curriculum.json and commit it with its generator changes"
         )

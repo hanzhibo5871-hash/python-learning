@@ -14,7 +14,8 @@
     ],
     "curriculum_rebuild": "v3: Python syntax first, common development second, real project third, AI last",
     "practice_first_revision": 1,
-    "learning_mode": "先看短例子 → 补全代码 → 独立作业 → 对比实际结果；详细原理折叠查看"
+    "learning_mode": "先看短例子 → 补全代码 → 独立作业 → 对比实际结果；详细原理折叠查看",
+    "d09_step_by_step_revision": 1
   },
   "source_catalog": [
     {
@@ -12221,11 +12222,11 @@
     {
       "id": "D09",
       "stage_id": "S2",
-      "title": "常用开发二：命令行工具",
+      "title": "常用开发二：命令行从输入到分派",
       "prerequisites": [
         "D08"
       ],
-      "learning_goal": "先传一组 argv，再传错误参数；分别观察正常输出、错误输出和退出码。",
+      "learning_goal": "先看效果、读懂每个新方法，再补全与独立练习；先学 if 分派，最后连接函数分派和真实终端。",
       "module_mapping": [
         {
           "module_id": "dev-cli",
@@ -12237,16 +12238,21 @@
         }
       ],
       "concepts": [
-        "argparse",
-        "sys.argv",
-        "退出码",
-        "--help"
+        "argv 与 Namespace",
+        "位置参数与带值选项",
+        "布尔开关",
+        "子命令与 dest",
+        "if 分派",
+        "函数作为值",
+        "set_defaults",
+        "SystemExit 与 --help",
+        "argv=None 与入口守卫"
       ],
       "frontend_bridge": "命令行工具是脚本与服务的基础入口，对应前端的 npm scripts。",
-      "coding_task": "写一个带参数与校验的命令行程序。",
+      "coding_task": "按 11 个小步完成库存命令行练习；已有 3 节加练继续选修，不必一次学完全部小节。",
       "snippet": {
         "language": "python",
-        "code": "import argparse\n\nparser = argparse.ArgumentParser()\nparser.add_argument(\"--name\", required=True)\nargs = parser.parse_args()"
+        "code": "argv = [\"原料\", \"--delta\", \"-3\"]\nprint(argv[0])\nprint(argv[2])\nprint(type(argv[2]).__name__)\n"
       },
       "references": [
         {
@@ -12255,612 +12261,1741 @@
         }
       ],
       "actions": [
-        "实现参数解析",
-        "处理错误"
+        "先看输入与解析结果",
+        "逐步编写库存调整",
+        "先 if 后函数分派",
+        "运行真实命令行回归"
       ],
       "artifacts": [
         "cli/greet.py"
       ],
       "exercise_ids": [],
       "acceptance": [
-        "参数生效",
-        "缺少必填参数报错",
-        "--help 可用"
+        "能解释输入列表如何变成结果字段",
+        "能用 if 与函数绑定分别分派",
+        "负数调整、错误输入与真实终端行为符合题目"
       ],
       "lesson": [
         {
-          "id": "D09-parser",
-          "title": "argparse 基本参数",
+          "id": "D09-argv",
+          "title": "01 · 先看输入：命令行为什么是一串文字",
           "catalog_refs": [
             "py-87",
             "linux-06"
           ],
-          "objective": "把命令行字符串解析成结构化参数。",
+          "objective": "看清 argv 列表里存了什么，暂时不学新库。",
+          "syntax": "argv 是自选变量名，列表里的 '-3' 仍是字符串。；本节只观察输入，不转整数、不修改库存。",
           "explanation": [
-            "argparse 把 argv 中的字符串转换成 Namespace，add_argument 描述选项名、类型、默认值和是否必需。解析器负责命令行语法，不应把业务数据库操作塞进参数声明。",
-            "`type=int` 会在解析边界完成转换，`--verbose` 这类开关通常使用 action='store_true'。help 文本不是装饰，它决定用户能否知道默认值、输入格式和示例命令。",
-            "命令行输入有缺失参数、未知选项和非法类型等失败。用 parse_args([...]) 做离线测试，确认成功 Namespace 以及失败时 stderr/退出码，而不是只测试手工 happy path。"
+            "先看效果：原料 --delta -3 表示调整原料，减少 3 个。程序先接到的是 ['原料', '--delta', '-3'] 这样的文字列表，还没有修改库存。",
+            "argv 是我们自己取的参数名，不是 Python 关键字。函数接收列表后可以用 argv[0] 读取原料；这里列表恰好有三项，不要求额外判断长度。",
+            "终端命令中的 python main.py 是启动方式，不放进传给 parse_args 的模拟列表。现在直接传列表就能练习；最后一节再接真实终端，不同时学习两套入口。"
           ],
-          "syntax": "ArgumentParser、add_argument、parse_args 组成最小 CLI。",
-          "js_bridge": "JavaScript 常用 minimist/commander 等库，Python argparse 自带帮助、类型转换和错误退出；不要把 `process.argv` 的字符串数组处理方式原样搬到 Namespace。",
+          "js_bridge": "本节不需要 JavaScript 知识。先在 Python 中运行示例，再完成本节的小步练习。",
+          "frontend_bridge": "只用已学的 Python 函数、条件和字典，不要求了解前端框架。",
+          "key_points": [
+            "argv 是自选变量名，列表里的 '-3' 仍是字符串。",
+            "本节只观察输入，不转整数、不修改库存。"
+          ],
           "examples": [
             {
               "language": "python",
-              "code": "import argparse\nparser = argparse.ArgumentParser()\nparser.add_argument('--limit', type=int, default=20)\nprint(parser.parse_args(['--limit', '3']).limit)",
-              "output": "3",
-              "explanation": "add_argument('--limit', type=int, default=20) 让 argparse 把命令行文本 '3' 转成整数 3，parse_args 后从 Namespace 读取 limit。省略选项会得到默认 20，传入非数字会由 argparse 拒绝。",
+              "code": "argv = [\"原料\", \"--delta\", \"-3\"]\nprint(argv[0])\nprint(argv[2])\nprint(type(argv[2]).__name__)\n",
+              "output": "原料\n-3\nstr",
+              "explanation": "argv 是我们自选的变量名，里面每一项都是文字；索引 0 取商品名，索引 2 取调整量文本。看到 -3 不代表它已经是整数，最后一行的 str 证明转换还没发生。",
               "source_kind": "python",
               "runnable": true
             },
             {
               "language": "python",
-              "code": "import argparse\nparser = argparse.ArgumentParser()\nparser.add_argument('title')\nprint(parser.parse_args(['买书']).title)",
-              "output": "买书",
-              "explanation": "位置参数 title 没有前缀，parse_args(['买书']) 会把文本绑定到 args.title 并输出买书。缺少这个必填位置参数时解析失败，不能用默认标题掩盖输入缺失。",
+              "code": "def input_parts(argv):\n    return argv[0], argv[1], argv[2]\n\nprint(input_parts([\"纸盒\", \"--delta\", \"5\"]))\n",
+              "output": "('纸盒', '--delta', '5')",
+              "explanation": "函数接收整个列表，再把三个字符串组成元组返回；return 才把结果交给外面的 print。这里不解析参数、不检查业务，只复习列表索引和函数传参，为下一步准备输入。",
               "source_kind": "python",
               "runnable": true
             }
           ],
-          "common_errors": [
-            {
-              "error": "忘记 type=int",
-              "symptom": "业务函数收到 '3'，加法变成字符串拼接",
-              "cause": "argparse 默认保留字符串",
-              "fix": "在 add_argument 写 type=int 并测试 Namespace 类型",
-              "example": {
-                "code": "parser.add_argument('--limit')\nargs = parser.parse_args(['--limit','3'])\nprint(args.limit + 1)",
-                "symptom": "业务函数收到 '3'，加法变成字符串拼接",
-                "fix": "在 add_argument 写 type=int 并测试 Namespace 类型"
-              }
-            },
-            {
-              "error": "把可选项写成必需",
-              "symptom": "用户不带 --verbose 也被拒绝",
-              "cause": "required=True 与开关语义不匹配",
-              "fix": "布尔开关使用 store_true 并提供默认 False",
-              "example": {
-                "code": "parser.add_argument('--verbose', required=True, action='store_true')",
-                "symptom": "用户不带 --verbose 也被拒绝",
-                "fix": "布尔开关使用 store_true 并提供默认 False"
-              }
-            }
-          ],
-          "guided_practice": {
-            "goal": "定义 parse_args(argv)，把 --limit 转成 int、把 --verbose 转成 bool，并保留清晰 help。",
-            "starter": "import argparse\n\ndef parse_args(argv):\n    # 建立 parser 并返回 Namespace\n    pass\n",
-            "steps": [
-              {
-                "action": "声明参数：加入 --limit type=int",
-                "expected": "parse_args(['--limit','3']).limit == 3"
-              },
-              {
-                "action": "开关：加入 --verbose",
-                "expected": "不传为 False，传入为 True"
-              }
-            ],
-            "check": "用列表参数离线测试正常、缺值、非法数字和 --help；不要读取真实 sys.argv 让单测不可控。"
-          },
-          "practice": {
-            "kind": "code",
-            "scenario": "在“argparse 基本参数”中解决一个真实开发问题，而不是只背概念。",
-            "instructions": "定义 parse_args(argv)，支持 `--limit INTEGER` 默认 10 和 `--verbose` 开关；非法 limit 由 argparse 产生非零错误，不在业务层静默转换。",
-            "expected_behavior": "正常 argv 得到正确 Namespace 类型；缺失/非法参数由 parser 明确拒绝，默认值可从 help 看见。",
-            "hints": "先复现示例输出，再只修改一处；遇到错误先看类型、行号和输入。ArgumentParser、add_argument、parse_args 组成最小 CLI。",
-            "starter_content": "import argparse\n\ndef parse_args(argv):\n    # 建立 parser 并返回 Namespace\n    pass\n",
-            "input_examples": [
-              {
-                "label": "解析",
-                "value": "import argparse\np = argparse.ArgumentParser()\np.add_argument('--limit', type=int, default=10)\nprint(p.parse_args(['--limit', '3']).limit)",
-                "expected": "3"
-              },
-              {
-                "label": "开关",
-                "value": "p.add_argument('--verbose', action='store_true')\nprint(p.parse_args([]).verbose)",
-                "expected": "False"
-              }
-            ],
-            "starter_policy": "complete",
-            "file_name": "main.py"
-          },
-          "key_points": [
-            "把命令行字符串解析成结构化参数。",
-            "Python 3 规则：ArgumentParser、add_argument、parse_args 组成最小 CLI。",
-            "运行结果和错误信息都是反馈证据"
-          ],
-          "frontend_bridge": "前端经验只作辅助：argparse 基本参数 必须先按 Python 3 的执行、类型和错误规则完成。",
           "example": {
             "language": "python",
-            "code": "import argparse\nparser = argparse.ArgumentParser()\nparser.add_argument('--limit', type=int, default=20)\nprint(parser.parse_args(['--limit', '3']).limit)",
-            "output": "3",
-            "explanation": "add_argument('--limit', type=int, default=20) 让 argparse 把命令行文本 '3' 转成整数 3，parse_args 后从 Namespace 读取 limit。省略选项会得到默认 20，传入非数字会由 argparse 拒绝。",
+            "code": "argv = [\"原料\", \"--delta\", \"-3\"]\nprint(argv[0])\nprint(argv[2])\nprint(type(argv[2]).__name__)\n",
+            "output": "原料\n-3\nstr",
+            "explanation": "argv 是我们自选的变量名，里面每一项都是文字；索引 0 取商品名，索引 2 取调整量文本。看到 -3 不代表它已经是整数，最后一行的 str 证明转换还没发生。",
             "source_kind": "python",
             "runnable": true
           },
+          "common_errors": [
+            {
+              "error": "把 argv 当成自动产生输入的关键字",
+              "cause": "这个函数参数必须由调用者传入，改成 items 也能工作。",
+              "symptom": "这个函数参数必须由调用者传入，改成 items 也能工作。",
+              "fix": "调用时显式传入三项列表。",
+              "example": {
+                "code": "input_parts()",
+                "symptom": "这个函数参数必须由调用者传入，改成 items 也能工作。",
+                "fix": "调用时显式传入三项列表。"
+              }
+            },
+            {
+              "error": "看到负号就当成 int",
+              "cause": "带引号的 '-3' 是文本，当前练习要保留文本。",
+              "symptom": "带引号的 '-3' 是文本，当前练习要保留文本。",
+              "fix": "先原样返回三项，整数转换在第 03 节学习。",
+              "example": {
+                "code": "return int(argv[2])",
+                "symptom": "带引号的 '-3' 是文本，当前练习要保留文本。",
+                "fix": "先原样返回三项，整数转换在第 03 节学习。"
+              }
+            }
+          ],
+          "practice": {
+            "kind": "code",
+            "file_name": "main.py",
+            "scenario": "仓库收到“原料减少 3 个”的操作指令时。",
+            "instructions": "定义 input_parts(argv)，将恰好三项的字符串列表按原顺序返回为三项元组；不转换类型，不加长度或业务校验。",
+            "expected_behavior": "('原料', '--delta', '-3')；('纸盒', '--delta', '5')",
+            "hints": "argv 是自选变量名，列表里的 '-3' 仍是字符串。",
+            "starter_content": "def input_parts(argv):\n    # TODO：返回列表中的三项\n    pass\n",
+            "starter_policy": "complete",
+            "input_examples": [
+              {
+                "label": "检查 1",
+                "value": "input_parts(['原料', '--delta', '-3'])",
+                "expected": "('原料', '--delta', '-3')"
+              },
+              {
+                "label": "检查 2",
+                "value": "input_parts(['纸盒', '--delta', '5'])",
+                "expected": "('纸盒', '--delta', '5')"
+              }
+            ]
+          },
+          "guided_practice": {
+            "goal": "定义 input_parts(argv)，将恰好三项的字符串列表按原顺序返回为三项元组；不转换类型，不加长度或业务校验。",
+            "starter": "def input_parts(argv):\n    # TODO：返回列表中的三项\n    pass\n",
+            "steps": [
+              {
+                "action": "input_parts(['原料', '--delta', '-3'])",
+                "expected": "('原料', '--delta', '-3')"
+              },
+              {
+                "action": "input_parts(['纸盒', '--delta', '5'])",
+                "expected": "('纸盒', '--delta', '5')"
+              }
+            ],
+            "check": "('原料', '--delta', '-3')；('纸盒', '--delta', '5')"
+          },
           "steps": [
-            "声明参数：加入 --limit type=int",
-            "开关：加入 --verbose"
+            "先读用途和逐行注释，预测第一个示例的输出",
+            "运行示例，再补全两道小练习",
+            "独立作业只实现本节要求，查看真实返回值"
           ],
           "practice_first": {
-            "goal": "定义 parse_args(argv)，支持 `--limit INTEGER` 默认 10 和 `--verbose` 开关；非法 limit 由 argparse 产生非零错误，不在业务层静默转换。",
+            "goal": "定义 input_parts(argv)，将恰好三项的字符串列表按原顺序返回为三项元组；不转换类型，不加长度或业务校验。",
             "rules": [
-              "ArgumentParser、add_argument、parse_args 组成最小 CLI。",
-              "先传一组 argv，再传错误参数；分别观察正常输出、错误输出和退出码。"
+              "argv 是自选变量名，列表里的 '-3' 仍是字符串。",
+              "本节只观察输入，不转整数、不修改库存。"
             ],
             "prerequisites": [
-              "D04-default-keyword",
-              "D07-main",
-              "D06-try-except"
+              "D04-def-return",
+              "D05-list-tuple"
             ],
             "cards": [],
             "drills": [
               {
-                "id": "fill-0",
-                "title": "补全练习 1",
-                "instructions": "替换 TODO 指出的占位 None，保留其他输入；运行后对比每一行输出，再完成下方独立作业。",
-                "starter": "# TODO：补全下面第 3 行的 None，使输出与右侧预期一致。\nimport argparse\nparser = None\nparser.add_argument('--limit', type=int, default=20)\nprint(parser.parse_args(['--limit', '3']).limit)",
-                "output": "3",
-                "reference": "import argparse\nparser = argparse.ArgumentParser()\nparser.add_argument('--limit', type=int, default=20)\nprint(parser.parse_args(['--limit', '3']).limit)",
+                "title": "读出商品名称",
+                "instructions": "读出商品名称。只改 TODO 对应位置，然后对比预期和实际输出。",
+                "starter": "# TODO：读出商品名称\nargv = [\"原料\", \"--delta\", \"-3\"]\nprint(None)\nprint(argv[2])\nprint(type(argv[2]).__name__)\n",
+                "reference": "argv = [\"原料\", \"--delta\", \"-3\"]\nprint(argv[0])\nprint(argv[2])\nprint(type(argv[2]).__name__)\n",
+                "output": "原料\n-3\nstr",
                 "source_kind": "python",
-                "runnable": true
+                "runnable": true,
+                "id": "step-1"
               },
               {
-                "id": "fill-1",
-                "title": "补全练习 2",
-                "instructions": "替换 TODO 指出的占位 None，保留其他输入；运行后对比每一行输出，再完成下方独立作业。",
-                "starter": "# TODO：补全下面第 3 行的 None，使输出与右侧预期一致。\nimport argparse\nparser = None\nparser.add_argument('title')\nprint(parser.parse_args(['买书']).title)",
-                "output": "买书",
-                "reference": "import argparse\nparser = argparse.ArgumentParser()\nparser.add_argument('title')\nprint(parser.parse_args(['买书']).title)",
+                "title": "返回三个原始字符串",
+                "instructions": "返回三个原始字符串。只改 TODO 对应位置，然后对比预期和实际输出。",
+                "starter": "# TODO：返回三个原始字符串\ndef input_parts(argv):\n    return None\n\nprint(input_parts([\"纸盒\", \"--delta\", \"5\"]))\n",
+                "reference": "def input_parts(argv):\n    return argv[0], argv[1], argv[2]\n\nprint(input_parts([\"纸盒\", \"--delta\", \"5\"]))\n",
+                "output": "('纸盒', '--delta', '5')",
                 "source_kind": "python",
-                "runnable": true
+                "runnable": true,
+                "id": "step-2"
               }
             ],
-            "provided": "主作业只提交当前编辑器内容。独立实验在临时目录运行，不覆盖作业和项目。"
+            "intro": [
+              "看清 argv 列表里存了什么，暂时不学新库。",
+              "仓库收到“原料减少 3 个”的操作指令时。",
+              "把输入看成三个字符串，先用索引观察，再把列表传给函数。"
+            ],
+            "provided": "每个示例可独立运行。补全题不覆盖主作业；主作业中的函数需 return，调试时可以 print。"
+          }
+        },
+        {
+          "id": "D09-position",
+          "title": "02 · 创建解析器：先只接收商品名",
+          "catalog_refs": [
+            "py-87",
+            "linux-06"
+          ],
+          "objective": "让 argparse 把商品名称保存到一个命名字段中。",
+          "syntax": "固定方法名不用背实现；parser、args、product 都是本例自选名字。；先登记规则，再解析输入；本节不加入 --delta。",
+          "explanation": [
+            "argparse 是 Python 自带的命令行翻译员，先 import 才能使用。ArgumentParser() 创建一个解析器；parser 是自选变量名，prog='stock_adjust' 只是帮助信息里的程序名称。",
+            "parser.add_argument('product') 约定接收商品名，并把它放进 product 字段。这是位置参数：用户写原料，不写 product 原料，也不写 --product 原料。",
+            "parser.parse_args(['原料']) 真正执行解析，返回装着结果的对象。把它保存为 args 后，用 args.product 读出原料；add_argument 负责立规则，不会直接拿到这次输入。"
+          ],
+          "js_bridge": "本节不需要 JavaScript 知识。先在 Python 中运行示例，再完成本节的小步练习。",
+          "frontend_bridge": "只用已学的 Python 函数、条件和字典，不要求了解前端框架。",
+          "key_points": [
+            "固定方法名不用背实现；parser、args、product 都是本例自选名字。",
+            "先登记规则，再解析输入；本节不加入 --delta。"
+          ],
+          "examples": [
+            {
+              "language": "python",
+              "code": "import argparse\nparser = argparse.ArgumentParser(prog=\"stock_adjust\")  # 创建翻译员\nparser.add_argument(\"product\")  # 先约定：必须提供一个商品名\nargs = parser.parse_args([\"原料\"])  # 现在才翻译这次输入\nprint(args.product)\n",
+              "output": "原料",
+              "explanation": "ArgumentParser 创建解析器，add_argument 只登记输入规则，parse_args 才读取这次列表。product 是自己起的结果字段名，原料是用户填入的值；prog 只影响帮助提示，不会改文件名。",
+              "source_kind": "python",
+              "runnable": true
+            },
+            {
+              "language": "python",
+              "code": "import argparse\nparser = argparse.ArgumentParser()\nparser.add_argument(\"item\")\nargs = parser.parse_args([\"纸盒\"])\nprint(args.item)\n",
+              "output": "纸盒",
+              "explanation": "把字段名从 product 换成 item 后，读取结果也要跟着写 args.item；用户仍然只输入纸盒。位置参数没有 -- 前缀，在本例中必须填写，不是要求用户输入字面量 item。",
+              "source_kind": "python",
+              "runnable": true
+            }
+          ],
+          "example": {
+            "language": "python",
+            "code": "import argparse\nparser = argparse.ArgumentParser(prog=\"stock_adjust\")  # 创建翻译员\nparser.add_argument(\"product\")  # 先约定：必须提供一个商品名\nargs = parser.parse_args([\"原料\"])  # 现在才翻译这次输入\nprint(args.product)\n",
+            "output": "原料",
+            "explanation": "ArgumentParser 创建解析器，add_argument 只登记输入规则，parse_args 才读取这次列表。product 是自己起的结果字段名，原料是用户填入的值；prog 只影响帮助提示，不会改文件名。",
+            "source_kind": "python",
+            "runnable": true
+          },
+          "common_errors": [
+            {
+              "error": "以为 product 是用户必须输入的单词",
+              "cause": "product 是结果字段名，实际输入应是商品名称。",
+              "symptom": "product 是结果字段名，实际输入应是商品名称。",
+              "fix": "只传 ['原料']，用 args.product 取值。",
+              "example": {
+                "code": "parser.parse_args([\"product\", \"原料\"])",
+                "symptom": "product 是结果字段名，实际输入应是商品名称。",
+                "fix": "只传 ['原料']，用 args.product 取值。"
+              }
+            },
+            {
+              "error": "把登记规则的结果当成解析结果",
+              "cause": "add_argument 没有解析原料，不能用它代替 parse_args。",
+              "symptom": "add_argument 没有解析原料，不能用它代替 parse_args。",
+              "fix": "args = parser.parse_args(argv)。",
+              "example": {
+                "code": "args = parser.add_argument(\"product\")",
+                "symptom": "add_argument 没有解析原料，不能用它代替 parse_args。",
+                "fix": "args = parser.parse_args(argv)。"
+              }
+            }
+          ],
+          "practice": {
+            "kind": "code",
+            "file_name": "main.py",
+            "scenario": "输入必须包含一个商品名，但暂时没有调整量时。",
+            "instructions": "定义 product_options(argv)，创建解析器，声明必填位置参数 product，返回 parse_args(argv) 的结果。商品名保持字符串，缺少参数由库自动处理。",
+            "expected_behavior": "原料；纸盒",
+            "hints": "固定方法名不用背实现；parser、args、product 都是本例自选名字。",
+            "starter_content": "import argparse\n\ndef product_options(argv):\n    # TODO：创建、声明、解析并返回\n    pass\n",
+            "starter_policy": "complete",
+            "input_examples": [
+              {
+                "label": "检查 1",
+                "value": "product_options(['原料']).product",
+                "expected": "原料"
+              },
+              {
+                "label": "检查 2",
+                "value": "product_options(['纸盒']).product",
+                "expected": "纸盒"
+              }
+            ]
+          },
+          "guided_practice": {
+            "goal": "定义 product_options(argv)，创建解析器，声明必填位置参数 product，返回 parse_args(argv) 的结果。商品名保持字符串，缺少参数由库自动处理。",
+            "starter": "import argparse\n\ndef product_options(argv):\n    # TODO：创建、声明、解析并返回\n    pass\n",
+            "steps": [
+              {
+                "action": "product_options(['原料']).product",
+                "expected": "原料"
+              },
+              {
+                "action": "product_options(['纸盒']).product",
+                "expected": "纸盒"
+              }
+            ],
+            "check": "原料；纸盒"
+          },
+          "steps": [
+            "先读用途和逐行注释，预测第一个示例的输出",
+            "运行示例，再补全两道小练习",
+            "独立作业只实现本节要求，查看真实返回值"
+          ],
+          "practice_first": {
+            "goal": "定义 product_options(argv)，创建解析器，声明必填位置参数 product，返回 parse_args(argv) 的结果。商品名保持字符串，缺少参数由库自动处理。",
+            "rules": [
+              "固定方法名不用背实现；parser、args、product 都是本例自选名字。",
+              "先登记规则，再解析输入；本节不加入 --delta。"
+            ],
+            "prerequisites": [
+              "D09-argv",
+              "D07-import"
+            ],
+            "cards": [],
+            "drills": [
+              {
+                "title": "创建一个参数解析器",
+                "instructions": "创建一个参数解析器。只改 TODO 对应位置，然后对比预期和实际输出。",
+                "starter": "# TODO：创建一个参数解析器\nimport argparse\nparser = None  # 创建翻译员\nparser.add_argument(\"product\")  # 先约定：必须提供一个商品名\nargs = parser.parse_args([\"原料\"])  # 现在才翻译这次输入\nprint(args.product)\n",
+                "reference": "import argparse\nparser = argparse.ArgumentParser(prog=\"stock_adjust\")  # 创建翻译员\nparser.add_argument(\"product\")  # 先约定：必须提供一个商品名\nargs = parser.parse_args([\"原料\"])  # 现在才翻译这次输入\nprint(args.product)\n",
+                "output": "原料",
+                "source_kind": "python",
+                "runnable": true,
+                "id": "step-1"
+              },
+              {
+                "title": "读取自己命名的 item 字段",
+                "instructions": "读取自己命名的 item 字段。只改 TODO 对应位置，然后对比预期和实际输出。",
+                "starter": "# TODO：读取自己命名的 item 字段\nimport argparse\nparser = argparse.ArgumentParser()\nparser.add_argument(\"item\")\nargs = parser.parse_args([\"纸盒\"])\nprint(None)\n",
+                "reference": "import argparse\nparser = argparse.ArgumentParser()\nparser.add_argument(\"item\")\nargs = parser.parse_args([\"纸盒\"])\nprint(args.item)\n",
+                "output": "纸盒",
+                "source_kind": "python",
+                "runnable": true,
+                "id": "step-2"
+              }
+            ],
+            "intro": [
+              "让 argparse 把商品名称保存到一个命名字段中。",
+              "输入必须包含一个商品名，但暂时没有调整量时。",
+              "创建解析器 → add_argument 登记规则 → parse_args 解析 → args.product 取值。"
+            ],
+            "provided": "每个示例可独立运行。补全题不覆盖主作业；主作业中的函数需 return，调试时可以 print。"
+          }
+        },
+        {
+          "id": "D09-options",
+          "title": "03 · 加上调整量：--delta、type 与 default",
+          "catalog_refs": [
+            "py-87",
+            "linux-06"
+          ],
+          "objective": "把调整量文字转成整数，并规定省略时使用什么值。",
+          "syntax": "--delta 的结果字段默认叫 delta，不带两个横线。；type=int 只检查整数形式，default=0 只负责省略时的值。",
+          "explanation": [
+            "位置参数 product 说明调整哪个商品；--delta 是带名字的选项，它后面跟调整量。delta 表示变化量，正数入库、负数出库，这是业务约定，不是 Python 语法。",
+            "type 和 default 是 add_argument 的配置参数名。type=int 表示用 int 做转换，注意写 int 而不是 int()；default=0 表示没提供 --delta 时用零，不是把所有输入改成零。",
+            "输入列表仍然写字符串，例如 ['原料', '--delta', '-3']。得到的 args.delta 才是整数 -3；负数合法，本节不检查库存是否够用，也不要求学习者手写转换异常。"
+          ],
+          "js_bridge": "本节不需要 JavaScript 知识。先在 Python 中运行示例，再完成本节的小步练习。",
+          "frontend_bridge": "只用已学的 Python 函数、条件和字典，不要求了解前端框架。",
+          "key_points": [
+            "--delta 的结果字段默认叫 delta，不带两个横线。",
+            "type=int 只检查整数形式，default=0 只负责省略时的值。"
+          ],
+          "examples": [
+            {
+              "language": "python",
+              "code": "import argparse\n\ndef adjustment_options(argv):\n    parser = argparse.ArgumentParser(prog=\"stock_adjust\")\n    parser.add_argument(\"product\")\n    parser.add_argument(\"--delta\", type=int, default=0)\n    return parser.parse_args(argv)\n\nargs = adjustment_options([\"原料\", \"--delta\", \"-3\"])\nprint(args.product, args.delta)\nprint(type(args.delta).__name__)\n",
+              "output": "原料 -3\nint",
+              "explanation": "--delta 后面的 '-3' 原本是字符串，type=int 让库在解析时把它转成整数，所以结果类型是 int。正数、零和负数都是整数；库不会自动加上“只能入库”这样的业务限制。",
+              "source_kind": "python",
+              "runnable": true
+            },
+            {
+              "language": "python",
+              "code": "import argparse\n\ndef adjustment_options(argv):\n    parser = argparse.ArgumentParser(prog=\"stock_adjust\")\n    parser.add_argument(\"product\")\n    parser.add_argument(\"--delta\", type=int, default=0)\n    return parser.parse_args(argv)\n\nargs = adjustment_options([\"纸盒\"])\nprint(args.product, args.delta)\n",
+              "output": "纸盒 0",
+              "explanation": "这次没有写 --delta，解析器使用 default=0，所以商品名保留纸盒，调整量为零。默认值只在没传这个选项时使用，不会覆盖用户明确传来的 5、0 或 -3。",
+              "source_kind": "python",
+              "runnable": true
+            }
+          ],
+          "example": {
+            "language": "python",
+            "code": "import argparse\n\ndef adjustment_options(argv):\n    parser = argparse.ArgumentParser(prog=\"stock_adjust\")\n    parser.add_argument(\"product\")\n    parser.add_argument(\"--delta\", type=int, default=0)\n    return parser.parse_args(argv)\n\nargs = adjustment_options([\"原料\", \"--delta\", \"-3\"])\nprint(args.product, args.delta)\nprint(type(args.delta).__name__)\n",
+            "output": "原料 -3\nint",
+            "explanation": "--delta 后面的 '-3' 原本是字符串，type=int 让库在解析时把它转成整数，所以结果类型是 int。正数、零和负数都是整数；库不会自动加上“只能入库”这样的业务限制。",
+            "source_kind": "python",
+            "runnable": true
+          },
+          "common_errors": [
+            {
+              "error": "调整量仍是字符串",
+              "cause": "没有配置 type=int，取出的 '-3' 不能直接参与整数加法。",
+              "symptom": "没有配置 type=int，取出的 '-3' 不能直接参与整数加法。",
+              "fix": "给 --delta 加上 type=int。",
+              "example": {
+                "code": "parser.add_argument(\"--delta\", default=0)",
+                "symptom": "没有配置 type=int，取出的 '-3' 不能直接参与整数加法。",
+                "fix": "给 --delta 加上 type=int。"
+              }
+            },
+            {
+              "error": "自行禁止负数调整",
+              "cause": "出库本来就用负数，本节没有只能为正的业务规则。",
+              "symptom": "出库本来就用负数，本节没有只能为正的业务规则。",
+              "fix": "删去范围限制，保留整数形式检查。",
+              "example": {
+                "code": "if args.delta < 0: parser.error(\"不能为负\")",
+                "symptom": "出库本来就用负数，本节没有只能为正的业务规则。",
+                "fix": "删去范围限制，保留整数形式检查。"
+              }
+            }
+          ],
+          "practice": {
+            "kind": "code",
+            "file_name": "main.py",
+            "scenario": "同一张调整单可能入库、出库，也可能只提供商品名时。",
+            "instructions": "定义 adjustment_options(argv)：必填商品名 product，选项 --delta 使用 type=int、default=0，返回 Namespace。允许正数、零、负数；不增加业务范围限制。",
+            "expected_behavior": "整数 -3；整数 0；整数 5",
+            "hints": "--delta 的结果字段默认叫 delta，不带两个横线。",
+            "starter_content": "import argparse\n\ndef adjustment_options(argv):\n    parser = argparse.ArgumentParser(prog=\"stock_adjust\")\n    parser.add_argument(\"product\")\n    # TODO：声明 --delta，并解析后返回\n    pass\n",
+            "starter_policy": "complete",
+            "input_examples": [
+              {
+                "label": "检查 1",
+                "value": "adjustment_options(['原料','--delta','-3']).delta",
+                "expected": "整数 -3"
+              },
+              {
+                "label": "检查 2",
+                "value": "adjustment_options(['纸盒']).delta",
+                "expected": "整数 0"
+              },
+              {
+                "label": "检查 3",
+                "value": "adjustment_options(['纸盒','--delta','5']).delta",
+                "expected": "整数 5"
+              }
+            ]
+          },
+          "guided_practice": {
+            "goal": "定义 adjustment_options(argv)：必填商品名 product，选项 --delta 使用 type=int、default=0，返回 Namespace。允许正数、零、负数；不增加业务范围限制。",
+            "starter": "import argparse\n\ndef adjustment_options(argv):\n    parser = argparse.ArgumentParser(prog=\"stock_adjust\")\n    parser.add_argument(\"product\")\n    # TODO：声明 --delta，并解析后返回\n    pass\n",
+            "steps": [
+              {
+                "action": "adjustment_options(['原料','--delta','-3']).delta",
+                "expected": "整数 -3"
+              },
+              {
+                "action": "adjustment_options(['纸盒']).delta",
+                "expected": "整数 0"
+              },
+              {
+                "action": "adjustment_options(['纸盒','--delta','5']).delta",
+                "expected": "整数 5"
+              }
+            ],
+            "check": "整数 -3；整数 0；整数 5"
+          },
+          "steps": [
+            "先读用途和逐行注释，预测第一个示例的输出",
+            "运行示例，再补全两道小练习",
+            "独立作业只实现本节要求，查看真实返回值"
+          ],
+          "practice_first": {
+            "goal": "定义 adjustment_options(argv)：必填商品名 product，选项 --delta 使用 type=int、default=0，返回 Namespace。允许正数、零、负数；不增加业务范围限制。",
+            "rules": [
+              "--delta 的结果字段默认叫 delta，不带两个横线。",
+              "type=int 只检查整数形式，default=0 只负责省略时的值。"
+            ],
+            "prerequisites": [
+              "D09-position"
+            ],
+            "cards": [],
+            "drills": [
+              {
+                "title": "让调整量的类型变成 int",
+                "instructions": "让调整量的类型变成 int。只改 TODO 对应位置，然后对比预期和实际输出。",
+                "starter": "# TODO：让调整量的类型变成 int\nimport argparse\n\ndef adjustment_options(argv):\n    parser = argparse.ArgumentParser(prog=\"stock_adjust\")\n    parser.add_argument(\"product\")\n    parser.add_argument(\"--delta\", type=str, default=0)\n    return parser.parse_args(argv)\n\nargs = adjustment_options([\"原料\", \"--delta\", \"-3\"])\nprint(args.product, args.delta)\nprint(type(args.delta).__name__)\n",
+                "reference": "import argparse\n\ndef adjustment_options(argv):\n    parser = argparse.ArgumentParser(prog=\"stock_adjust\")\n    parser.add_argument(\"product\")\n    parser.add_argument(\"--delta\", type=int, default=0)\n    return parser.parse_args(argv)\n\nargs = adjustment_options([\"原料\", \"--delta\", \"-3\"])\nprint(args.product, args.delta)\nprint(type(args.delta).__name__)\n",
+                "output": "原料 -3\nint",
+                "source_kind": "python",
+                "runnable": true,
+                "id": "step-1"
+              },
+              {
+                "title": "设置省略调整量时的默认值",
+                "instructions": "设置省略调整量时的默认值。只改 TODO 对应位置，然后对比预期和实际输出。",
+                "starter": "# TODO：设置省略调整量时的默认值\nimport argparse\n\ndef adjustment_options(argv):\n    parser = argparse.ArgumentParser(prog=\"stock_adjust\")\n    parser.add_argument(\"product\")\n    parser.add_argument(\"--delta\", type=int, default=None)\n    return parser.parse_args(argv)\n\nargs = adjustment_options([\"纸盒\"])\nprint(args.product, args.delta)\n",
+                "reference": "import argparse\n\ndef adjustment_options(argv):\n    parser = argparse.ArgumentParser(prog=\"stock_adjust\")\n    parser.add_argument(\"product\")\n    parser.add_argument(\"--delta\", type=int, default=0)\n    return parser.parse_args(argv)\n\nargs = adjustment_options([\"纸盒\"])\nprint(args.product, args.delta)\n",
+                "output": "纸盒 0",
+                "source_kind": "python",
+                "runnable": true,
+                "id": "step-2"
+              }
+            ],
+            "intro": [
+              "把调整量文字转成整数，并规定省略时使用什么值。",
+              "同一张调整单可能入库、出库，也可能只提供商品名时。",
+              "声明 --delta，配置 type=int 和 default=0，再读 args.delta。"
+            ],
+            "provided": "每个示例可独立运行。补全题不覆盖主作业；主作业中的函数需 return，调试时可以 print。"
+          }
+        },
+        {
+          "id": "D09-stock",
+          "title": "04 · 串起来：Namespace → 读取参数 → 更新库存",
+          "catalog_refs": [
+            "py-87",
+            "linux-06"
+          ],
+          "objective": "把解析结果交给已经学过的字典更新代码。",
+          "syntax": "先解析成功，再修改 STOCK；本例商品明确已经存在。；Namespace 用点号取属性，库存字典用方括号读写。；本题返回新库存；只打印而不 return 仍会返回 None。",
+          "explanation": [
+            "把两层函数串起来看：adjust_stock 接到列表，把同一列表传给 adjustment_options；后者返回 Namespace，再赋给前者的 args。argv 是输入，args 是结果，不是两个互不相干的库对象。",
+            "print(args) 可以看到 Namespace(product='原料', delta=-3)。读对象属性用 args.product；读字典用 STOCK[args.product]，这时键就是原料。两种括号写法不同，是因为读取的对象不同。",
+            "STOCK[args.product] += args.delta 等价于原库存加调整量再写回。练习要求 return 新库存，print 只用于观察；商品明确已存在，不检查余额，也不新增商品或写文件。"
+          ],
+          "js_bridge": "本节不需要 JavaScript 知识。先在 Python 中运行示例，再完成本节的小步练习。",
+          "frontend_bridge": "只用已学的 Python 函数、条件和字典，不要求了解前端框架。",
+          "key_points": [
+            "先解析成功，再修改 STOCK；本例商品明确已经存在。",
+            "Namespace 用点号取属性，库存字典用方括号读写。",
+            "本题返回新库存；只打印而不 return 仍会返回 None。"
+          ],
+          "examples": [
+            {
+              "language": "python",
+              "code": "import argparse\n\ndef adjustment_options(argv):\n    parser = argparse.ArgumentParser(prog=\"stock_adjust\")\n    parser.add_argument(\"product\")\n    parser.add_argument(\"--delta\", type=int, default=0)\n    return parser.parse_args(argv)\n\nSTOCK = {\"纸盒\": 10, \"原料\": 20}\n\ndef adjust_stock(argv):\n    args = adjustment_options(argv)\n    STOCK[args.product] += args.delta\n    return STOCK[args.product]\n\nprint(STOCK[\"原料\"])\nprint(adjust_stock([\"原料\", \"--delta\", \"-3\"]))\nprint(STOCK)\n",
+              "output": "20\n17\n{'纸盒': 10, '原料': 17}",
+              "explanation": "先解析出 product='原料' 和 delta=-3，再执行 STOCK['原料'] = STOCK['原料'] + (-3)，库存从 20 变为 17。函数返回新库存，外面的 print 显示它；解析失败时不会走到更新那一行。",
+              "source_kind": "python",
+              "runnable": true
+            },
+            {
+              "language": "python",
+              "code": "import argparse\n\ndef adjustment_options(argv):\n    parser = argparse.ArgumentParser(prog=\"stock_adjust\")\n    parser.add_argument(\"product\")\n    parser.add_argument(\"--delta\", type=int, default=0)\n    return parser.parse_args(argv)\n\nargs = adjustment_options([\"原料\", \"--delta\", \"-3\"])\nprint(args)\nprint(args.product)\nprint(args.delta)\n",
+              "output": "Namespace(product='原料', delta=-3)\n原料\n-3",
+              "explanation": "Namespace 可以先理解为装着解析结果的对象，点号用来读取其中的属性。它不是字典：这里写 args.product，不是 args['product']；STOCK 才是用方括号读写商品库存的字典。",
+              "source_kind": "python",
+              "runnable": true
+            }
+          ],
+          "example": {
+            "language": "python",
+            "code": "import argparse\n\ndef adjustment_options(argv):\n    parser = argparse.ArgumentParser(prog=\"stock_adjust\")\n    parser.add_argument(\"product\")\n    parser.add_argument(\"--delta\", type=int, default=0)\n    return parser.parse_args(argv)\n\nSTOCK = {\"纸盒\": 10, \"原料\": 20}\n\ndef adjust_stock(argv):\n    args = adjustment_options(argv)\n    STOCK[args.product] += args.delta\n    return STOCK[args.product]\n\nprint(STOCK[\"原料\"])\nprint(adjust_stock([\"原料\", \"--delta\", \"-3\"]))\nprint(STOCK)\n",
+            "output": "20\n17\n{'纸盒': 10, '原料': 17}",
+            "explanation": "先解析出 product='原料' 和 delta=-3，再执行 STOCK['原料'] = STOCK['原料'] + (-3)，库存从 20 变为 17。函数返回新库存，外面的 print 显示它；解析失败时不会走到更新那一行。",
+            "source_kind": "python",
+            "runnable": true
+          },
+          "common_errors": [
+            {
+              "error": "把 Namespace 当成字典读",
+              "cause": "args 不是库存字典，args['product'] 会导致类型错误。",
+              "symptom": "args 不是库存字典，args['product'] 会导致类型错误。",
+              "fix": "使用 STOCK[args.product]。",
+              "example": {
+                "code": "STOCK[args[\"product\"]] += args.delta",
+                "symptom": "args 不是库存字典，args['product'] 会导致类型错误。",
+                "fix": "使用 STOCK[args.product]。"
+              }
+            },
+            {
+              "error": "只在局部算出新库存",
+              "cause": "仅计算或打印数值不会写回 STOCK，下一次仍读到旧库存。",
+              "symptom": "仅计算或打印数值不会写回 STOCK，下一次仍读到旧库存。",
+              "fix": "先用 += 更新 STOCK，再 return 新值。",
+              "example": {
+                "code": "return STOCK[args.product] + args.delta",
+                "symptom": "仅计算或打印数值不会写回 STOCK，下一次仍读到旧库存。",
+                "fix": "先用 += 更新 STOCK，再 return 新值。"
+              }
+            }
+          ],
+          "practice": {
+            "kind": "code",
+            "file_name": "main.py",
+            "scenario": "收到库存调整单后，确认输入能解析，再修改库存时。",
+            "instructions": "已提供 STOCK 和 adjustment_options。补全 adjust_stock(argv)：先解析，再按商品名累加 delta，修改原字典并返回该商品新库存。商品一定存在，允许结果为负数，不增加商品、类型或余额限制。",
+            "expected_behavior": "返回 17，原料库存变为 17；返回 15，纸盒库存变为 15；返回 -10，不额外拒绝",
+            "hints": "先解析成功，再修改 STOCK；本例商品明确已经存在。",
+            "starter_content": "import argparse\n\ndef adjustment_options(argv):\n    parser = argparse.ArgumentParser(prog=\"stock_adjust\")\n    parser.add_argument(\"product\")\n    parser.add_argument(\"--delta\", type=int, default=0)\n    return parser.parse_args(argv)\n\nSTOCK = {\"纸盒\": 10, \"原料\": 20}\n\ndef adjust_stock(argv):\n    # TODO：解析 → 更新字典 → 返回新库存\n    pass\n",
+            "starter_policy": "complete",
+            "input_examples": [
+              {
+                "label": "检查 1",
+                "value": "初始原料20；adjust_stock(['原料','--delta','-3'])",
+                "expected": "返回 17，原料库存变为 17"
+              },
+              {
+                "label": "检查 2",
+                "value": "初始纸盒10；adjust_stock(['纸盒','--delta','5'])",
+                "expected": "返回 15，纸盒库存变为 15"
+              },
+              {
+                "label": "检查 3",
+                "value": "初始原料20；adjust_stock(['原料','--delta','-30'])",
+                "expected": "返回 -10，不额外拒绝"
+              }
+            ]
+          },
+          "guided_practice": {
+            "goal": "已提供 STOCK 和 adjustment_options。补全 adjust_stock(argv)：先解析，再按商品名累加 delta，修改原字典并返回该商品新库存。商品一定存在，允许结果为负数，不增加商品、类型或余额限制。",
+            "starter": "import argparse\n\ndef adjustment_options(argv):\n    parser = argparse.ArgumentParser(prog=\"stock_adjust\")\n    parser.add_argument(\"product\")\n    parser.add_argument(\"--delta\", type=int, default=0)\n    return parser.parse_args(argv)\n\nSTOCK = {\"纸盒\": 10, \"原料\": 20}\n\ndef adjust_stock(argv):\n    # TODO：解析 → 更新字典 → 返回新库存\n    pass\n",
+            "steps": [
+              {
+                "action": "初始原料20；adjust_stock(['原料','--delta','-3'])",
+                "expected": "返回 17，原料库存变为 17"
+              },
+              {
+                "action": "初始纸盒10；adjust_stock(['纸盒','--delta','5'])",
+                "expected": "返回 15，纸盒库存变为 15"
+              },
+              {
+                "action": "初始原料20；adjust_stock(['原料','--delta','-30'])",
+                "expected": "返回 -10，不额外拒绝"
+              }
+            ],
+            "check": "返回 17，原料库存变为 17；返回 15，纸盒库存变为 15；返回 -10，不额外拒绝"
+          },
+          "steps": [
+            "先读用途和逐行注释，预测第一个示例的输出",
+            "运行示例，再补全两道小练习",
+            "独立作业只实现本节要求，查看真实返回值"
+          ],
+          "practice_first": {
+            "goal": "已提供 STOCK 和 adjustment_options。补全 adjust_stock(argv)：先解析，再按商品名累加 delta，修改原字典并返回该商品新库存。商品一定存在，允许结果为负数，不增加商品、类型或余额限制。",
+            "rules": [
+              "先解析成功，再修改 STOCK；本例商品明确已经存在。",
+              "Namespace 用点号取属性，库存字典用方括号读写。",
+              "本题返回新库存；只打印而不 return 仍会返回 None。"
+            ],
+            "prerequisites": [
+              "D09-options",
+              "D05-dict-set"
+            ],
+            "cards": [],
+            "drills": [
+              {
+                "title": "把解析出的变化量加回库存",
+                "instructions": "把解析出的变化量加回库存。只改 TODO 对应位置，然后对比预期和实际输出。",
+                "starter": "# TODO：把解析出的变化量加回库存\nimport argparse\n\ndef adjustment_options(argv):\n    parser = argparse.ArgumentParser(prog=\"stock_adjust\")\n    parser.add_argument(\"product\")\n    parser.add_argument(\"--delta\", type=int, default=0)\n    return parser.parse_args(argv)\n\nSTOCK = {\"纸盒\": 10, \"原料\": 20}\n\ndef adjust_stock(argv):\n    args = adjustment_options(argv)\n    STOCK[args.product] += 0\n    return STOCK[args.product]\n\nprint(STOCK[\"原料\"])\nprint(adjust_stock([\"原料\", \"--delta\", \"-3\"]))\nprint(STOCK)\n",
+                "reference": "import argparse\n\ndef adjustment_options(argv):\n    parser = argparse.ArgumentParser(prog=\"stock_adjust\")\n    parser.add_argument(\"product\")\n    parser.add_argument(\"--delta\", type=int, default=0)\n    return parser.parse_args(argv)\n\nSTOCK = {\"纸盒\": 10, \"原料\": 20}\n\ndef adjust_stock(argv):\n    args = adjustment_options(argv)\n    STOCK[args.product] += args.delta\n    return STOCK[args.product]\n\nprint(STOCK[\"原料\"])\nprint(adjust_stock([\"原料\", \"--delta\", \"-3\"]))\nprint(STOCK)\n",
+                "output": "20\n17\n{'纸盒': 10, '原料': 17}",
+                "source_kind": "python",
+                "runnable": true,
+                "id": "step-1"
+              },
+              {
+                "title": "从 Namespace 中读出商品",
+                "instructions": "从 Namespace 中读出商品。只改 TODO 对应位置，然后对比预期和实际输出。",
+                "starter": "# TODO：从 Namespace 中读出商品\nimport argparse\n\ndef adjustment_options(argv):\n    parser = argparse.ArgumentParser(prog=\"stock_adjust\")\n    parser.add_argument(\"product\")\n    parser.add_argument(\"--delta\", type=int, default=0)\n    return parser.parse_args(argv)\n\nargs = adjustment_options([\"原料\", \"--delta\", \"-3\"])\nprint(args)\nprint(None)\nprint(args.delta)\n",
+                "reference": "import argparse\n\ndef adjustment_options(argv):\n    parser = argparse.ArgumentParser(prog=\"stock_adjust\")\n    parser.add_argument(\"product\")\n    parser.add_argument(\"--delta\", type=int, default=0)\n    return parser.parse_args(argv)\n\nargs = adjustment_options([\"原料\", \"--delta\", \"-3\"])\nprint(args)\nprint(args.product)\nprint(args.delta)\n",
+                "output": "Namespace(product='原料', delta=-3)\n原料\n-3",
+                "source_kind": "python",
+                "runnable": true,
+                "id": "step-2"
+              }
+            ],
+            "intro": [
+              "把解析结果交给已经学过的字典更新代码。",
+              "收到库存调整单后，确认输入能解析，再修改库存时。",
+              "先 args = adjustment_options(argv)，再用 args.product 与 args.delta 更新 STOCK。"
+            ],
+            "provided": "解析函数和库存字典已完整提供，不必重复默写。这里只补 adjust_stock 的三步；不同实验互不共享库存。"
+          }
+        },
+        {
+          "id": "D09-parser",
+          "title": "05 · 普通参数小结：带值选项与布尔开关",
+          "catalog_refs": [
+            "py-87",
+            "linux-06"
+          ],
+          "objective": "区分需要填写数值的选项和只表示开关的选项。",
+          "syntax": "带值选项：--limit 3；布尔开关：--verbose，后面不加 True。；type、default、action 是库的配置项，不是需要自己实现的方法。",
+          "explanation": [
+            "前面的库存调整程序只有一种操作，并没有子命令。现在仍然只做普通参数解析，只把业务换成库存报告：--limit 代表显示条数，--verbose 代表是否详细显示。",
+            "action='store_true' 是 argparse 提供的一种开关配置，出现 --verbose 就得到 True，不出现就得到 False。action 是库规定的参数名，verbose 是我们选的选项名，不用自己写字符串转布尔的函数。",
+            "本节保留旧作业名 parse_args(argv)，默认 limit=10。它与 parser.parse_args(argv) 名称相似，但前者是自己定义的包装函数，后者是库对象的方法；本节不限制整数大小或正负。"
+          ],
+          "js_bridge": "本节不需要 JavaScript 知识。先在 Python 中运行示例，再完成本节的小步练习。",
+          "frontend_bridge": "只用已学的 Python 函数、条件和字典，不要求了解前端框架。",
+          "key_points": [
+            "带值选项：--limit 3；布尔开关：--verbose，后面不加 True。",
+            "type、default、action 是库的配置项，不是需要自己实现的方法。"
+          ],
+          "examples": [
+            {
+              "language": "python",
+              "code": "import argparse\n\ndef parse_args(argv):\n    parser = argparse.ArgumentParser(prog=\"stock_report\")\n    parser.add_argument(\"--limit\", type=int, default=10)\n    parser.add_argument(\"--verbose\", action=\"store_true\")\n    return parser.parse_args(argv)\n\nargs = parse_args([\"--limit\", \"3\", \"--verbose\"])\nprint(args.limit, args.verbose)\n",
+              "output": "3 True",
+              "explanation": "--limit 后跟一个整数，--verbose 则是无需填写值的开关；action='store_true' 表示出现时记为 True。二者的填写方式不同，不要给 --verbose 再加上字符串 True。",
+              "source_kind": "python",
+              "runnable": true
+            },
+            {
+              "language": "python",
+              "code": "import argparse\n\ndef parse_args(argv):\n    parser = argparse.ArgumentParser(prog=\"stock_report\")\n    parser.add_argument(\"--limit\", type=int, default=10)\n    parser.add_argument(\"--verbose\", action=\"store_true\")\n    return parser.parse_args(argv)\n\nargs = parse_args([])\nprint(args.limit, args.verbose)\n",
+              "output": "10 False",
+              "explanation": "空列表表示本次没有提供选项，因此 limit 使用默认 10，store_true 开关保持默认 False。parse_args([]) 只解析这个空列表，不会偷偷改读运行工作台时的真实命令行。",
+              "source_kind": "python",
+              "runnable": true
+            }
+          ],
+          "example": {
+            "language": "python",
+            "code": "import argparse\n\ndef parse_args(argv):\n    parser = argparse.ArgumentParser(prog=\"stock_report\")\n    parser.add_argument(\"--limit\", type=int, default=10)\n    parser.add_argument(\"--verbose\", action=\"store_true\")\n    return parser.parse_args(argv)\n\nargs = parse_args([\"--limit\", \"3\", \"--verbose\"])\nprint(args.limit, args.verbose)\n",
+            "output": "3 True",
+            "explanation": "--limit 后跟一个整数，--verbose 则是无需填写值的开关；action='store_true' 表示出现时记为 True。二者的填写方式不同，不要给 --verbose 再加上字符串 True。",
+            "source_kind": "python",
+            "runnable": true
+          },
+          "common_errors": [
+            {
+              "error": "给布尔开关再填写 True",
+              "cause": "store_true 只看开关是否出现，多出的 True 会被当成未知输入。",
+              "symptom": "store_true 只看开关是否出现，多出的 True 会被当成未知输入。",
+              "fix": "只传 ['--verbose']。",
+              "example": {
+                "code": "parse_args([\"--verbose\", \"True\"])",
+                "symptom": "store_true 只看开关是否出现，多出的 True 会被当成未知输入。",
+                "fix": "只传 ['--verbose']。"
+              }
+            },
+            {
+              "error": "把自己写的 parse_args 与库方法混为一谈",
+              "cause": "在包装函数内直接再次调用自己，会无限递归。",
+              "symptom": "在包装函数内直接再次调用自己，会无限递归。",
+              "fix": "创建 parser 后调用 parser.parse_args(argv)。",
+              "example": {
+                "code": "def parse_args(argv):\n    return parse_args(argv)",
+                "symptom": "在包装函数内直接再次调用自己，会无限递归。",
+                "fix": "创建 parser 后调用 parser.parse_args(argv)。"
+              }
+            }
+          ],
+          "practice": {
+            "kind": "code",
+            "file_name": "main.py",
+            "scenario": "库存报告需要限制显示条数，并可选择详细模式时。",
+            "instructions": "定义 parse_args(argv)，支持 --limit INTEGER，默认 10；支持 --verbose 开关，不传为 False、传入为 True。返回 Namespace，非法整数和未知选项交给 argparse，不限制 limit 正负。",
+            "expected_behavior": "limit=10，verbose=False；limit=3，verbose=True",
+            "hints": "带值选项：--limit 3；布尔开关：--verbose，后面不加 True。",
+            "starter_content": "import argparse\n\ndef parse_args(argv):\n    # TODO：创建 parser，声明带值选项与开关，再返回解析结果\n    pass\n",
+            "starter_policy": "complete",
+            "input_examples": [
+              {
+                "label": "检查 1",
+                "value": "parse_args([])",
+                "expected": "limit=10，verbose=False"
+              },
+              {
+                "label": "检查 2",
+                "value": "parse_args(['--limit','3','--verbose'])",
+                "expected": "limit=3，verbose=True"
+              }
+            ]
+          },
+          "guided_practice": {
+            "goal": "定义 parse_args(argv)，支持 --limit INTEGER，默认 10；支持 --verbose 开关，不传为 False、传入为 True。返回 Namespace，非法整数和未知选项交给 argparse，不限制 limit 正负。",
+            "starter": "import argparse\n\ndef parse_args(argv):\n    # TODO：创建 parser，声明带值选项与开关，再返回解析结果\n    pass\n",
+            "steps": [
+              {
+                "action": "parse_args([])",
+                "expected": "limit=10，verbose=False"
+              },
+              {
+                "action": "parse_args(['--limit','3','--verbose'])",
+                "expected": "limit=3，verbose=True"
+              }
+            ],
+            "check": "limit=10，verbose=False；limit=3，verbose=True"
+          },
+          "steps": [
+            "先读用途和逐行注释，预测第一个示例的输出",
+            "运行示例，再补全两道小练习",
+            "独立作业只实现本节要求，查看真实返回值"
+          ],
+          "practice_first": {
+            "goal": "定义 parse_args(argv)，支持 --limit INTEGER，默认 10；支持 --verbose 开关，不传为 False、传入为 True。返回 Namespace，非法整数和未知选项交给 argparse，不限制 limit 正负。",
+            "rules": [
+              "带值选项：--limit 3；布尔开关：--verbose，后面不加 True。",
+              "type、default、action 是库的配置项，不是需要自己实现的方法。"
+            ],
+            "prerequisites": [
+              "D09-stock"
+            ],
+            "cards": [],
+            "drills": [
+              {
+                "title": "声明出现即为 True 的开关",
+                "instructions": "声明出现即为 True 的开关。只改 TODO 对应位置，然后对比预期和实际输出。",
+                "starter": "# TODO：声明出现即为 True 的开关\nimport argparse\n\ndef parse_args(argv):\n    parser = argparse.ArgumentParser(prog=\"stock_report\")\n    parser.add_argument(\"--limit\", type=int, default=10)\n    # TODO：这里声明 --verbose 开关\n    return parser.parse_args(argv)\n\nargs = parse_args([\"--limit\", \"3\", \"--verbose\"])\nprint(args.limit, args.verbose)\n",
+                "reference": "import argparse\n\ndef parse_args(argv):\n    parser = argparse.ArgumentParser(prog=\"stock_report\")\n    parser.add_argument(\"--limit\", type=int, default=10)\n    parser.add_argument(\"--verbose\", action=\"store_true\")\n    return parser.parse_args(argv)\n\nargs = parse_args([\"--limit\", \"3\", \"--verbose\"])\nprint(args.limit, args.verbose)\n",
+                "output": "3 True",
+                "source_kind": "python",
+                "runnable": true,
+                "id": "step-1"
+              },
+              {
+                "title": "恢复报告条数的默认值 10",
+                "instructions": "恢复报告条数的默认值 10。只改 TODO 对应位置，然后对比预期和实际输出。",
+                "starter": "# TODO：恢复报告条数的默认值 10\nimport argparse\n\ndef parse_args(argv):\n    parser = argparse.ArgumentParser(prog=\"stock_report\")\n    parser.add_argument(\"--limit\", type=int, default=0)\n    parser.add_argument(\"--verbose\", action=\"store_true\")\n    return parser.parse_args(argv)\n\nargs = parse_args([])\nprint(args.limit, args.verbose)\n",
+                "reference": "import argparse\n\ndef parse_args(argv):\n    parser = argparse.ArgumentParser(prog=\"stock_report\")\n    parser.add_argument(\"--limit\", type=int, default=10)\n    parser.add_argument(\"--verbose\", action=\"store_true\")\n    return parser.parse_args(argv)\n\nargs = parse_args([])\nprint(args.limit, args.verbose)\n",
+                "output": "10 False",
+                "source_kind": "python",
+                "runnable": true,
+                "id": "step-2"
+              }
+            ],
+            "intro": [
+              "区分需要填写数值的选项和只表示开关的选项。",
+              "库存报告需要限制显示条数，并可选择详细模式时。",
+              "--limit 配 type=int；--verbose 配 action='store_true'，只写开关名。"
+            ],
+            "provided": "每个示例可独立运行。补全题不覆盖主作业；主作业中的函数需 return，调试时可以 print。"
+          }
+        },
+        {
+          "id": "D09-command-name",
+          "title": "06 · 只识别子命令：add_parser 与 dest",
+          "catalog_refs": [
+            "py-87",
+            "linux-06"
+          ],
+          "objective": "先知道用户选了哪个功能，暂时不要自动执行功能。",
+          "syntax": "dest 决定结果属性叫什么，add_parser 决定有哪些命令。；show 没有 product；只在 adjust 的结果中读取商品和调整量。",
+          "explanation": [
+            "普通参数回答“哪个商品、调整多少”，子命令回答“要做什么”。现在输入 show 是查看，输入 adjust 原料 --delta -3 是调整；本节只返回解析结果，仍然不修改库存。",
+            "parser 是总解析器；subparsers 管理子命令菜单；adjust 是 adjust 菜单项自己的解析器。写 adjust.add_argument('product')，商品参数就只属于 adjust，不会要求 show 也填商品。",
+            "dest='command' 可以读作“把选中的命令名字存进 command 字段”。dest 是库的固定配置名，command 可以改名，但读取属性也要同步改；required=True 表示必须选择一个子命令，不是自动选择 show。"
+          ],
+          "js_bridge": "本节不需要 JavaScript 知识。先在 Python 中运行示例，再完成本节的小步练习。",
+          "frontend_bridge": "只用已学的 Python 函数、条件和字典，不要求了解前端框架。",
+          "key_points": [
+            "dest 决定结果属性叫什么，add_parser 决定有哪些命令。",
+            "show 没有 product；只在 adjust 的结果中读取商品和调整量。"
+          ],
+          "examples": [
+            {
+              "language": "python",
+              "code": "import argparse\n\ndef command_options(argv):\n    parser = argparse.ArgumentParser(prog=\"stock\")\n    subparsers = parser.add_subparsers(dest=\"command\", required=True)\n    subparsers.add_parser(\"show\")\n    adjust = subparsers.add_parser(\"adjust\")\n    adjust.add_argument(\"product\")\n    adjust.add_argument(\"--delta\", type=int, default=0)\n    return parser.parse_args(argv)\n\nprint(command_options([\"show\"]))\nprint(command_options([\"adjust\", \"原料\", \"--delta\", \"-3\"]))\n",
+              "output": "Namespace(command='show')\nNamespace(command='adjust', product='原料', delta=-3)",
+              "explanation": "add_subparsers 建立可选的操作菜单，add_parser 为其中一个操作建立自己的参数解析器。dest='command' 把选中的菜单名放进 args.command；show 不需要商品，只有 adjust 分支才带 product 和 delta。",
+              "source_kind": "python",
+              "runnable": true
+            },
+            {
+              "language": "python",
+              "code": "import argparse\nparser = argparse.ArgumentParser()\nsubparsers = parser.add_subparsers(dest=\"action\", required=True)\nsubparsers.add_parser(\"show\")\nargs = parser.parse_args([\"show\"])\nprint(args.action)\n",
+              "output": "show",
+              "explanation": "dest 是库规定的配置名，但字符串 action 是我们自己决定的结果字段名，所以这里读 args.action。它保存的是用户选择的 show，不会自动执行查看库存；选择动作和执行动作要分开理解。",
+              "source_kind": "python",
+              "runnable": true
+            }
+          ],
+          "example": {
+            "language": "python",
+            "code": "import argparse\n\ndef command_options(argv):\n    parser = argparse.ArgumentParser(prog=\"stock\")\n    subparsers = parser.add_subparsers(dest=\"command\", required=True)\n    subparsers.add_parser(\"show\")\n    adjust = subparsers.add_parser(\"adjust\")\n    adjust.add_argument(\"product\")\n    adjust.add_argument(\"--delta\", type=int, default=0)\n    return parser.parse_args(argv)\n\nprint(command_options([\"show\"]))\nprint(command_options([\"adjust\", \"原料\", \"--delta\", \"-3\"]))\n",
+            "output": "Namespace(command='show')\nNamespace(command='adjust', product='原料', delta=-3)",
+            "explanation": "add_subparsers 建立可选的操作菜单，add_parser 为其中一个操作建立自己的参数解析器。dest='command' 把选中的菜单名放进 args.command；show 不需要商品，只有 adjust 分支才带 product 和 delta。",
+            "source_kind": "python",
+            "runnable": true
+          },
+          "common_errors": [
+            {
+              "error": "把子命令商品参数加给总 parser",
+              "cause": "总解析器的必填商品会连 show 也一起要求填写。",
+              "symptom": "总解析器的必填商品会连 show 也一起要求填写。",
+              "fix": "在 adjust = subparsers.add_parser('adjust') 后，使用 adjust.add_argument。",
+              "example": {
+                "code": "parser.add_argument(\"product\")",
+                "symptom": "总解析器的必填商品会连 show 也一起要求填写。",
+                "fix": "在 adjust = subparsers.add_parser('adjust') 后，使用 adjust.add_argument。"
+              }
+            },
+            {
+              "error": "认为 dest='command' 会执行函数",
+              "cause": "dest 只设置结果属性，得到的仍然是命令名称字符串。",
+              "symptom": "dest 只设置结果属性，得到的仍然是命令名称字符串。",
+              "fix": "先 print(args.command)，下一节再写 if 决定做什么。",
+              "example": {
+                "code": "args.command()",
+                "symptom": "dest 只设置结果属性，得到的仍然是命令名称字符串。",
+                "fix": "先 print(args.command)，下一节再写 if 决定做什么。"
+              }
+            }
+          ],
+          "practice": {
+            "kind": "code",
+            "file_name": "main.py",
+            "scenario": "同一个仓库程序既要查看库存，又要调整库存时。",
+            "instructions": "定义 command_options(argv)：必须选择 show 或 adjust。show 不带商品；adjust 接收必填 product 和 --delta（int，默认0）。dest='command'，返回 Namespace；这里只解析，不分派、不修改库存。",
+            "expected_behavior": "command='show'，没有 product 属性；command='adjust'，product='原料'，delta=-3",
+            "hints": "dest 决定结果属性叫什么，add_parser 决定有哪些命令。",
+            "starter_content": "import argparse\n\ndef command_options(argv):\n    parser = argparse.ArgumentParser(prog=\"stock\")\n    # TODO：建立子命令菜单，给 adjust 添加自己的参数\n    pass\n",
+            "starter_policy": "complete",
+            "input_examples": [
+              {
+                "label": "检查 1",
+                "value": "command_options(['show'])",
+                "expected": "command='show'，没有 product 属性"
+              },
+              {
+                "label": "检查 2",
+                "value": "command_options(['adjust','原料','--delta','-3'])",
+                "expected": "command='adjust'，product='原料'，delta=-3"
+              }
+            ]
+          },
+          "guided_practice": {
+            "goal": "定义 command_options(argv)：必须选择 show 或 adjust。show 不带商品；adjust 接收必填 product 和 --delta（int，默认0）。dest='command'，返回 Namespace；这里只解析，不分派、不修改库存。",
+            "starter": "import argparse\n\ndef command_options(argv):\n    parser = argparse.ArgumentParser(prog=\"stock\")\n    # TODO：建立子命令菜单，给 adjust 添加自己的参数\n    pass\n",
+            "steps": [
+              {
+                "action": "command_options(['show'])",
+                "expected": "command='show'，没有 product 属性"
+              },
+              {
+                "action": "command_options(['adjust','原料','--delta','-3'])",
+                "expected": "command='adjust'，product='原料'，delta=-3"
+              }
+            ],
+            "check": "command='show'，没有 product 属性；command='adjust'，product='原料'，delta=-3"
+          },
+          "steps": [
+            "先读用途和逐行注释，预测第一个示例的输出",
+            "运行示例，再补全两道小练习",
+            "独立作业只实现本节要求，查看真实返回值"
+          ],
+          "practice_first": {
+            "goal": "定义 command_options(argv)：必须选择 show 或 adjust。show 不带商品；adjust 接收必填 product 和 --delta（int，默认0）。dest='command'，返回 Namespace；这里只解析，不分派、不修改库存。",
+            "rules": [
+              "dest 决定结果属性叫什么，add_parser 决定有哪些命令。",
+              "show 没有 product；只在 adjust 的结果中读取商品和调整量。"
+            ],
+            "prerequisites": [
+              "D09-parser"
+            ],
+            "cards": [],
+            "drills": [
+              {
+                "title": "把选中命令的名称存进 command 字段",
+                "instructions": "把选中命令的名称存进 command 字段。只改 TODO 对应位置，然后对比预期和实际输出。",
+                "starter": "# TODO：把选中命令的名称存进 command 字段\nimport argparse\n\ndef command_options(argv):\n    parser = argparse.ArgumentParser(prog=\"stock\")\n    subparsers = parser.add_subparsers(dest=\"other\", required=True)\n    subparsers.add_parser(\"show\")\n    adjust = subparsers.add_parser(\"adjust\")\n    adjust.add_argument(\"product\")\n    adjust.add_argument(\"--delta\", type=int, default=0)\n    return parser.parse_args(argv)\n\nprint(command_options([\"show\"]))\nprint(command_options([\"adjust\", \"原料\", \"--delta\", \"-3\"]))\n",
+                "reference": "import argparse\n\ndef command_options(argv):\n    parser = argparse.ArgumentParser(prog=\"stock\")\n    subparsers = parser.add_subparsers(dest=\"command\", required=True)\n    subparsers.add_parser(\"show\")\n    adjust = subparsers.add_parser(\"adjust\")\n    adjust.add_argument(\"product\")\n    adjust.add_argument(\"--delta\", type=int, default=0)\n    return parser.parse_args(argv)\n\nprint(command_options([\"show\"]))\nprint(command_options([\"adjust\", \"原料\", \"--delta\", \"-3\"]))\n",
+                "output": "Namespace(command='show')\nNamespace(command='adjust', product='原料', delta=-3)",
+                "source_kind": "python",
+                "runnable": true,
+                "id": "step-1"
+              },
+              {
+                "title": "字段改名后从 action 读取",
+                "instructions": "字段改名后从 action 读取。只改 TODO 对应位置，然后对比预期和实际输出。",
+                "starter": "# TODO：字段改名后从 action 读取\nimport argparse\nparser = argparse.ArgumentParser()\nsubparsers = parser.add_subparsers(dest=\"action\", required=True)\nsubparsers.add_parser(\"show\")\nargs = parser.parse_args([\"show\"])\nprint(None)\n",
+                "reference": "import argparse\nparser = argparse.ArgumentParser()\nsubparsers = parser.add_subparsers(dest=\"action\", required=True)\nsubparsers.add_parser(\"show\")\nargs = parser.parse_args([\"show\"])\nprint(args.action)\n",
+                "output": "show",
+                "source_kind": "python",
+                "runnable": true,
+                "id": "step-2"
+              }
+            ],
+            "intro": [
+              "先知道用户选了哪个功能，暂时不要自动执行功能。",
+              "同一个仓库程序既要查看库存，又要调整库存时。",
+              "add_subparsers 建菜单，add_parser 加菜单项，dest 指定菜单名称存到哪里。"
+            ],
+            "provided": "每个示例可独立运行。补全题不覆盖主作业；主作业中的函数需 return，调试时可以 print。"
+          }
+        },
+        {
+          "id": "D09-if-dispatch",
+          "title": "07 · 先用 if 分派：选哪个功能就走哪个分支",
+          "catalog_refs": [
+            "py-87",
+            "linux-06"
+          ],
+          "objective": "用已经学过的 if，把命令名称连接到实际操作。",
+          "syntax": "解析是整理输入；分派是根据命令选择代码。；先判断命令，再读取那个命令专有的参数。",
+          "explanation": [
+            "参数解析只负责把文字整理成字段，不会替你改库存。“分派”就是根据字段选择执行哪段代码；最容易看懂的写法正是你学过的 if / elif。",
+            "run_stock 先调用 command_options，再判断 args.command。show 分支直接返回库存，adjust 分支才用 args.product 和 args.delta；这样 show 没有商品字段也不会报错。",
+            "现在先把 if 分派写熟，不要求 set_defaults。相同列表、相同库存应得到相同结果；出库仍允许负数，解析失败则在进入分支前停止，不需要自己补业务错误处理。"
+          ],
+          "js_bridge": "本节不需要 JavaScript 知识。先在 Python 中运行示例，再完成本节的小步练习。",
+          "frontend_bridge": "只用已学的 Python 函数、条件和字典，不要求了解前端框架。",
+          "key_points": [
+            "解析是整理输入；分派是根据命令选择代码。",
+            "先判断命令，再读取那个命令专有的参数。"
+          ],
+          "examples": [
+            {
+              "language": "python",
+              "code": "import argparse\n\ndef command_options(argv):\n    parser = argparse.ArgumentParser(prog=\"stock\")\n    subparsers = parser.add_subparsers(dest=\"command\", required=True)\n    subparsers.add_parser(\"show\")\n    adjust = subparsers.add_parser(\"adjust\")\n    adjust.add_argument(\"product\")\n    adjust.add_argument(\"--delta\", type=int, default=0)\n    return parser.parse_args(argv)\n\nSTOCK = {\"纸盒\": 10, \"原料\": 20}\n\ndef run_stock(argv):\n    args = command_options(argv)\n    if args.command == \"show\":\n        return STOCK\n    elif args.command == \"adjust\":\n        STOCK[args.product] += args.delta\n        return STOCK[args.product]\n\nprint(run_stock([\"show\"]))\nprint(run_stock([\"adjust\", \"原料\", \"--delta\", \"-3\"]))\nprint(run_stock([\"show\"]))\n",
+              "output": "{'纸盒': 10, '原料': 20}\n17\n{'纸盒': 10, '原料': 17}",
+              "explanation": "先用 args.command 判断用户选择 show 还是 adjust；只有进入 adjust 分支，才读取 product 和 delta。两个 show 分别显示调整前后库存，证明不是只计算了 17，而是真的更新了字典。",
+              "source_kind": "python",
+              "runnable": true
+            },
+            {
+              "language": "python",
+              "code": "import argparse\n\ndef command_options(argv):\n    parser = argparse.ArgumentParser(prog=\"stock\")\n    subparsers = parser.add_subparsers(dest=\"command\", required=True)\n    subparsers.add_parser(\"show\")\n    adjust = subparsers.add_parser(\"adjust\")\n    adjust.add_argument(\"product\")\n    adjust.add_argument(\"--delta\", type=int, default=0)\n    return parser.parse_args(argv)\n\nSTOCK = {\"纸盒\": 10, \"原料\": 20}\n\ndef run_stock(argv):\n    args = command_options(argv)\n    if args.command == \"show\":\n        return STOCK\n    elif args.command == \"adjust\":\n        STOCK[args.product] += args.delta\n        return STOCK[args.product]\n\nprint(run_stock([\"adjust\", \"纸盒\", \"--delta\", \"5\"]))\nprint(run_stock([\"adjust\", \"纸盒\", \"--delta\", \"-2\"]))\n",
+              "output": "15\n13",
+              "explanation": "同一段程序中的两次调用共享 STOCK，第一次纸盒由 10 变成 15，第二次在 15 上减 2 得到 13。分派只是在已有 if 中选择正确的代码，不需要引入新类或函数映射技巧。",
+              "source_kind": "python",
+              "runnable": true
+            }
+          ],
+          "example": {
+            "language": "python",
+            "code": "import argparse\n\ndef command_options(argv):\n    parser = argparse.ArgumentParser(prog=\"stock\")\n    subparsers = parser.add_subparsers(dest=\"command\", required=True)\n    subparsers.add_parser(\"show\")\n    adjust = subparsers.add_parser(\"adjust\")\n    adjust.add_argument(\"product\")\n    adjust.add_argument(\"--delta\", type=int, default=0)\n    return parser.parse_args(argv)\n\nSTOCK = {\"纸盒\": 10, \"原料\": 20}\n\ndef run_stock(argv):\n    args = command_options(argv)\n    if args.command == \"show\":\n        return STOCK\n    elif args.command == \"adjust\":\n        STOCK[args.product] += args.delta\n        return STOCK[args.product]\n\nprint(run_stock([\"show\"]))\nprint(run_stock([\"adjust\", \"原料\", \"--delta\", \"-3\"]))\nprint(run_stock([\"show\"]))\n",
+            "output": "{'纸盒': 10, '原料': 20}\n17\n{'纸盒': 10, '原料': 17}",
+            "explanation": "先用 args.command 判断用户选择 show 还是 adjust；只有进入 adjust 分支，才读取 product 和 delta。两个 show 分别显示调整前后库存，证明不是只计算了 17，而是真的更新了字典。",
+            "source_kind": "python",
+            "runnable": true
+          },
+          "common_errors": [
+            {
+              "error": "在 if 前无条件读取商品字段",
+              "cause": "show 的结果没有 product，会在选择分支前就报错。",
+              "symptom": "show 的结果没有 product，会在选择分支前就报错。",
+              "fix": "将商品读取移到 adjust 分支内部。",
+              "example": {
+                "code": "name = args.product\nif args.command == \"show\":\n    return STOCK",
+                "symptom": "show 的结果没有 product，会在选择分支前就报错。",
+                "fix": "将商品读取移到 adjust 分支内部。"
+              }
+            },
+            {
+              "error": "用调整量覆盖总库存",
+              "cause": "delta 是变化量，不是调整后的总量。",
+              "symptom": "delta 是变化量，不是调整后的总量。",
+              "fix": "用 += 累加，再返回更新后的数量。",
+              "example": {
+                "code": "STOCK[args.product] = args.delta",
+                "symptom": "delta 是变化量，不是调整后的总量。",
+                "fix": "用 += 累加，再返回更新后的数量。"
+              }
+            }
+          ],
+          "practice": {
+            "kind": "code",
+            "file_name": "main.py",
+            "scenario": "已经解析出 show 或 adjust，需要执行对应库存功能时。",
+            "instructions": "已提供 command_options 和 STOCK。补全 run_stock(argv)：show 返回库存字典且不修改；adjust 累加指定商品库存并返回新数量。商品一定存在，允许有符号调整和负库存，错误输入不得修改库存。",
+            "expected_behavior": "{'纸盒': 10, '原料': 20}；17；再 show 看到原料17",
+            "hints": "解析是整理输入；分派是根据命令选择代码。",
+            "starter_content": "import argparse\n\ndef command_options(argv):\n    parser = argparse.ArgumentParser(prog=\"stock\")\n    subparsers = parser.add_subparsers(dest=\"command\", required=True)\n    subparsers.add_parser(\"show\")\n    adjust = subparsers.add_parser(\"adjust\")\n    adjust.add_argument(\"product\")\n    adjust.add_argument(\"--delta\", type=int, default=0)\n    return parser.parse_args(argv)\n\nSTOCK = {\"纸盒\": 10, \"原料\": 20}\n\ndef run_stock(argv):\n    args = command_options(argv)\n    # TODO：先判断命令，再分别查看或调整\n    pass\n",
+            "starter_policy": "complete",
+            "input_examples": [
+              {
+                "label": "检查 1",
+                "value": "初始库存；run_stock(['show'])",
+                "expected": "{'纸盒': 10, '原料': 20}"
+              },
+              {
+                "label": "检查 2",
+                "value": "随后 run_stock(['adjust','原料','--delta','-3'])",
+                "expected": "17；再 show 看到原料17"
+              }
+            ]
+          },
+          "guided_practice": {
+            "goal": "已提供 command_options 和 STOCK。补全 run_stock(argv)：show 返回库存字典且不修改；adjust 累加指定商品库存并返回新数量。商品一定存在，允许有符号调整和负库存，错误输入不得修改库存。",
+            "starter": "import argparse\n\ndef command_options(argv):\n    parser = argparse.ArgumentParser(prog=\"stock\")\n    subparsers = parser.add_subparsers(dest=\"command\", required=True)\n    subparsers.add_parser(\"show\")\n    adjust = subparsers.add_parser(\"adjust\")\n    adjust.add_argument(\"product\")\n    adjust.add_argument(\"--delta\", type=int, default=0)\n    return parser.parse_args(argv)\n\nSTOCK = {\"纸盒\": 10, \"原料\": 20}\n\ndef run_stock(argv):\n    args = command_options(argv)\n    # TODO：先判断命令，再分别查看或调整\n    pass\n",
+            "steps": [
+              {
+                "action": "初始库存；run_stock(['show'])",
+                "expected": "{'纸盒': 10, '原料': 20}"
+              },
+              {
+                "action": "随后 run_stock(['adjust','原料','--delta','-3'])",
+                "expected": "17；再 show 看到原料17"
+              }
+            ],
+            "check": "{'纸盒': 10, '原料': 20}；17；再 show 看到原料17"
+          },
+          "steps": [
+            "先读用途和逐行注释，预测第一个示例的输出",
+            "运行示例，再补全两道小练习",
+            "独立作业只实现本节要求，查看真实返回值"
+          ],
+          "practice_first": {
+            "goal": "已提供 command_options 和 STOCK。补全 run_stock(argv)：show 返回库存字典且不修改；adjust 累加指定商品库存并返回新数量。商品一定存在，允许有符号调整和负库存，错误输入不得修改库存。",
+            "rules": [
+              "解析是整理输入；分派是根据命令选择代码。",
+              "先判断命令，再读取那个命令专有的参数。"
+            ],
+            "prerequisites": [
+              "D09-command-name",
+              "D03-if"
+            ],
+            "cards": [],
+            "drills": [
+              {
+                "title": "让 show 进入查看分支",
+                "instructions": "让 show 进入查看分支。只改 TODO 对应位置，然后对比预期和实际输出。",
+                "starter": "# TODO：让 show 进入查看分支\nimport argparse\n\ndef command_options(argv):\n    parser = argparse.ArgumentParser(prog=\"stock\")\n    subparsers = parser.add_subparsers(dest=\"command\", required=True)\n    subparsers.add_parser(\"show\")\n    adjust = subparsers.add_parser(\"adjust\")\n    adjust.add_argument(\"product\")\n    adjust.add_argument(\"--delta\", type=int, default=0)\n    return parser.parse_args(argv)\n\nSTOCK = {\"纸盒\": 10, \"原料\": 20}\n\ndef run_stock(argv):\n    args = command_options(argv)\n    if False:\n        return STOCK\n    elif args.command == \"adjust\":\n        STOCK[args.product] += args.delta\n        return STOCK[args.product]\n\nprint(run_stock([\"show\"]))\nprint(run_stock([\"adjust\", \"原料\", \"--delta\", \"-3\"]))\nprint(run_stock([\"show\"]))\n",
+                "reference": "import argparse\n\ndef command_options(argv):\n    parser = argparse.ArgumentParser(prog=\"stock\")\n    subparsers = parser.add_subparsers(dest=\"command\", required=True)\n    subparsers.add_parser(\"show\")\n    adjust = subparsers.add_parser(\"adjust\")\n    adjust.add_argument(\"product\")\n    adjust.add_argument(\"--delta\", type=int, default=0)\n    return parser.parse_args(argv)\n\nSTOCK = {\"纸盒\": 10, \"原料\": 20}\n\ndef run_stock(argv):\n    args = command_options(argv)\n    if args.command == \"show\":\n        return STOCK\n    elif args.command == \"adjust\":\n        STOCK[args.product] += args.delta\n        return STOCK[args.product]\n\nprint(run_stock([\"show\"]))\nprint(run_stock([\"adjust\", \"原料\", \"--delta\", \"-3\"]))\nprint(run_stock([\"show\"]))\n",
+                "output": "{'纸盒': 10, '原料': 20}\n17\n{'纸盒': 10, '原料': 17}",
+                "source_kind": "python",
+                "runnable": true,
+                "id": "step-1"
+              },
+              {
+                "title": "让 adjust 分支真正累加变化量",
+                "instructions": "让 adjust 分支真正累加变化量。只改 TODO 对应位置，然后对比预期和实际输出。",
+                "starter": "# TODO：让 adjust 分支真正累加变化量\nimport argparse\n\ndef command_options(argv):\n    parser = argparse.ArgumentParser(prog=\"stock\")\n    subparsers = parser.add_subparsers(dest=\"command\", required=True)\n    subparsers.add_parser(\"show\")\n    adjust = subparsers.add_parser(\"adjust\")\n    adjust.add_argument(\"product\")\n    adjust.add_argument(\"--delta\", type=int, default=0)\n    return parser.parse_args(argv)\n\nSTOCK = {\"纸盒\": 10, \"原料\": 20}\n\ndef run_stock(argv):\n    args = command_options(argv)\n    if args.command == \"show\":\n        return STOCK\n    elif args.command == \"adjust\":\n        STOCK[args.product] += 0\n        return STOCK[args.product]\n\nprint(run_stock([\"adjust\", \"纸盒\", \"--delta\", \"5\"]))\nprint(run_stock([\"adjust\", \"纸盒\", \"--delta\", \"-2\"]))\n",
+                "reference": "import argparse\n\ndef command_options(argv):\n    parser = argparse.ArgumentParser(prog=\"stock\")\n    subparsers = parser.add_subparsers(dest=\"command\", required=True)\n    subparsers.add_parser(\"show\")\n    adjust = subparsers.add_parser(\"adjust\")\n    adjust.add_argument(\"product\")\n    adjust.add_argument(\"--delta\", type=int, default=0)\n    return parser.parse_args(argv)\n\nSTOCK = {\"纸盒\": 10, \"原料\": 20}\n\ndef run_stock(argv):\n    args = command_options(argv)\n    if args.command == \"show\":\n        return STOCK\n    elif args.command == \"adjust\":\n        STOCK[args.product] += args.delta\n        return STOCK[args.product]\n\nprint(run_stock([\"adjust\", \"纸盒\", \"--delta\", \"5\"]))\nprint(run_stock([\"adjust\", \"纸盒\", \"--delta\", \"-2\"]))\n",
+                "output": "15\n13",
+                "source_kind": "python",
+                "runnable": true,
+                "id": "step-2"
+              }
+            ],
+            "intro": [
+              "用已经学过的 if，把命令名称连接到实际操作。",
+              "已经解析出 show 或 adjust，需要执行对应库存功能时。",
+              "检查 args.command；show 返回库存，adjust 分支读取商品并更新库存。"
+            ],
+            "provided": "每个示例可独立运行。补全题不覆盖主作业；主作业中的函数需 return，调试时可以 print。"
+          }
+        },
+        {
+          "id": "D09-function-value",
+          "title": "08 · 暂离 argparse：函数名与函数调用",
+          "catalog_refs": [
+            "py-87",
+            "linux-06"
+          ],
+          "objective": "分清保存一个函数和立刻调用这个函数的区别。",
+          "syntax": "函数名不带括号：保存或传递函数；带括号：立即调用。；调用之后要 return 结果；print 不能代替返回。",
+          "explanation": [
+            "这里先不使用 argparse，只复习函数。函数本身也可以赋给变量或传给另一个函数；action = show_stock 保存函数，action = show_stock() 则立刻执行并保存它的返回值。",
+            "如果 show_stock 只 print 而没有 return，它的返回值就是 None。因此错误地写 action = show_stock()，后面再 action() 就是在调用 None；这也是下一节容易绕的原因。",
+            "call_action(action, value) 只需要 return action(value)。以后把 action 换成 args.func，把 value 换成 args，就是 args.func(args)；本质仍然是普通函数调用，不是新语法。"
+          ],
+          "js_bridge": "本节不需要 JavaScript 知识。先在 Python 中运行示例，再完成本节的小步练习。",
+          "frontend_bridge": "只用已学的 Python 函数、条件和字典，不要求了解前端框架。",
+          "key_points": [
+            "函数名不带括号：保存或传递函数；带括号：立即调用。",
+            "调用之后要 return 结果；print 不能代替返回。"
+          ],
+          "examples": [
+            {
+              "language": "python",
+              "code": "def show_stock():\n    print(\"现在才查看库存\")\n\naction = show_stock\nprint(\"函数已经存好，还没有执行\")\naction()\n",
+              "output": "函数已经存好，还没有执行\n现在才查看库存",
+              "explanation": "action = show_stock 保存的是函数本身，这一行没有执行函数体，所以先看到“还没有执行”。到 action() 才真正调用函数；多加一对括号就改变了执行时机，不只是写法不同。",
+              "source_kind": "python",
+              "runnable": true
+            },
+            {
+              "language": "python",
+              "code": "def call_action(action, value):\n    return action(value)\n\ndef double(number):\n    return number * 2\n\nprint(call_action(double, 4))\nprint(call_action(double, -3))\n",
+              "output": "8\n-6",
+              "explanation": "double 不带括号，表示把函数交给 call_action；action(value) 才拿着传入的值调用它。call_action 不知道具体业务，只负责调用并返回结果，所以同一个函数也能处理负数。",
+              "source_kind": "python",
+              "runnable": true
+            }
+          ],
+          "example": {
+            "language": "python",
+            "code": "def show_stock():\n    print(\"现在才查看库存\")\n\naction = show_stock\nprint(\"函数已经存好，还没有执行\")\naction()\n",
+            "output": "函数已经存好，还没有执行\n现在才查看库存",
+            "explanation": "action = show_stock 保存的是函数本身，这一行没有执行函数体，所以先看到“还没有执行”。到 action() 才真正调用函数；多加一对括号就改变了执行时机，不只是写法不同。",
+            "source_kind": "python",
+            "runnable": true
+          },
+          "common_errors": [
+            {
+              "error": "保存的是函数返回值而不是函数",
+              "cause": "加括号会提前执行，变量可能变成 None 或字符串。",
+              "symptom": "加括号会提前执行，变量可能变成 None 或字符串。",
+              "fix": "保存函数写 action = show_stock，准备好再调用。",
+              "example": {
+                "code": "action = show_stock()",
+                "symptom": "加括号会提前执行，变量可能变成 None 或字符串。",
+                "fix": "保存函数写 action = show_stock，准备好再调用。"
+              }
+            },
+            {
+              "error": "调用正确但忘了返回",
+              "cause": "只执行 action(value) 会丢掉结果，外层收到 None。",
+              "symptom": "只执行 action(value) 会丢掉结果，外层收到 None。",
+              "fix": "写 return action(value)。",
+              "example": {
+                "code": "def call_action(action, value):\n    action(value)",
+                "symptom": "只执行 action(value) 会丢掉结果，外层收到 None。",
+                "fix": "写 return action(value)。"
+              }
+            }
+          ],
+          "practice": {
+            "kind": "code",
+            "file_name": "main.py",
+            "scenario": "希望先选好处理函数，等参数准备好以后再执行时。",
+            "instructions": "定义 call_action(action, value)，调用传入的 action(value)，并原样返回结果。函数和值由测试提供，不需要判断类型，也不要自己固定写 double。",
+            "expected_behavior": "8；查看：原料",
+            "hints": "函数名不带括号：保存或传递函数；带括号：立即调用。",
+            "starter_content": "def call_action(action, value):\n    # TODO：调用传进来的函数，再返回结果\n    pass\n",
+            "starter_policy": "complete",
+            "input_examples": [
+              {
+                "label": "检查 1",
+                "value": "call_action(double, 4)，其中 double(n) 返回 n*2",
+                "expected": "8"
+              },
+              {
+                "label": "检查 2",
+                "value": "call_action(greet, '原料')，其中 greet(x) 返回 '查看：'+x",
+                "expected": "查看：原料"
+              }
+            ]
+          },
+          "guided_practice": {
+            "goal": "定义 call_action(action, value)，调用传入的 action(value)，并原样返回结果。函数和值由测试提供，不需要判断类型，也不要自己固定写 double。",
+            "starter": "def call_action(action, value):\n    # TODO：调用传进来的函数，再返回结果\n    pass\n",
+            "steps": [
+              {
+                "action": "call_action(double, 4)，其中 double(n) 返回 n*2",
+                "expected": "8"
+              },
+              {
+                "action": "call_action(greet, '原料')，其中 greet(x) 返回 '查看：'+x",
+                "expected": "查看：原料"
+              }
+            ],
+            "check": "8；查看：原料"
+          },
+          "steps": [
+            "先读用途和逐行注释，预测第一个示例的输出",
+            "运行示例，再补全两道小练习",
+            "独立作业只实现本节要求，查看真实返回值"
+          ],
+          "practice_first": {
+            "goal": "定义 call_action(action, value)，调用传入的 action(value)，并原样返回结果。函数和值由测试提供，不需要判断类型，也不要自己固定写 double。",
+            "rules": [
+              "函数名不带括号：保存或传递函数；带括号：立即调用。",
+              "调用之后要 return 结果；print 不能代替返回。"
+            ],
+            "prerequisites": [
+              "D09-if-dispatch",
+              "D04-def-return"
+            ],
+            "cards": [],
+            "drills": [
+              {
+                "title": "保存函数但不要立刻执行",
+                "instructions": "保存函数但不要立刻执行。只改 TODO 对应位置，然后对比预期和实际输出。",
+                "starter": "# TODO：保存函数但不要立刻执行\ndef show_stock():\n    print(\"现在才查看库存\")\n\naction = None\nprint(\"函数已经存好，还没有执行\")\naction()\n",
+                "reference": "def show_stock():\n    print(\"现在才查看库存\")\n\naction = show_stock\nprint(\"函数已经存好，还没有执行\")\naction()\n",
+                "output": "函数已经存好，还没有执行\n现在才查看库存",
+                "source_kind": "python",
+                "runnable": true,
+                "id": "step-1"
+              },
+              {
+                "title": "调用传来的函数并返回结果",
+                "instructions": "调用传来的函数并返回结果。只改 TODO 对应位置，然后对比预期和实际输出。",
+                "starter": "# TODO：调用传来的函数并返回结果\ndef call_action(action, value):\n    return None\n\ndef double(number):\n    return number * 2\n\nprint(call_action(double, 4))\nprint(call_action(double, -3))\n",
+                "reference": "def call_action(action, value):\n    return action(value)\n\ndef double(number):\n    return number * 2\n\nprint(call_action(double, 4))\nprint(call_action(double, -3))\n",
+                "output": "8\n-6",
+                "source_kind": "python",
+                "runnable": true,
+                "id": "step-2"
+              }
+            ],
+            "intro": [
+              "分清保存一个函数和立刻调用这个函数的区别。",
+              "希望先选好处理函数，等参数准备好以后再执行时。",
+              "action = 函数名保存函数；action(value) 调用函数；return 把结果交回去。"
+            ],
+            "provided": "每个示例可独立运行。补全题不覆盖主作业；主作业中的函数需 return，调试时可以 print。"
           }
         },
         {
           "id": "D09-subcommands",
-          "title": "子命令与参数分派",
+          "title": "09 · 再用 set_defaults 分派：存函数，再调用",
           "catalog_refs": [
             "py-87",
             "linux-06"
           ],
-          "objective": "让一个入口承载多个清晰动作。",
+          "objective": "把已经理解的 if 分派改成先绑定函数、再统一调用。",
+          "syntax": "dest='command' 存命令名字；set_defaults(func=...) 存处理函数，二者不是一回事。；func 是自选字段名；set_defaults 不会自动执行函数。；绑定时不要加括号，解析后才 args.func(args)。",
           "explanation": [
-            "子命令把一个 CLI 的动作分成互不混淆的语法树，例如 `task add` 与 `task list`。add_subparsers 产生命令选择器，每个子解析器只声明自己需要的参数。",
-            "set_defaults(func=...) 可以把解析结果直接分派到处理函数，但处理函数应接收 Namespace 并返回退出结果，不要在解析阶段执行数据库副作用。共享参数可以放在父解析器或显式复用函数中。",
-            "无子命令、未知子命令和子命令缺参数都要有清晰反馈。测试用 argv 列表覆盖每个分支，检查 dispatch 选择正确函数以及未知命令不会落到默认的错误动作。"
+            "set_defaults 是库方法，不是 Python 新语法。它给解析结果补默认字段：func 是我们选的字段名，handle_list 是一个函数；这行没有括号，所以只是保存，不会立即执行。",
+            "每个子解析器分别设置自己的 func。输入 list 后 args.func 是查看函数，输入 add 后 args.func 是登记函数；再执行 args.func(args)，就是把整个参数对象交给选中的函数。",
+            "if 分派与函数分派都正确，只是组织方式不同。本节保留旧作业 build_parser() 和 list / add TITLE，作为从 show / adjust 迁移的小练习；TITLE 是登记文字，不要求写数据库或修改库存。"
           ],
-          "syntax": "add_subparsers 和 set_defaults 把命令映射到处理函数。",
-          "js_bridge": "JavaScript commander 的 command/action 与 argparse subparsers 目的相似，但 Python dispatch 常通过 Namespace 属性完成；不要把子命令字符串直接当函数名 eval。",
+          "js_bridge": "本节不需要 JavaScript 知识。先在 Python 中运行示例，再完成本节的小步练习。",
+          "frontend_bridge": "只用已学的 Python 函数、条件和字典，不要求了解前端框架。",
+          "key_points": [
+            "dest='command' 存命令名字；set_defaults(func=...) 存处理函数，二者不是一回事。",
+            "func 是自选字段名；set_defaults 不会自动执行函数。",
+            "绑定时不要加括号，解析后才 args.func(args)。"
+          ],
           "examples": [
             {
               "language": "python",
-              "code": "import argparse\nparser = argparse.ArgumentParser()\nsub = parser.add_subparsers(dest='command', required=True)\nsub.add_parser('list')\nprint(parser.parse_args(['list']).command)",
-              "output": "list",
-              "explanation": "add_subparsers(dest='command', required=True) 注册 list 子命令，解析 ['list'] 后 command 是字符串 list。未提供子命令会显示 argparse 错误并退出，required=True 正是在声明这个边界。",
+              "code": "import argparse\n\ndef handle_list(args):\n    return \"查看库存\"\n\nparser = argparse.ArgumentParser()\nparser.set_defaults(func=handle_list)\nargs = parser.parse_args([])\nprint(args.func is handle_list)\nprint(args.func(args))\n",
+              "output": "True\n查看库存",
+              "explanation": "set_defaults 可以在解析结果里放入额外默认字段；这里把 handle_list 这个函数放进 func 字段，没有执行它。第一行 True 证明拿到的是同一个函数，第二行 args.func(args) 才执行并返回文字。",
               "source_kind": "python",
               "runnable": true
             },
             {
               "language": "python",
-              "code": "import argparse\nparser = argparse.ArgumentParser()\nsub = parser.add_subparsers(dest='command', required=True)\nadd = sub.add_parser('add')\nadd.add_argument('title')\nprint(parser.parse_args(['add', '买书']).title)",
-              "output": "买书",
-              "explanation": "add 子解析器额外声明 title 位置参数，所以 ['add', '买书'] 同时得到 command='add' 和 title='买书'。如果把 title 放到父解析器，list 也会被错误要求提供标题。",
+              "code": "import argparse\n\ndef handle_list(args):\n    return \"查看库存\"\n\ndef handle_add(args):\n    return f\"登记：{args.title}\"\n\ndef build_parser():\n    parser = argparse.ArgumentParser(prog=\"stock_note\")\n    subparsers = parser.add_subparsers(dest=\"command\", required=True)\n    listing = subparsers.add_parser(\"list\")\n    listing.set_defaults(func=handle_list)\n    adding = subparsers.add_parser(\"add\")\n    adding.add_argument(\"title\")\n    adding.set_defaults(func=handle_add)\n    return parser\n\nparser = build_parser()\nargs = parser.parse_args([\"list\"])\nprint(args.func(args))\nargs = parser.parse_args([\"add\", \"原料出库3袋\"])\nprint(args.func(args))\n",
+              "output": "查看库存\n登记：原料出库3袋",
+              "explanation": "每个子解析器只绑定自己的处理函数：list 对应 handle_list，add 对应 handle_add。parse_args 按用户选择把对应函数放进 args.func，随后统一调用 args.func(args)；本例登记文字，不写文件或新增库存商品。",
               "source_kind": "python",
               "runnable": true
             }
           ],
-          "common_errors": [
-            {
-              "error": "子解析器没有 required",
-              "symptom": "空命令默默执行根处理函数",
-              "cause": "未选择 subcommand 时 Namespace 没有动作",
-              "fix": "设置 required=True 或显式检查 command",
-              "example": {
-                "code": "sub = parser.add_subparsers(dest='command')\nargs = parser.parse_args([])",
-                "symptom": "空命令默默执行根处理函数",
-                "fix": "设置 required=True 或显式检查 command"
-              }
-            },
-            {
-              "error": "共享参数重复不一致",
-              "symptom": "add/list 对 --db 的默认值不同",
-              "cause": "每个子解析器手写了不同配置",
-              "fix": "抽出 add_common_arguments 并测试两命令一致",
-              "example": {
-                "code": "add.add_argument('--db', default='a.db')\nlist_p.add_argument('--db', default='b.db')",
-                "symptom": "add/list 对 --db 的默认值不同",
-                "fix": "抽出 add_common_arguments 并测试两命令一致"
-              }
-            }
-          ],
-          "guided_practice": {
-            "goal": "能建立 add/list 两个子命令，并将 Namespace 分派到不同处理函数。",
-            "starter": "import argparse\n\ndef build_parser():\n    # 返回含 add/list 的 parser\n    pass\n",
-            "steps": [
-              {
-                "action": "建立子命令：调用 add_subparsers(dest='command')",
-                "expected": "parse_args(['list']).command == 'list'"
-              },
-              {
-                "action": "分派：为 add/list 设置不同 func",
-                "expected": "dispatch 调用与命令对应的函数"
-              }
-            ],
-            "check": "测试 list、add、空命令、未知命令；记录每个命令得到的 Namespace 和退出行为。"
-          },
-          "practice": {
-            "kind": "code",
-            "scenario": "在“子命令与参数分派”中解决一个真实开发问题，而不是只背概念。",
-            "instructions": "定义 build_parser()，支持 list 和 add TITLE，并将 `args.func` 绑定到可测试处理函数；空/未知命令必须返回 parser 错误。",
-            "expected_behavior": "list/add 分派正确；TITLE 作为字符串保留；空或未知命令有非零错误而非调用错误处理器。",
-            "hints": "先复现示例输出，再只修改一处；遇到错误先看类型、行号和输入。add_subparsers 和 set_defaults 把命令映射到处理函数。",
-            "starter_content": "import argparse\n\ndef build_parser():\n    # 返回含 add/list 的 parser\n    pass\n",
-            "input_examples": [
-              {
-                "label": "选择",
-                "value": "p = argparse.ArgumentParser()\nsub = p.add_subparsers(dest='command')\nsub.add_parser('list')\nprint(p.parse_args(['list']).command)",
-                "expected": "list"
-              },
-              {
-                "label": "参数",
-                "value": "add = sub.add_parser('add')\nadd.add_argument('title')\nprint(p.parse_args(['add','买书']).title)",
-                "expected": "买书"
-              }
-            ],
-            "starter_policy": "complete",
-            "file_name": "main.py"
-          },
-          "key_points": [
-            "让一个入口承载多个清晰动作。",
-            "Python 3 规则：add_subparsers 和 set_defaults 把命令映射到处理函数。",
-            "运行结果和错误信息都是反馈证据"
-          ],
-          "frontend_bridge": "前端经验只作辅助：子命令与参数分派 必须先按 Python 3 的执行、类型和错误规则完成。",
           "example": {
             "language": "python",
-            "code": "import argparse\nparser = argparse.ArgumentParser()\nsub = parser.add_subparsers(dest='command', required=True)\nsub.add_parser('list')\nprint(parser.parse_args(['list']).command)",
-            "output": "list",
-            "explanation": "add_subparsers(dest='command', required=True) 注册 list 子命令，解析 ['list'] 后 command 是字符串 list。未提供子命令会显示 argparse 错误并退出，required=True 正是在声明这个边界。",
+            "code": "import argparse\n\ndef handle_list(args):\n    return \"查看库存\"\n\nparser = argparse.ArgumentParser()\nparser.set_defaults(func=handle_list)\nargs = parser.parse_args([])\nprint(args.func is handle_list)\nprint(args.func(args))\n",
+            "output": "True\n查看库存",
+            "explanation": "set_defaults 可以在解析结果里放入额外默认字段；这里把 handle_list 这个函数放进 func 字段，没有执行它。第一行 True 证明拿到的是同一个函数，第二行 args.func(args) 才执行并返回文字。",
             "source_kind": "python",
             "runnable": true
           },
+          "common_errors": [
+            {
+              "error": "在 set_defaults 里提前调用处理函数",
+              "cause": "这里尚未解析 args，且 func 会变成返回值而不是函数。",
+              "symptom": "这里尚未解析 args，且 func 会变成返回值而不是函数。",
+              "fix": "使用 func=handle_list，不带括号。",
+              "example": {
+                "code": "listing.set_defaults(func=handle_list())",
+                "symptom": "这里尚未解析 args，且 func 会变成返回值而不是函数。",
+                "fix": "使用 func=handle_list，不带括号。"
+              }
+            },
+            {
+              "error": "只绑定函数，忘记最后调用",
+              "cause": "parse_args 只整理参数和选择函数，不会产生业务返回值。",
+              "symptom": "parse_args 只整理参数和选择函数，不会产生业务返回值。",
+              "fix": "解析之后调用 args.func(args)，再使用它的返回值。",
+              "example": {
+                "code": "args = parser.parse_args([\"list\"])",
+                "symptom": "parse_args 只整理参数和选择函数，不会产生业务返回值。",
+                "fix": "解析之后调用 args.func(args)，再使用它的返回值。"
+              }
+            }
+          ],
+          "practice": {
+            "kind": "code",
+            "file_name": "main.py",
+            "scenario": "子命令变多，希望每个命令有独立处理函数时。",
+            "instructions": "定义 build_parser()，返回支持必选子命令 list 和 add TITLE 的解析器。结果含 command 和可调用的 func；args.func(args) 对 list 返回'查看库存'，对 add 返回 f'登记：{args.title}'。处理函数名不限。缺命令、未知命令或 add 缺标题交给 argparse。",
+            "expected_behavior": "查看库存；登记：原料出库3袋",
+            "hints": "dest='command' 存命令名字；set_defaults(func=...) 存处理函数，二者不是一回事。",
+            "starter_content": "import argparse\n\ndef build_parser():\n    # TODO：可先在外面定义两个处理函数，再建立菜单并绑定\n    pass\n",
+            "starter_policy": "complete",
+            "input_examples": [
+              {
+                "label": "检查 1",
+                "value": "args = build_parser().parse_args(['list']); args.func(args)",
+                "expected": "查看库存"
+              },
+              {
+                "label": "检查 2",
+                "value": "args = build_parser().parse_args(['add','原料出库3袋']); args.func(args)",
+                "expected": "登记：原料出库3袋"
+              }
+            ]
+          },
+          "guided_practice": {
+            "goal": "定义 build_parser()，返回支持必选子命令 list 和 add TITLE 的解析器。结果含 command 和可调用的 func；args.func(args) 对 list 返回'查看库存'，对 add 返回 f'登记：{args.title}'。处理函数名不限。缺命令、未知命令或 add 缺标题交给 argparse。",
+            "starter": "import argparse\n\ndef build_parser():\n    # TODO：可先在外面定义两个处理函数，再建立菜单并绑定\n    pass\n",
+            "steps": [
+              {
+                "action": "args = build_parser().parse_args(['list']); args.func(args)",
+                "expected": "查看库存"
+              },
+              {
+                "action": "args = build_parser().parse_args(['add','原料出库3袋']); args.func(args)",
+                "expected": "登记：原料出库3袋"
+              }
+            ],
+            "check": "查看库存；登记：原料出库3袋"
+          },
           "steps": [
-            "建立子命令：调用 add_subparsers(dest='command')",
-            "分派：为 add/list 设置不同 func"
+            "先读用途和逐行注释，预测第一个示例的输出",
+            "运行示例，再补全两道小练习",
+            "独立作业只实现本节要求，查看真实返回值"
           ],
           "practice_first": {
-            "goal": "定义 build_parser()，支持 list 和 add TITLE，并将 `args.func` 绑定到可测试处理函数；空/未知命令必须返回 parser 错误。",
+            "goal": "定义 build_parser()，返回支持必选子命令 list 和 add TITLE 的解析器。结果含 command 和可调用的 func；args.func(args) 对 list 返回'查看库存'，对 add 返回 f'登记：{args.title}'。处理函数名不限。缺命令、未知命令或 add 缺标题交给 argparse。",
             "rules": [
-              "add_subparsers 和 set_defaults 把命令映射到处理函数。",
-              "先传一组 argv，再传错误参数；分别观察正常输出、错误输出和退出码。"
+              "dest='command' 存命令名字；set_defaults(func=...) 存处理函数，二者不是一回事。",
+              "func 是自选字段名；set_defaults 不会自动执行函数。",
+              "绑定时不要加括号，解析后才 args.func(args)。"
             ],
             "prerequisites": [
-              "D04-default-keyword",
-              "D07-main",
-              "D06-try-except"
+              "D09-function-value"
             ],
             "cards": [],
             "drills": [
               {
-                "id": "fill-0",
-                "title": "补全练习 1",
-                "instructions": "替换 TODO 指出的占位 None，保留其他输入；运行后对比每一行输出，再完成下方独立作业。",
-                "starter": "# TODO：补全下面第 4 行的 None，使输出与右侧预期一致。\nimport argparse\nparser = argparse.ArgumentParser()\nsub = None\nsub.add_parser('list')\nprint(parser.parse_args(['list']).command)",
-                "output": "list",
-                "reference": "import argparse\nparser = argparse.ArgumentParser()\nsub = parser.add_subparsers(dest='command', required=True)\nsub.add_parser('list')\nprint(parser.parse_args(['list']).command)",
+                "title": "将函数本身保存到 func 字段",
+                "instructions": "将函数本身保存到 func 字段。只改 TODO 对应位置，然后对比预期和实际输出。",
+                "starter": "# TODO：将函数本身保存到 func 字段\nimport argparse\n\ndef handle_list(args):\n    return \"查看库存\"\n\nparser = argparse.ArgumentParser()\nparser.set_defaults(func=None)\nargs = parser.parse_args([])\nprint(args.func is handle_list)\nprint(args.func(args))\n",
+                "reference": "import argparse\n\ndef handle_list(args):\n    return \"查看库存\"\n\nparser = argparse.ArgumentParser()\nparser.set_defaults(func=handle_list)\nargs = parser.parse_args([])\nprint(args.func is handle_list)\nprint(args.func(args))\n",
+                "output": "True\n查看库存",
                 "source_kind": "python",
-                "runnable": true
+                "runnable": true,
+                "id": "step-1"
               },
               {
-                "id": "fill-1",
-                "title": "补全练习 2",
-                "instructions": "替换 TODO 指出的占位 None，保留其他输入；运行后对比每一行输出，再完成下方独立作业。",
-                "starter": "# TODO：补全下面第 5 行的 None，使输出与右侧预期一致。\nimport argparse\nparser = argparse.ArgumentParser()\nsub = parser.add_subparsers(dest='command', required=True)\nadd = None\nadd.add_argument('title')\nprint(parser.parse_args(['add', '买书']).title)",
-                "output": "买书",
-                "reference": "import argparse\nparser = argparse.ArgumentParser()\nsub = parser.add_subparsers(dest='command', required=True)\nadd = sub.add_parser('add')\nadd.add_argument('title')\nprint(parser.parse_args(['add', '买书']).title)",
+                "title": "真正调用选中的处理函数",
+                "instructions": "真正调用选中的处理函数。只改 TODO 对应位置，然后对比预期和实际输出。",
+                "starter": "# TODO：真正调用选中的处理函数\nimport argparse\n\ndef handle_list(args):\n    return \"查看库存\"\n\ndef handle_add(args):\n    return f\"登记：{args.title}\"\n\ndef build_parser():\n    parser = argparse.ArgumentParser(prog=\"stock_note\")\n    subparsers = parser.add_subparsers(dest=\"command\", required=True)\n    listing = subparsers.add_parser(\"list\")\n    listing.set_defaults(func=handle_list)\n    adding = subparsers.add_parser(\"add\")\n    adding.add_argument(\"title\")\n    adding.set_defaults(func=handle_add)\n    return parser\n\nparser = build_parser()\nargs = parser.parse_args([\"list\"])\nprint(None)\nargs = parser.parse_args([\"add\", \"原料出库3袋\"])\nprint(args.func(args))\n",
+                "reference": "import argparse\n\ndef handle_list(args):\n    return \"查看库存\"\n\ndef handle_add(args):\n    return f\"登记：{args.title}\"\n\ndef build_parser():\n    parser = argparse.ArgumentParser(prog=\"stock_note\")\n    subparsers = parser.add_subparsers(dest=\"command\", required=True)\n    listing = subparsers.add_parser(\"list\")\n    listing.set_defaults(func=handle_list)\n    adding = subparsers.add_parser(\"add\")\n    adding.add_argument(\"title\")\n    adding.set_defaults(func=handle_add)\n    return parser\n\nparser = build_parser()\nargs = parser.parse_args([\"list\"])\nprint(args.func(args))\nargs = parser.parse_args([\"add\", \"原料出库3袋\"])\nprint(args.func(args))\n",
+                "output": "查看库存\n登记：原料出库3袋",
                 "source_kind": "python",
-                "runnable": true
+                "runnable": true,
+                "id": "step-2"
               }
             ],
-            "provided": "主作业只提交当前编辑器内容。独立实验在临时目录运行，不覆盖作业和项目。"
+            "intro": [
+              "把已经理解的 if 分派改成先绑定函数、再统一调用。",
+              "子命令变多，希望每个命令有独立处理函数时。",
+              "子解析器.set_defaults(func=处理函数)，解析后再执行 args.func(args)。"
+            ],
+            "provided": "每个示例可独立运行。补全题不覆盖主作业；主作业中的函数需 return，调试时可以 print。"
           }
         },
         {
           "id": "D09-errors",
-          "title": "参数错误与退出码",
+          "title": "10 · 故意输错一次：错误输出、退出码和帮助",
           "catalog_refs": [
             "py-87",
             "linux-06"
           ],
-          "objective": "让错误出现在 stderr 并用非零退出码告知调用者。",
+          "objective": "读懂输入失败与查看帮助的区别，不把失败当成成功。",
+          "syntax": "默认解析错误：stderr + SystemExit(2)；--help：stdout + SystemExit(0)。；错误不应伪装成成功；正负范围要由题目另行规定。",
           "explanation": [
-            "命令行错误是用户输入协议的一部分，应写到 stderr 并返回非零退出码；成功输出写 stdout。argparse 的 parser.error 会统一格式化 usage、错误原因并以 SystemExit(2) 结束。",
-            "业务错误和参数错误可以有不同退出码，但必须稳定。处理函数不要 catch SystemExit 后返回 0，否则 shell、测试和 CI 会误以为命令成功。",
-            "测试错误时应捕获 SystemExit，检查 code、stderr 和没有污染 stdout。边界包括缺少位置参数、未知选项、非法枚举值以及目标不存在。"
+            "stdout 是普通输出，stderr 是错误输出。缺少必填参数、非法整数、未知选项会让 argparse 把说明写到 stderr 并抛出 SystemExit(2)；成功返回的才是 Namespace。",
+            "--help 不是失败：它把帮助写到 stdout，随后抛出 SystemExit(0)。SystemExit 和普通 Exception 不是同一个捕获范围；示例显式 except SystemExit，只为展示 code，作业不需要吞掉错误。",
+            "本节仍只检查输入形式：title 必填，--limit 是整数，默认10，负整数合法。不要 catch 后返回0、不要用默认值掩盖 abc，也不要把上一道选修题的次数必须为正规则套到这里。"
           ],
-          "syntax": "parser.error 会退出；业务失败要保持稳定的 exit code。",
-          "js_bridge": "Node CLI 通常手动写 console.error 和 process.exitCode；argparse 已经提供 stderr/退出码约定，但 Python 代码仍要避免把错误打印到 stdout。",
+          "js_bridge": "本节不需要 JavaScript 知识。先在 Python 中运行示例，再完成本节的小步练习。",
+          "frontend_bridge": "只用已学的 Python 函数、条件和字典，不要求了解前端框架。",
+          "key_points": [
+            "默认解析错误：stderr + SystemExit(2)；--help：stdout + SystemExit(0)。",
+            "错误不应伪装成成功；正负范围要由题目另行规定。"
+          ],
           "examples": [
             {
               "language": "python",
-              "code": "import argparse\nparser = argparse.ArgumentParser()\nparser.add_argument('--count', type=int)\nprint(parser.parse_args(['--count', '2']).count)",
-              "output": "2",
-              "explanation": "--count 的 type=int 在解析阶段把 '2' 转换为整数，print(args.count) 因而输出 2。传入负数是否允许要由业务规则另行检查；type=int 只负责数字格式。",
+              "code": "import argparse\n\ndef parse_or_error(argv):\n    parser = argparse.ArgumentParser(prog=\"stock_note\")\n    parser.add_argument(\"title\")\n    parser.add_argument(\"--limit\", type=int, default=10)\n    return parser.parse_args(argv)\n\nfor argv in [[], [\"盘点\", \"--limit\", \"abc\"]]:\n    try:\n        parse_or_error(argv)\n    except SystemExit as error:\n        print(\"退出码\", error.code)\n",
+              "output": "退出码 2\n退出码 2",
+              "explanation": "缺少标题和无法转成整数的 abc 都由 parse_args 拒绝，抛出 SystemExit(2)。这里专门捕获它只是为了观察退出码；usage 和 error 会同时出现在错误输出区，不需要学习者手写这一套提示。",
               "source_kind": "python",
               "runnable": true
             },
             {
               "language": "python",
-              "code": "import argparse\nparser = argparse.ArgumentParser()\ntry:\n    parser.parse_args(['--count', 'x'])\nexcept SystemExit as error:\n    print(error.code != 0)",
-              "output": "True",
-              "explanation": "传入 --count x 时，argparse 在 type=int 转换处触发 SystemExit，error.code 非零表示命令失败。捕获退出只适合测试；真实 CLI 应把错误留给用户并返回非零状态。",
+              "code": "import argparse\n\ndef parse_or_error(argv):\n    parser = argparse.ArgumentParser(prog=\"stock_note\")\n    parser.add_argument(\"title\")\n    parser.add_argument(\"--limit\", type=int, default=10)\n    return parser.parse_args(argv)\n\nargs = parse_or_error([\"盘点\", \"--limit\", \"-3\"])\nprint(args.title, args.limit)\n",
+              "output": "盘点 -3",
+              "explanation": "-3 仍然是合法整数，所以解析成功并保留标题盘点，不会进入错误退出。type=int 只校验输入形式；只有题目明确要求正数时才应增加 parser.error 的业务校验，本节没有这条要求。",
               "source_kind": "python",
               "runnable": true
             }
           ],
-          "common_errors": [
-            {
-              "error": "错误打印到 stdout",
-              "symptom": "脚本管道把错误当成正常数据",
-              "cause": "使用 print 默认写 stdout",
-              "fix": "用 parser.error 或 print(..., file=sys.stderr)",
-              "example": {
-                "code": "print('invalid input')\nraise SystemExit(2)",
-                "symptom": "脚本管道把错误当成正常数据",
-                "fix": "用 parser.error 或 print(..., file=sys.stderr)"
-              }
-            },
-            {
-              "error": "错误后返回 0",
-              "symptom": "CI 绿色但命令实际失败",
-              "cause": "except 后没有设置非零退出码",
-              "fix": "让异常/SystemExit 传播或明确返回非零",
-              "example": {
-                "code": "try:\n    parse()\nexcept ValueError:\n    print('bad')\n    return 0",
-                "symptom": "CI 绿色但命令实际失败",
-                "fix": "让异常/SystemExit 传播或明确返回非零"
-              }
-            }
-          ],
-          "guided_practice": {
-            "goal": "让非法参数得到可预测 stderr 和非零退出码，成功路径保持干净 stdout。",
-            "starter": "import argparse\n\ndef parse_or_error(argv):\n    # 参数失败交给 parser.error\n    pass\n",
-            "steps": [
-              {
-                "action": "缺参数：调用空 argv",
-                "expected": "得到 SystemExit code=2 和 stderr"
-              },
-              {
-                "action": "成功：调用合法 argv",
-                "expected": "返回 Namespace 且不打印错误"
-              }
-            ],
-            "check": "捕获 parse_args 对缺参数、未知选项和非法整数的 SystemExit；分别检查 code、stderr 和 stdout。"
-          },
-          "practice": {
-            "kind": "code",
-            "scenario": "在“参数错误与退出码”中解决一个真实开发问题，而不是只背概念。",
-            "instructions": "定义 parse_or_error(argv)，缺少 TITLE/非法 --limit 时由 argparse 产生 code=2；成功路径返回 Namespace，不捕获成 0。",
-            "expected_behavior": "错误路径 code 非零且信息在 stderr；成功路径得到结构化参数，stdout 不混入 usage/error 文本。",
-            "hints": "先复现示例输出，再只修改一处；遇到错误先看类型、行号和输入。parser.error 会退出；业务失败要保持稳定的 exit code。",
-            "starter_content": "import argparse\n\ndef parse_or_error(argv):\n    # 参数失败交给 parser.error\n    pass\n",
-            "input_examples": [
-              {
-                "label": "parser error",
-                "value": "import argparse\np = argparse.ArgumentParser()\np.add_argument('title')\ntry:\n    p.parse_args([])\nexcept SystemExit as e:\n    print(e.code)",
-                "expected": "2"
-              },
-              {
-                "label": "成功",
-                "value": "print(p.parse_args(['买书']).title)",
-                "expected": "买书"
-              }
-            ],
-            "starter_policy": "complete",
-            "file_name": "main.py"
-          },
-          "key_points": [
-            "让错误出现在 stderr 并用非零退出码告知调用者。",
-            "Python 3 规则：parser.error 会退出；业务失败要保持稳定的 exit code。",
-            "运行结果和错误信息都是反馈证据"
-          ],
-          "frontend_bridge": "前端经验只作辅助：参数错误与退出码 必须先按 Python 3 的执行、类型和错误规则完成。",
           "example": {
             "language": "python",
-            "code": "import argparse\nparser = argparse.ArgumentParser()\nparser.add_argument('--count', type=int)\nprint(parser.parse_args(['--count', '2']).count)",
-            "output": "2",
-            "explanation": "--count 的 type=int 在解析阶段把 '2' 转换为整数，print(args.count) 因而输出 2。传入负数是否允许要由业务规则另行检查；type=int 只负责数字格式。",
+            "code": "import argparse\n\ndef parse_or_error(argv):\n    parser = argparse.ArgumentParser(prog=\"stock_note\")\n    parser.add_argument(\"title\")\n    parser.add_argument(\"--limit\", type=int, default=10)\n    return parser.parse_args(argv)\n\nfor argv in [[], [\"盘点\", \"--limit\", \"abc\"]]:\n    try:\n        parse_or_error(argv)\n    except SystemExit as error:\n        print(\"退出码\", error.code)\n",
+            "output": "退出码 2\n退出码 2",
+            "explanation": "缺少标题和无法转成整数的 abc 都由 parse_args 拒绝，抛出 SystemExit(2)。这里专门捕获它只是为了观察退出码；usage 和 error 会同时出现在错误输出区，不需要学习者手写这一套提示。",
             "source_kind": "python",
             "runnable": true
           },
+          "common_errors": [
+            {
+              "error": "捕获输入错误后返回成功值",
+              "cause": "输入不正确却显示成功，后面的代码可能使用无效参数。",
+              "symptom": "输入不正确却显示成功，后面的代码可能使用无效参数。",
+              "fix": "不要在作业里吞掉 SystemExit，直接交给调用者。",
+              "example": {
+                "code": "except SystemExit:\n    return 0",
+                "symptom": "输入不正确却显示成功，后面的代码可能使用无效参数。",
+                "fix": "不要在作业里吞掉 SystemExit，直接交给调用者。"
+              }
+            },
+            {
+              "error": "以为 --help 也必须提供标题",
+              "cause": "帮助选项会优先显示用法，不应该被普通参数检查阻止。",
+              "symptom": "帮助选项会优先显示用法，不应该被普通参数检查阻止。",
+              "fix": "由 argparse 同时处理必填参数和 --help。",
+              "example": {
+                "code": "if not argv or len(argv) < 2:\n    raise SystemExit(2)",
+                "symptom": "帮助选项会优先显示用法，不应该被普通参数检查阻止。",
+                "fix": "由 argparse 同时处理必填参数和 --help。"
+              }
+            }
+          ],
+          "practice": {
+            "kind": "code",
+            "file_name": "main.py",
+            "scenario": "缺商品或标题、写错整数、使用未知选项时。",
+            "instructions": "定义 parse_or_error(argv)：必填位置参数 title，--limit 使用 type=int、default=10，成功返回 Namespace。缺标题、坏整数、未知选项必须保留 SystemExit(2)；--help 保留 SystemExit(0)。允许负整数，不手动捕获成成功。",
+            "expected_behavior": "title='盘点'，limit=-3；SystemExit(2)，错误提示在 stderr；SystemExit(0)，帮助在 stdout",
+            "hints": "默认解析错误：stderr + SystemExit(2)；--help：stdout + SystemExit(0)。",
+            "starter_content": "import argparse\n\ndef parse_or_error(argv):\n    # TODO：声明 title 和 --limit；直接返回库的解析结果\n    pass\n",
+            "starter_policy": "complete",
+            "input_examples": [
+              {
+                "label": "检查 1",
+                "value": "parse_or_error(['盘点','--limit','-3'])",
+                "expected": "title='盘点'，limit=-3"
+              },
+              {
+                "label": "检查 2",
+                "value": "parse_or_error([]) / ['盘点','--limit','abc']",
+                "expected": "SystemExit(2)，错误提示在 stderr"
+              },
+              {
+                "label": "检查 3",
+                "value": "parse_or_error(['--help'])",
+                "expected": "SystemExit(0)，帮助在 stdout"
+              }
+            ]
+          },
+          "guided_practice": {
+            "goal": "定义 parse_or_error(argv)：必填位置参数 title，--limit 使用 type=int、default=10，成功返回 Namespace。缺标题、坏整数、未知选项必须保留 SystemExit(2)；--help 保留 SystemExit(0)。允许负整数，不手动捕获成成功。",
+            "starter": "import argparse\n\ndef parse_or_error(argv):\n    # TODO：声明 title 和 --limit；直接返回库的解析结果\n    pass\n",
+            "steps": [
+              {
+                "action": "parse_or_error(['盘点','--limit','-3'])",
+                "expected": "title='盘点'，limit=-3"
+              },
+              {
+                "action": "parse_or_error([]) / ['盘点','--limit','abc']",
+                "expected": "SystemExit(2)，错误提示在 stderr"
+              },
+              {
+                "action": "parse_or_error(['--help'])",
+                "expected": "SystemExit(0)，帮助在 stdout"
+              }
+            ],
+            "check": "title='盘点'，limit=-3；SystemExit(2)，错误提示在 stderr；SystemExit(0)，帮助在 stdout"
+          },
           "steps": [
-            "缺参数：调用空 argv",
-            "成功：调用合法 argv"
+            "先读用途和逐行注释，预测第一个示例的输出",
+            "运行示例，再补全两道小练习",
+            "独立作业只实现本节要求，查看真实返回值"
           ],
           "practice_first": {
-            "goal": "定义 parse_or_error(argv)，缺少 TITLE/非法 --limit 时由 argparse 产生 code=2；成功路径返回 Namespace，不捕获成 0。",
+            "goal": "定义 parse_or_error(argv)：必填位置参数 title，--limit 使用 type=int、default=10，成功返回 Namespace。缺标题、坏整数、未知选项必须保留 SystemExit(2)；--help 保留 SystemExit(0)。允许负整数，不手动捕获成成功。",
             "rules": [
-              "parser.error 会退出；业务失败要保持稳定的 exit code。",
-              "先传一组 argv，再传错误参数；分别观察正常输出、错误输出和退出码。"
+              "默认解析错误：stderr + SystemExit(2)；--help：stdout + SystemExit(0)。",
+              "错误不应伪装成成功；正负范围要由题目另行规定。"
             ],
             "prerequisites": [
-              "D04-default-keyword",
-              "D07-main",
+              "D09-subcommands",
               "D06-try-except"
             ],
             "cards": [],
             "drills": [
               {
-                "id": "fill-0",
-                "title": "补全练习 1",
-                "instructions": "替换 TODO 指出的占位 None，保留其他输入；运行后对比每一行输出，再完成下方独立作业。",
-                "starter": "# TODO：补全下面第 3 行的 None，使输出与右侧预期一致。\nimport argparse\nparser = None\nparser.add_argument('--count', type=int)\nprint(parser.parse_args(['--count', '2']).count)",
-                "output": "2",
-                "reference": "import argparse\nparser = argparse.ArgumentParser()\nparser.add_argument('--count', type=int)\nprint(parser.parse_args(['--count', '2']).count)",
+                "title": "让 abc 被整数解析规则拒绝",
+                "instructions": "让 abc 被整数解析规则拒绝。只改 TODO 对应位置，然后对比预期和实际输出。",
+                "starter": "# TODO：让 abc 被整数解析规则拒绝\nimport argparse\n\ndef parse_or_error(argv):\n    parser = argparse.ArgumentParser(prog=\"stock_note\")\n    parser.add_argument(\"title\")\n    parser.add_argument(\"--limit\", type=str, default=10)\n    return parser.parse_args(argv)\n\nfor argv in [[], [\"盘点\", \"--limit\", \"abc\"]]:\n    try:\n        parse_or_error(argv)\n    except SystemExit as error:\n        print(\"退出码\", error.code)\n",
+                "reference": "import argparse\n\ndef parse_or_error(argv):\n    parser = argparse.ArgumentParser(prog=\"stock_note\")\n    parser.add_argument(\"title\")\n    parser.add_argument(\"--limit\", type=int, default=10)\n    return parser.parse_args(argv)\n\nfor argv in [[], [\"盘点\", \"--limit\", \"abc\"]]:\n    try:\n        parse_or_error(argv)\n    except SystemExit as error:\n        print(\"退出码\", error.code)\n",
+                "output": "退出码 2\n退出码 2",
                 "source_kind": "python",
-                "runnable": true
+                "runnable": true,
+                "id": "step-1"
               },
               {
-                "id": "fill-1",
-                "title": "补全练习 2",
-                "instructions": "替换 TODO 指出的占位 None，保留其他输入；运行后对比每一行输出，再完成下方独立作业。",
-                "starter": "# TODO：补全下面第 3 行的 None，使输出与右侧预期一致。\nimport argparse\nparser = None\ntry:\n    parser.parse_args(['--count', 'x'])\nexcept SystemExit as error:\n    print(error.code != 0)",
-                "output": "True",
-                "reference": "import argparse\nparser = argparse.ArgumentParser()\ntry:\n    parser.parse_args(['--count', 'x'])\nexcept SystemExit as error:\n    print(error.code != 0)",
+                "title": "成功时返回真正的 Namespace",
+                "instructions": "成功时返回真正的 Namespace。只改 TODO 对应位置，然后对比预期和实际输出。",
+                "starter": "# TODO：成功时返回真正的 Namespace\nimport argparse\n\ndef parse_or_error(argv):\n    parser = argparse.ArgumentParser(prog=\"stock_note\")\n    parser.add_argument(\"title\")\n    parser.add_argument(\"--limit\", type=int, default=10)\n    return None\n\nargs = parse_or_error([\"盘点\", \"--limit\", \"-3\"])\nprint(args.title, args.limit)\n",
+                "reference": "import argparse\n\ndef parse_or_error(argv):\n    parser = argparse.ArgumentParser(prog=\"stock_note\")\n    parser.add_argument(\"title\")\n    parser.add_argument(\"--limit\", type=int, default=10)\n    return parser.parse_args(argv)\n\nargs = parse_or_error([\"盘点\", \"--limit\", \"-3\"])\nprint(args.title, args.limit)\n",
+                "output": "盘点 -3",
                 "source_kind": "python",
-                "runnable": true
+                "runnable": true,
+                "id": "step-2"
               }
             ],
-            "provided": "主作业只提交当前编辑器内容。独立实验在临时目录运行，不覆盖作业和项目。"
+            "intro": [
+              "读懂输入失败与查看帮助的区别，不把失败当成成功。",
+              "缺商品或标题、写错整数、使用未知选项时。",
+              "让 parse_args 自动报错；错误通常退出2，--help 打印帮助并退出0。"
+            ],
+            "provided": "每个示例可独立运行。补全题不覆盖主作业；主作业中的函数需 return，调试时可以 print。"
           }
         },
         {
           "id": "D09-entry",
-          "title": "可执行入口与命令行回归",
+          "title": "11 · 接上真实终端：argv=None 与入口守卫",
           "catalog_refs": [
             "py-87",
             "linux-06"
           ],
-          "objective": "从子进程观察真实命令行为。",
+          "objective": "把前面能接收列表的库存程序变成真正的命令行工具。",
+          "syntax": "None = 读取真实命令行；[] = 明确传入空参数；不能用 argv or [] 混在一起。；真实入口调用 main()；写死列表会忽略终端新输入。；导入不执行，成功返回0；每次新进程的库存从初始值开始。",
           "explanation": [
-            "可执行入口是从 shell 到 Python 函数的边界：读取 argv、解析参数、调用 main、把返回值映射成退出码。把这些步骤放在 main() 中可以让导入测试不依赖真实命令行。",
-            "`if __name__ == '__main__': raise SystemExit(main())` 让直接运行和导入行为分离。subprocess 测试能观察真实 stdout/stderr/returncode，比只调用内部函数更接近用户体验。",
-            "入口测试要固定 cwd、环境和 argv，避免相对路径偶然成功。成功、未知命令和异常都要定义输出和退出码，尤其不能让 traceback 代替用户可读错误。"
+            "前面传 ['原料','--delta','-3'] 是模拟输入。parse_args(None) 才读取 sys.argv[1:]，也就是去掉脚本名后的终端参数；parse_args([]) 则是明确没有参数，这两个含义不能混淆。",
+            "def main(argv=None) 让同一个函数既可以 main(['纸盒',...]) 离线练习，也可以 main() 读取终端。main 是自选的普通函数名，不会自动执行；if __name__ == '__main__' 决定直接运行文件时才调用它。",
+            "main 成功后 return 0，由 raise SystemExit(main()) 交给终端；参数错误在解析时就抛 SystemExit(2)。导入模块时只定义函数和库存，不读取命令、不输出；工作台代你运行子进程检查，不要求本节另写 subprocess 测试。"
           ],
-          "syntax": "__main__ 守卫、sys.argv 与 subprocess 共同构成可回归入口。",
-          "js_bridge": "Node 的 `require.main === module` 解决类似入口分离；Python 用 __name__ 守卫和 SystemExit 承载返回码，不能把 Node 的 process.argv[2] 索引规则直接复制。",
+          "js_bridge": "本节不需要 JavaScript 知识。先在 Python 中运行示例，再完成本节的小步练习。",
+          "frontend_bridge": "只用已学的 Python 函数、条件和字典，不要求了解前端框架。",
+          "key_points": [
+            "None = 读取真实命令行；[] = 明确传入空参数；不能用 argv or [] 混在一起。",
+            "真实入口调用 main()；写死列表会忽略终端新输入。",
+            "导入不执行，成功返回0；每次新进程的库存从初始值开始。"
+          ],
           "examples": [
             {
               "language": "python",
-              "code": "def main(argv=None):\n    return 0\n\nif __name__ == '__main__':\n    raise SystemExit(main())\nelse:\n    print('import safe')",
-              "output": "",
-              "explanation": "main 返回 0，但 if __name__ == '__main__' 只在文件被直接执行时调用它，所以导入模块只打印 import safe。删除守卫会让导入产生输出或副作用，库代码就难以复用。",
+              "code": "import sys\n# 网页演示提供模拟终端；真实 main.py 不写这两行设置。\nsys.argv = [\"main.py\", \"原料\", \"--delta\", \"-3\"]\nimport argparse\n\ndef adjustment_options(argv):\n    parser = argparse.ArgumentParser(prog=\"stock_adjust\")\n    parser.add_argument(\"product\")\n    parser.add_argument(\"--delta\", type=int, default=0)\n    return parser.parse_args(argv)\n\nSTOCK = {\"纸盒\": 10, \"原料\": 20}\n\ndef main(argv=None):\n    args = adjustment_options(argv)\n    STOCK[args.product] += args.delta\n    print(f\"{args.product} 当前库存：{STOCK[args.product]}\")\n    return 0\n\nif __name__ == \"__main__\":\n    raise SystemExit(main())\n",
+              "output": "原料 当前库存：17",
+              "explanation": "网页演示先提供一组模拟 sys.argv，然后 main() 把默认 None 传到 parse_args，库读取脚本名之后的真实参数。正式提交不要设置 sys.argv，也不要在底部写死原料列表，否则在终端换成纸盒也不会生效。",
               "source_kind": "python",
               "runnable": true
             },
             {
               "language": "python",
-              "code": "def main(argv=None):\n    return 3\n\nprint(main([]))",
-              "output": "3",
-              "explanation": "subprocess 用当前 Python 执行 -c 'print(3)'，returncode 为 0 且 stdout.strip() 为 3，所以组合输出是 0 3。子进程失败时应同时检查 returncode 和 stderr，不能只看 stdout。",
-              "source_kind": "python",
-              "runnable": true
+              "code": "import argparse\n\ndef adjustment_options(argv):\n    parser = argparse.ArgumentParser(prog=\"stock_adjust\")\n    parser.add_argument(\"product\")\n    parser.add_argument(\"--delta\", type=int, default=0)\n    return parser.parse_args(argv)\n\nSTOCK = {\"纸盒\": 10, \"原料\": 20}\n\ndef main(argv=None):\n    args = adjustment_options(argv)\n    STOCK[args.product] += args.delta\n    print(f\"{args.product} 当前库存：{STOCK[args.product]}\")\n    return 0\n\nif __name__ == \"__main__\":\n    raise SystemExit(main())\n",
+              "output": "原料 当前库存：17",
+              "explanation": "把这份文件保存为 main.py 后，在终端输入示例命令，main() 会读取这一次提供的商品与调整量。导入 main 时守卫不执行，因此不解析导入者的参数、不打印库存；每次重新启动进程都会重建初始 STOCK。",
+              "source_kind": "file_fragment",
+              "runnable": false,
+              "target_path": "main.py"
             }
           ],
-          "common_errors": [
-            {
-              "error": "导入时执行 CLI",
-              "symptom": "pytest 收集模块时就解析测试进程 argv",
-              "cause": "顶层直接调用 main",
-              "fix": "把调用放在 __name__ 守卫",
-              "example": {
-                "code": "main()\n# module import 时立刻执行",
-                "symptom": "pytest 收集模块时就解析测试进程 argv",
-                "fix": "把调用放在 __name__ 守卫"
-              }
-            },
-            {
-              "error": "只测函数不测命令",
-              "symptom": "shell 下输出/退出码与单测不同",
-              "cause": "入口包装丢失了真实 stderr/cwd",
-              "fix": "加入 subprocess 回归，固定命令和 cwd",
-              "example": {
-                "code": "assert main(['--bad']) is False",
-                "symptom": "shell 下输出/退出码与单测不同",
-                "fix": "加入 subprocess 回归，固定命令和 cwd"
-              }
-            }
-          ],
-          "guided_practice": {
-            "goal": "构造可直接运行且可被 import 的 CLI 入口，并用子进程锁定输出与退出码。",
-            "starter": "import sys\n\ndef main(argv=None):\n    # 解析 argv 并返回整数退出码\n    pass\n\nif __name__ == '__main__':\n    raise SystemExit(main())\n",
-            "steps": [
-              {
-                "action": "函数入口：main(argv) 返回 0/非零",
-                "expected": "调用不读取外部 sys.argv"
-              },
-              {
-                "action": "子进程：直接运行合法命令",
-                "expected": "returncode 和 stdout 符合契约"
-              }
-            ],
-            "check": "用 subprocess 运行正常、错误和 help 命令；再 import 模块确认导入没有执行命令行。"
-          },
-          "practice": {
-            "kind": "code",
-            "scenario": "在“可执行入口与命令行回归”中解决一个真实开发问题，而不是只背概念。",
-            "instructions": "定义 main(argv=None) 和 __name__ 守卫；成功返回 0、参数错误返回 2，并用 subprocess 检查真正入口。",
-            "expected_behavior": "直接运行和导入边界清晰；成功/失败 returncode 正确，导入不解析 pytest 的 argv。",
-            "hints": "先复现示例输出，再只修改一处；遇到错误先看类型、行号和输入。__main__ 守卫、sys.argv 与 subprocess 共同构成可回归入口。",
-            "starter_content": "import sys\n\ndef main(argv=None):\n    # 解析 argv 并返回整数退出码\n    pass\n\nif __name__ == '__main__':\n    raise SystemExit(main())\n",
-            "input_examples": [
-              {
-                "label": "守卫",
-                "value": "def main():\n    print('ok')\n    return 0\nif __name__ == '__main__':\n    raise SystemExit(main())",
-                "expected": "直接运行输出 ok，退出 0"
-              },
-              {
-                "label": "argv",
-                "value": "def main(argv=None):\n    return 0 if (argv or []) == [] else 2\nprint(main([]))",
-                "expected": "0"
-              }
-            ],
-            "starter_policy": "complete",
-            "file_name": "main.py"
-          },
-          "key_points": [
-            "从子进程观察真实命令行为。",
-            "Python 3 规则：__main__ 守卫、sys.argv 与 subprocess 共同构成可回归入口。",
-            "运行结果和错误信息都是反馈证据"
-          ],
-          "frontend_bridge": "前端经验只作辅助：可执行入口与命令行回归 必须先按 Python 3 的执行、类型和错误规则完成。",
           "example": {
             "language": "python",
-            "code": "def main(argv=None):\n    return 0\n\nif __name__ == '__main__':\n    raise SystemExit(main())\nelse:\n    print('import safe')",
-            "output": "",
-            "explanation": "main 返回 0，但 if __name__ == '__main__' 只在文件被直接执行时调用它，所以导入模块只打印 import safe。删除守卫会让导入产生输出或副作用，库代码就难以复用。",
+            "code": "import sys\n# 网页演示提供模拟终端；真实 main.py 不写这两行设置。\nsys.argv = [\"main.py\", \"原料\", \"--delta\", \"-3\"]\nimport argparse\n\ndef adjustment_options(argv):\n    parser = argparse.ArgumentParser(prog=\"stock_adjust\")\n    parser.add_argument(\"product\")\n    parser.add_argument(\"--delta\", type=int, default=0)\n    return parser.parse_args(argv)\n\nSTOCK = {\"纸盒\": 10, \"原料\": 20}\n\ndef main(argv=None):\n    args = adjustment_options(argv)\n    STOCK[args.product] += args.delta\n    print(f\"{args.product} 当前库存：{STOCK[args.product]}\")\n    return 0\n\nif __name__ == \"__main__\":\n    raise SystemExit(main())\n",
+            "output": "原料 当前库存：17",
+            "explanation": "网页演示先提供一组模拟 sys.argv，然后 main() 把默认 None 传到 parse_args，库读取脚本名之后的真实参数。正式提交不要设置 sys.argv，也不要在底部写死原料列表，否则在终端换成纸盒也不会生效。",
             "source_kind": "python",
             "runnable": true
           },
+          "common_errors": [
+            {
+              "error": "真实入口仍写死模拟列表",
+              "cause": "不管终端输入什么，程序都只处理固定的原料出库。",
+              "symptom": "不管终端输入什么，程序都只处理固定的原料出库。",
+              "fix": "底部调用 main()，让 argv 的默认 None 传到解析器。",
+              "example": {
+                "code": "raise SystemExit(main([\"原料\", \"--delta\", \"-3\"]))",
+                "symptom": "不管终端输入什么，程序都只处理固定的原料出库。",
+                "fix": "底部调用 main()，让 argv 的默认 None 传到解析器。"
+              }
+            },
+            {
+              "error": "用 argv or [] 覆盖 None",
+              "cause": "默认 None 被改成空列表，库无法读取真实终端输入。",
+              "symptom": "默认 None 被改成空列表，库无法读取真实终端输入。",
+              "fix": "直接传 argv，保留 None 与 [] 的区别。",
+              "example": {
+                "code": "args = adjustment_options(argv or [])",
+                "symptom": "默认 None 被改成空列表，库无法读取真实终端输入。",
+                "fix": "直接传 argv，保留 None 与 [] 的区别。"
+              }
+            }
+          ],
+          "practice": {
+            "kind": "code",
+            "file_name": "main.py",
+            "scenario": "希望修改终端参数就能调整不同商品，而不是每次改代码时。",
+            "instructions": "已提供 adjustment_options 和 STOCK。补全 main(argv=None)：传递 argv、调整库存、打印“商品 当前库存：数量”、返回0；底部用 __name__ 守卫及 raise SystemExit(main())。真实终端参数必须生效；导入无输出、不解析参数。只验证已有商品，允许负调整和负库存。",
+            "expected_behavior": "原料 当前库存：17；退出码0；纸盒 当前库存：15；退出码0；前者错误退出2；后者显示帮助并退出0",
+            "hints": "None = 读取真实命令行；[] = 明确传入空参数；不能用 argv or [] 混在一起。",
+            "starter_content": "import argparse\n\ndef adjustment_options(argv):\n    parser = argparse.ArgumentParser(prog=\"stock_adjust\")\n    parser.add_argument(\"product\")\n    parser.add_argument(\"--delta\", type=int, default=0)\n    return parser.parse_args(argv)\n\nSTOCK = {\"纸盒\": 10, \"原料\": 20}\n\ndef main(argv=None):\n    # TODO：接收输入，更新库存，打印结果，返回0\n    pass\n\nif __name__ == \"__main__\":\n    # TODO：调用 main() 并交给 SystemExit\n    pass\n",
+            "starter_policy": "complete",
+            "input_examples": [
+              {
+                "label": "检查 1",
+                "value": "python main.py 原料 --delta -3",
+                "expected": "原料 当前库存：17；退出码0"
+              },
+              {
+                "label": "检查 2",
+                "value": "python main.py 纸盒 --delta 5",
+                "expected": "纸盒 当前库存：15；退出码0"
+              },
+              {
+                "label": "检查 3",
+                "value": "python main.py / python main.py --help",
+                "expected": "前者错误退出2；后者显示帮助并退出0"
+              }
+            ]
+          },
+          "guided_practice": {
+            "goal": "已提供 adjustment_options 和 STOCK。补全 main(argv=None)：传递 argv、调整库存、打印“商品 当前库存：数量”、返回0；底部用 __name__ 守卫及 raise SystemExit(main())。真实终端参数必须生效；导入无输出、不解析参数。只验证已有商品，允许负调整和负库存。",
+            "starter": "import argparse\n\ndef adjustment_options(argv):\n    parser = argparse.ArgumentParser(prog=\"stock_adjust\")\n    parser.add_argument(\"product\")\n    parser.add_argument(\"--delta\", type=int, default=0)\n    return parser.parse_args(argv)\n\nSTOCK = {\"纸盒\": 10, \"原料\": 20}\n\ndef main(argv=None):\n    # TODO：接收输入，更新库存，打印结果，返回0\n    pass\n\nif __name__ == \"__main__\":\n    # TODO：调用 main() 并交给 SystemExit\n    pass\n",
+            "steps": [
+              {
+                "action": "python main.py 原料 --delta -3",
+                "expected": "原料 当前库存：17；退出码0"
+              },
+              {
+                "action": "python main.py 纸盒 --delta 5",
+                "expected": "纸盒 当前库存：15；退出码0"
+              },
+              {
+                "action": "python main.py / python main.py --help",
+                "expected": "前者错误退出2；后者显示帮助并退出0"
+              }
+            ],
+            "check": "原料 当前库存：17；退出码0；纸盒 当前库存：15；退出码0；前者错误退出2；后者显示帮助并退出0"
+          },
           "steps": [
-            "函数入口：main(argv) 返回 0/非零",
-            "子进程：直接运行合法命令"
+            "先读用途和逐行注释，预测第一个示例的输出",
+            "运行示例，再补全两道小练习",
+            "独立作业只实现本节要求，查看真实返回值"
           ],
           "practice_first": {
-            "goal": "定义 main(argv=None) 和 __name__ 守卫；成功返回 0、参数错误返回 2，并用 subprocess 检查真正入口。",
+            "goal": "已提供 adjustment_options 和 STOCK。补全 main(argv=None)：传递 argv、调整库存、打印“商品 当前库存：数量”、返回0；底部用 __name__ 守卫及 raise SystemExit(main())。真实终端参数必须生效；导入无输出、不解析参数。只验证已有商品，允许负调整和负库存。",
             "rules": [
-              "__main__ 守卫、sys.argv 与 subprocess 共同构成可回归入口。",
-              "先传一组 argv，再传错误参数；分别观察正常输出、错误输出和退出码。"
+              "None = 读取真实命令行；[] = 明确传入空参数；不能用 argv or [] 混在一起。",
+              "真实入口调用 main()；写死列表会忽略终端新输入。",
+              "导入不执行，成功返回0；每次新进程的库存从初始值开始。"
             ],
             "prerequisites": [
-              "D04-default-keyword",
-              "D07-main",
-              "D06-try-except"
+              "D09-errors",
+              "D07-main"
             ],
-            "cards": [
-              {
-                "title": "入口与退出码",
-                "rule": "main 返回整数，由 SystemExit 交给终端。0 表示成功；不要在导入模块时调用 main。",
-                "code": "def main(argv=None):\n    print('命令完成')\n    return 0\nif __name__ == '__main__':\n    raise SystemExit(main())\n",
-                "output": "命令完成",
-                "source_kind": "python",
-                "runnable": true
-              }
-            ],
+            "cards": [],
             "drills": [
               {
-                "id": "fill-1",
-                "title": "补全练习 2",
-                "instructions": "替换 TODO 指出的占位 None，保留其他输入；运行后对比每一行输出，再完成下方独立作业。",
-                "starter": "# TODO：补全下面第 3 行的 None，使输出与右侧预期一致。\ndef main(argv=None):\n    return None\n\nprint(main([]))",
-                "output": "3",
-                "reference": "def main(argv=None):\n    return 3\n\nprint(main([]))",
+                "title": "保留 argv 的 None 语义",
+                "instructions": "保留 argv 的 None 语义。只改 TODO 对应位置，然后对比预期和实际输出。",
+                "starter": "# TODO：保留 argv 的 None 语义\nimport sys\n# 网页演示提供模拟终端；真实 main.py 不写这两行设置。\nsys.argv = [\"main.py\", \"原料\", \"--delta\", \"-3\"]\nimport argparse\n\ndef adjustment_options(argv):\n    parser = argparse.ArgumentParser(prog=\"stock_adjust\")\n    parser.add_argument(\"product\")\n    parser.add_argument(\"--delta\", type=int, default=0)\n    return parser.parse_args(argv)\n\nSTOCK = {\"纸盒\": 10, \"原料\": 20}\n\ndef main(argv=None):\n    args = adjustment_options([])\n    STOCK[args.product] += args.delta\n    print(f\"{args.product} 当前库存：{STOCK[args.product]}\")\n    return 0\n\nif __name__ == \"__main__\":\n    raise SystemExit(main())\n",
+                "reference": "import sys\n# 网页演示提供模拟终端；真实 main.py 不写这两行设置。\nsys.argv = [\"main.py\", \"原料\", \"--delta\", \"-3\"]\nimport argparse\n\ndef adjustment_options(argv):\n    parser = argparse.ArgumentParser(prog=\"stock_adjust\")\n    parser.add_argument(\"product\")\n    parser.add_argument(\"--delta\", type=int, default=0)\n    return parser.parse_args(argv)\n\nSTOCK = {\"纸盒\": 10, \"原料\": 20}\n\ndef main(argv=None):\n    args = adjustment_options(argv)\n    STOCK[args.product] += args.delta\n    print(f\"{args.product} 当前库存：{STOCK[args.product]}\")\n    return 0\n\nif __name__ == \"__main__\":\n    raise SystemExit(main())\n",
+                "output": "原料 当前库存：17",
                 "source_kind": "python",
-                "runnable": true
+                "runnable": true,
+                "id": "step-1"
+              },
+              {
+                "title": "入口不要写死另一组商品参数",
+                "instructions": "入口不要写死另一组商品参数。只改 TODO 对应位置，然后对比预期和实际输出。",
+                "starter": "# TODO：入口不要写死另一组商品参数\nimport sys\n# 网页演示提供模拟终端；真实 main.py 不写这两行设置。\nsys.argv = [\"main.py\", \"纸盒\", \"--delta\", \"5\"]\nimport argparse\n\ndef adjustment_options(argv):\n    parser = argparse.ArgumentParser(prog=\"stock_adjust\")\n    parser.add_argument(\"product\")\n    parser.add_argument(\"--delta\", type=int, default=0)\n    return parser.parse_args(argv)\n\nSTOCK = {\"纸盒\": 10, \"原料\": 20}\n\ndef main(argv=None):\n    args = adjustment_options(argv)\n    STOCK[args.product] += args.delta\n    print(f\"{args.product} 当前库存：{STOCK[args.product]}\")\n    return 0\n\nif __name__ == \"__main__\":\n    raise SystemExit(main([\"原料\", \"--delta\", \"-3\"]))\n",
+                "reference": "import sys\n# 网页演示提供模拟终端；真实 main.py 不写这两行设置。\nsys.argv = [\"main.py\", \"纸盒\", \"--delta\", \"5\"]\nimport argparse\n\ndef adjustment_options(argv):\n    parser = argparse.ArgumentParser(prog=\"stock_adjust\")\n    parser.add_argument(\"product\")\n    parser.add_argument(\"--delta\", type=int, default=0)\n    return parser.parse_args(argv)\n\nSTOCK = {\"纸盒\": 10, \"原料\": 20}\n\ndef main(argv=None):\n    args = adjustment_options(argv)\n    STOCK[args.product] += args.delta\n    print(f\"{args.product} 当前库存：{STOCK[args.product]}\")\n    return 0\n\nif __name__ == \"__main__\":\n    raise SystemExit(main())\n",
+                "output": "纸盒 当前库存：15",
+                "source_kind": "python",
+                "runnable": true,
+                "id": "step-2"
               }
             ],
-            "provided": "主作业只提交当前编辑器内容。独立实验在临时目录运行，不覆盖作业和项目。"
+            "intro": [
+              "把前面能接收列表的库存程序变成真正的命令行工具。",
+              "希望修改终端参数就能调整不同商品，而不是每次改代码时。",
+              "main(argv=None) 把 argv 交给解析器；守卫中调用 main()，不要写死列表。"
+            ],
+            "provided": "解析函数已提供。网页演示中的 sys.argv 设置只是实验输入；主作业不要复制它。真实命令行回归由工作台完成，无须自己编写 subprocess。"
           }
         },
         {
