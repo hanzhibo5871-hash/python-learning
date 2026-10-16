@@ -1,0 +1,7 @@
+{
+  "version": "0.2.0",
+  "configurations": [{
+    "name": "调试 Python 学习插件", "type": "extensionHost", "request": "launch",
+    "args": ["--extensionDevelopmentPath=${workspaceFolder}"]
+  }]
+}

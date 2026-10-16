@@ -1,0 +1,81 @@
+{
+  "name": "learnctl-python-learning",
+  "displayName": "Python 学习工作台",
+  "description": "完整的 Python 课程、作业验收与 DeepSeek AI 答疑工作台。",
+  "version": "0.3.0",
+  "publisher": "learnctl-local",
+  "license": "MIT",
+  "engines": { "vscode": "^1.85.0" },
+  "categories": ["Education"],
+  "main": "./src/extension.js",
+  "extensionKind": ["workspace"],
+  "activationEvents": ["workspaceContains:data/curriculum.json"],
+  "capabilities": {
+    "untrustedWorkspaces": { "supported": false, "description": "课程验收需要运行工作区中的 Python 程序。" },
+    "virtualWorkspaces": { "supported": false }
+  },
+  "scripts": {
+    "test": "node --test test/*.test.js",
+    "check": "node --check src/extension.js && node --check src/lesson.js && node --check src/client.js && node --check media/workbench.js"
+  },
+  "contributes": {
+    "commands": [
+      { "command": "learnctl.dashboard", "title": "Python 学习：课程总览", "icon": "$(home)" },
+      { "command": "learnctl.today", "title": "Python 学习：今日课程", "icon": "$(book)" },
+      { "command": "learnctl.chooseTask", "title": "Python 学习：选择课程", "icon": "$(list-selection)" },
+      { "command": "learnctl.refresh", "title": "Python 学习：刷新进度", "icon": "$(refresh)" },
+      { "command": "learnctl.showSection", "title": "Python 学习：阅读小节" },
+      { "command": "learnctl.prepare", "title": "Python 学习：准备并打开作业", "icon": "$(go-to-file)" },
+      { "command": "learnctl.check", "title": "Python 学习：保存并检查作业", "icon": "$(check)" },
+      { "command": "learnctl.completeTask", "title": "Python 学习：登记本课完成", "icon": "$(pass)" },
+      { "command": "learnctl.openFile", "title": "Python 学习：打开作业文件", "icon": "$(go-to-file)" },
+      { "command": "learnctl.prepareExample", "title": "Python 学习：在编辑器尝试教学示例", "icon": "$(code)" },
+      { "command": "learnctl.runExample", "title": "Python 学习：保存并运行教学示例", "icon": "$(play)" },
+      { "command": "learnctl.previous", "title": "Python 学习：上一节" },
+      { "command": "learnctl.next", "title": "Python 学习：下一节" },
+      { "command": "learnctl.askAi", "title": "Python 学习：询问 AI 助教", "icon": "$(comment-discussion)" },
+      { "command": "learnctl.askSelection", "title": "Python 学习：让 AI 解释选中代码", "icon": "$(sparkle)" },
+      { "command": "learnctl.configureAi", "title": "Python 学习：配置 DeepSeek Key", "icon": "$(key)" },
+      { "command": "learnctl.testAi", "title": "Python 学习：测试 AI 连接" },
+      { "command": "learnctl.removeAi", "title": "Python 学习：移除已保存的 AI Key" },
+      { "command": "learnctl.clearChat", "title": "Python 学习：清空本节 AI 对话" },
+      { "command": "learnctl.cancelAi", "title": "Python 学习：取消 AI 请求" }
+    ],
+    "viewsContainers": {
+      "activitybar": [{ "id": "learnctl", "title": "Python 学习", "icon": "media/book.svg" }]
+    },
+    "views": { "learnctl": [{ "id": "learnctl.lessons", "name": "当前课程" }, { "id": "learnctl.catalog", "name": "全部课程" }] },
+    "viewsWelcome": [{
+      "view": "learnctl.lessons",
+      "contents": "打开包含 data/curriculum.json 和 learnctl 的课程根目录。\n[读取今日课程](command:learnctl.today)",
+      "when": "!learnctl.hasCourse"
+    }],
+    "menus": {
+      "view/title": [
+        { "command": "learnctl.dashboard", "when": "view == learnctl.lessons || view == learnctl.catalog", "group": "navigation@0" },
+        { "command": "learnctl.today", "when": "view == learnctl.lessons", "group": "navigation@1" },
+        { "command": "learnctl.chooseTask", "when": "view == learnctl.lessons", "group": "navigation@2" },
+        { "command": "learnctl.refresh", "when": "view == learnctl.lessons", "group": "navigation@3" }
+      ],
+      "editor/context": [
+        { "command": "learnctl.askSelection", "when": "editorHasSelection && learnctl.hasCourse", "group": "learnctl@1" }
+      ],
+      "view/item/context": [
+        { "command": "learnctl.prepare", "when": "view == learnctl.lessons && viewItem == localSection", "group": "inline@1" },
+        { "command": "learnctl.check", "when": "view == learnctl.lessons && viewItem == localSection", "group": "inline@2" }
+      ]
+    },
+    "keybindings": [{ "command": "learnctl.check", "key": "ctrl+alt+enter", "mac": "cmd+alt+enter", "when": "editorTextFocus && learnctl.hasCourse" }],
+    "taskDefinitions": [{ "type": "learnctl-example", "required": ["path"],
+      "properties": { "path": { "type": "string", "description": "当前教学示例的工作区相对路径。" } } }],
+    "configuration": {
+      "title": "Python 学习工作台",
+      "properties": {
+        "learnctl.pythonPath": {
+          "type": "string", "default": "", "scope": "resource",
+          "description": "课程 Python 解释器路径，可填绝对路径或相对课程根目录的路径。留空明确使用项目 .venv（Windows: .venv/Scripts/python.exe；其他系统: .venv/bin/python），不会搜索系统 Python。"
+        }
+      }
+    }
+  }
+}

@@ -18,6 +18,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
+from learnctl import ai
 from learnctl.curriculum import load_curriculum
 from learnctl.progress import initial_progress, save_progress
 from learnctl.web.server import create_server
@@ -29,6 +30,13 @@ def assert_teaching(page, expect, task_id):
     expect(page.locator('.lesson-intro')).to_have_count(1)
     for label in ('用来做什么', '一般用在哪里', '怎么用'):
         expect(intro).to_contain_text(label)
+    if int(task_id[1:]) >= 7:
+        expect(page.locator('#editor')).to_have_count(0)
+        expect(page.locator('[data-prepare-local]')).to_be_visible()
+        expect(page.locator('[data-validate]')).to_contain_text('验证已保存文件')
+        expect(page.locator('.examples-reference')).not_to_have_attribute('open', '')
+        expect(page.locator('.long-reference')).not_to_have_attribute('open', '')
+        return
     expect(page.locator('.examples-reference')).to_have_attribute('open', '')
     expect(page.locator('.examples-reference .mini-example').first).to_have_attribute('open', '')
     assert page.evaluate("""() => {
@@ -61,6 +69,13 @@ def main() -> None:
             state['lesson_progress'][task['id']]['completed_sections'] = [s['id'] for s in task['lesson']]
         save_progress(root / '.learn/progress.json', state)
         server = create_server(root, port=0)
+        # Never inherit a real environment Key in UI tests. Named mock scopes
+        # may set a test-only session Key; all other requests stay unconfigured.
+        server.ai_session.get_key = lambda: server.ai_session._key
+        original_ai_request = ai._request
+        def reject_live_ai(*args, **kwargs):
+            raise RuntimeError("浏览器回归禁止真实 DeepSeek 请求，请使用 mock 传输")
+        ai._request = reject_live_ai
         thread = threading.Thread(target=server.serve_forever, daemon=True)
         thread.start()
         base = f'http://127.0.0.1:{server.server_port}'
@@ -160,7 +175,9 @@ def main() -> None:
                     expect(page.locator('.drill-section [data-run-experiment]')).to_have_count(2)
                     assert page.evaluate('() => document.documentElement.scrollWidth <= window.innerWidth + 2')
                 page.locator('[data-section="D09-command-name"]').click()
+                page.locator('.examples-reference > summary').click()
                 demo = page.locator('.examples-reference .mini-example').first
+                demo.locator('summary').first.click()
                 demo.locator('[data-run-experiment]').click()
                 expect(demo.locator('[data-experiment-result]')).to_contain_text('输出符合预期', timeout=30000)
                 if args.screenshots:
@@ -176,13 +193,23 @@ def main() -> None:
                 assert_tutor_chat(page, expect, server)
                 if args.screenshots:
                     page.screenshot(path=str(args.screenshots / 'tutor-chat.png'), full_page=True)
+                from browser_grading_smoke import assert_ai_grading
+                assert_ai_grading(page, expect, server)
+                if args.screenshots:
+                    page.locator('.practice-grid').screenshot(path=str(args.screenshots / 'ai-grading-mobile.png'))
+                    page.set_viewport_size({'width':1440, 'height':1050})
+                    page.locator('.practice-grid').screenshot(path=str(args.screenshots / 'ai-grading-desktop.png'))
+                from browser_course_smoke import assert_course_readiness
+                reviewed = assert_course_readiness(page, expect, args.screenshots)
+                print(f"PASS: {reviewed} D05-Agent section views, teaching order, current syntax, folded explanations, desktop/mobile width")
                 assert not errors, errors
                 browser.close()
-            print('PASS: teaching before example/drills/assignment; representative lessons plus all 11 D09 steps; wrong/correct output; isolated experiment; saved solution; mobile width; tutor history/retry/lesson isolation/reset; no JS errors')
+            print('PASS: teaching before example/drills/assignment; representative lessons plus all 11 D09 steps; wrong/correct output; isolated experiment; saved solution; mobile width; tutor history/retry/lesson isolation/reset; AI grading conflicts/snippet text rendering/HTML escaping/key redaction/retry/modified submissions/navigation/drills/variation; no JS errors')
         finally:
             server.shutdown()
             server.server_close()
             thread.join(timeout=2)
+            ai._request = original_ai_request
 
 
 if __name__ == '__main__':

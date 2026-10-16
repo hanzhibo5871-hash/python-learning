@@ -1,0 +1,3369 @@
+{
+  "coverage": [
+    {
+      "section": "D06-exception-types",
+      "requires": "异常类型、精确捕获、索引/键访问、函数返回",
+      "evidence": "D02-names教type/isinstance；D05容器访问；本节运行int失败、KeyError捕获。",
+      "gaps": []
+    },
+    {
+      "section": "D06-try-except",
+      "requires": "int转换、只捕获ValueError、保留TypeError",
+      "evidence": "本节示例int/except；D02-names已教类型。",
+      "gaps": [
+        "None应继续抛TypeError需写明。"
+      ]
+    },
+    {
+      "section": "D06-else-finally",
+      "requires": "成功else、总会finally、events.append",
+      "evidence": "本节两条例展示else/finally；D03/D05已用append。",
+      "gaps": []
+    },
+    {
+      "section": "D06-raise",
+      "requires": "None/类型/空白边界、strip、主动raise及异常链",
+      "evidence": "D02已教None/isinstance；本节positive和from异常链。",
+      "gaps": [
+        "starter误为positive而非require_nonempty；本节短卡重申判断顺序。"
+      ]
+    },
+    {
+      "section": "D06-custom",
+      "requires": "异常子类、pass、strip、业务异常",
+      "evidence": "本节SUPPORT解释父类/pass且运行；输入清洗已教。",
+      "gaps": []
+    },
+    {
+      "section": "D06-with",
+      "requires": "open/read、UTF8、with生命周期",
+      "evidence": "本节with文字清楚；运行例却是Path/StringIO。",
+      "gaps": [
+        "应先用builtin open/read短例，避免暗借D07/D08。"
+      ]
+    },
+    {
+      "section": "D06-parse",
+      "requires": "int、ValueError返回None",
+      "evidence": "D06-try-except已教；本节明确输入字符串、负数/空白合法。",
+      "gaps": []
+    },
+    {
+      "section": "D06-positive",
+      "requires": "转换与业务范围分开、raise ValueError",
+      "evidence": "D06-raise已教，本节明确非整数及非正数量拒绝。",
+      "gaps": []
+    },
+    {
+      "section": "D06-average",
+      "requires": "空列表、总和/个数、除法、不修改输入",
+      "evidence": "len由D05修复；sum在D04-varargs运行例出现；循环和除法已教。",
+      "gaps": []
+    },
+    {
+      "section": "D07-import",
+      "requires": "import/from/as、math.ceil、Path.suffix",
+      "evidence": "本节math.ceil及Path.name短例。",
+      "gaps": [
+        "suffix作用目前到后续stdlib才解释，需本節短卡。"
+      ]
+    },
+    {
+      "section": "D07-package",
+      "requires": "模块文件、from导入、调用平台函数",
+      "evidence": "import此前已教；生效验证器提供helpers.py。",
+      "gaps": [
+        "明确helpers.py由平台提供；原JSON实验在loads首教前出现，换真正模块导入例。"
+      ]
+    },
+    {
+      "section": "D07-main",
+      "requires": "__name__守卫、导入与直接执行分离",
+      "evidence": "本节文字和运行例明确。",
+      "gaps": [
+        "例子可换不同入口名；实际导入静默行为要验收。"
+      ]
+    },
+    {
+      "section": "D07-stdlib",
+      "requires": "UTF8读文件、JSON解析、dict/name类型检查",
+      "evidence": "本节SUPPORT只演示loads字符串；Path前节已教。",
+      "gaps": [
+        "补文件到文本到JSON；明确返回name原字符串与错误类型。"
+      ]
+    },
+    {
+      "section": "D07-class-instance",
+      "requires": "class/self/__init__、独立实例状态",
+      "evidence": "本节完整教学和两个运行例。",
+      "gaps": [
+        "Task示例是正式题完整答案，改Book/其他对象。"
+      ]
+    },
+    {
+      "section": "D07-inheritance",
+      "requires": "继承、super初始化、方法重写",
+      "evidence": "本節示例用super扩展方法，但没有子类构造调用父类。",
+      "gaps": [
+        "补不同对象的super().__init__；starter目标错为Animal/Dog。"
+      ]
+    },
+    {
+      "section": "D07-dataclass",
+      "requires": "类型标注、装饰器、字段、repr/default_factory",
+      "evidence": "D04类型标注、本节DECORATOR短卡及field运行例。",
+      "gaps": [
+        "Point例是正式题完整答案，改不同字段对象。"
+      ]
+    },
+    {
+      "section": "D07-slug",
+      "requires": "strip/lower/replace、导入无副作用",
+      "evidence": "strip/lower此前已教；D07-main守卫已教。",
+      "gaps": [
+        "replace只在先前文字提名，未教参数写法/短例。"
+      ]
+    },
+    {
+      "section": "D07-counter",
+      "requires": "实例状态、+=、方法返回",
+      "evidence": "D07-class-instance已教且运行Counter雏形。",
+      "gaps": []
+    },
+    {
+      "section": "D07-dataclass-total",
+      "requires": "dataclass字段、自定义方法、self、乘法",
+      "evidence": "D07-dataclass/class-instance已教；本节说明price/quantity。",
+      "gaps": []
+    },
+    {
+      "section": "D08-pathlib",
+      "requires": "Path/glob/name排序、exists/is_file",
+      "evidence": "Path/name/suffix已教；本节例运行/与glob。",
+      "gaps": [
+        "exists/is_file只有长文字，没有短可运行边界对比。"
+      ]
+    },
+    {
+      "section": "D08-utf8",
+      "requires": "read_text/write_text、encoding、splitlines",
+      "evidence": "本节明确UTF8并运行往返。",
+      "gaps": [
+        "实验首次用splitlines但未教空行/末尾换行行为。"
+      ]
+    },
+    {
+      "section": "D08-json-read",
+      "requires": "loads、dict/字段类型、strip、JSONDecodeError",
+      "evidence": "D07-stdlib补后已有读取/解析；本节JSON和错误例。",
+      "gaps": [
+        "expected说返回title，生效behavior要求返回整个dict。"
+      ]
+    },
+    {
+      "section": "D08-json-report",
+      "requires": "计数、JSON文件序列化、UTF8",
+      "evidence": "循环/len/sum此前已教，生成器表达式在D05例出现。",
+      "gaps": [
+        "只有dumps屏幕输出，缺dump到文件；纯数字报告不应要求中文字段；rows范围/返回值明确。"
+      ]
+    },
+    {
+      "section": "D08-read-lines",
+      "requires": "读取、splitlines、strip、循环过滤",
+      "evidence": "补D08-utf8短卡后此前覆盖；本节说明空行规则。",
+      "gaps": []
+    },
+    {
+      "section": "D08-json-total",
+      "requires": "JSON列表读取、amount求和、空输入、解析错误",
+      "evidence": "D07/D08读取及解析、D04-varargs的sum、循环已教。",
+      "gaps": []
+    },
+    {
+      "section": "D08-json-report-drill",
+      "requires": "len、构造字典、UTF8写JSON、不转义",
+      "evidence": "修复D08-json-report后覆盖；本节明确文件内容。",
+      "gaps": []
+    },
+    {
+      "section": "D09-parser",
+      "requires": "带值选项：--limit 3；布尔开关：--verbose，后面不加 True。；type、default、action 是库的配置项，不是需要自己实现的方法。",
+      "evidence": "scripts/d09_course.py 提供本节两份示例、两道补全和明确的前置小节；先观察输入与结果，再独立实现。",
+      "gaps": []
+    },
+    {
+      "section": "D09-subcommands",
+      "requires": "dest='command' 存命令名字；set_defaults(func=...) 存处理函数，二者不是一回事。；func 是自选字段名；set_defaults 不会自动执行函数。；绑定时不要加括号，解析后才 args.func(args)。",
+      "evidence": "scripts/d09_course.py 提供本节两份示例、两道补全和明确的前置小节；先观察输入与结果，再独立实现。",
+      "gaps": []
+    },
+    {
+      "section": "D09-errors",
+      "requires": "默认解析错误：stderr + SystemExit(2)；--help：stdout + SystemExit(0)。；错误不应伪装成成功；正负范围要由题目另行规定。",
+      "evidence": "scripts/d09_course.py 提供本节两份示例、两道补全和明确的前置小节；先观察输入与结果，再独立实现。",
+      "gaps": []
+    },
+    {
+      "section": "D09-entry",
+      "requires": "None = 读取真实命令行；[] = 明确传入空参数；不能用 argv or [] 混在一起。；真实入口调用 main()；写死列表会忽略终端新输入。；导入不执行，成功返回0；每次新进程的库存从初始值开始。",
+      "evidence": "scripts/d09_course.py 提供本节两份示例、两道补全和明确的前置小节；先观察输入与结果，再独立实现。",
+      "gaps": []
+    },
+    {
+      "section": "D09-greet-cli",
+      "requires": "required选项、help、参数输出",
+      "evidence": "D09-parser已教，当前解释required及help。",
+      "gaps": []
+    },
+    {
+      "section": "D09-repeat-cli",
+      "requires": "int与范围校验、parser.error、循环输出",
+      "evidence": "类型/比较/循环已教，本节文字点明parser.error。",
+      "gaps": [
+        "在前面的D09-errors补parser.error实际运行例。"
+      ]
+    },
+    {
+      "section": "D09-square-cli",
+      "requires": "整数位置参数、平方、可导入函数、守卫",
+      "evidence": "D09-parser/entry及D07-main覆盖。",
+      "gaps": []
+    },
+    {
+      "section": "D10-env",
+      "requires": "os.environ、get默认、空值、None映射注入",
+      "evidence": "本节运行os.environ.get；默认参数/None此前已教。",
+      "gaps": [
+        "starter错叫get_db_path；需区分缺失/空值、空env不自动回退真实环境。"
+      ]
+    },
+    {
+      "section": "D10-convert",
+      "requires": "strip/lower/in/集合、int与端口范围、raise",
+      "evidence": "前置基础已教，本节as_bool运行例。",
+      "gaps": [
+        "输入为字符串、大小写/空白接受范围需明确。"
+      ]
+    },
+    {
+      "section": "D10-dotenv",
+      "requires": "逐行读取、strip、startswith、split maxsplit=1、缺失文件",
+      "evidence": "读取/split/strip此前已教；本节有首次等号例。",
+      "gaps": [
+        "startswith未解释；可选引号/坏行策略不应留未定义隐含验收；完整解析例太接近作业。"
+      ]
+    },
+    {
+      "section": "D10-config",
+      "requires": "dataclass配置、classmethod/cls、转换及默认",
+      "evidence": "dataclass和转换此前已教。",
+      "gaps": [
+        "classmethod完全没教；starter缺port、from_env；默认/空值政策需明确。"
+      ]
+    },
+    {
+      "section": "D11-logger",
+      "requires": "getLogger、级别、handler、传播、重复初始化",
+      "evidence": "本节文字有概念，例只数NullHandler。",
+      "gaps": [
+        "补级别与幂等实际对比；明确INFO、一个有效handler、不传播，handler具体类不强制。"
+      ]
+    },
+    {
+      "section": "D11-format",
+      "requires": "Formatter字段、参数化消息、logger.exception",
+      "evidence": "本节LogRecord/Formatter运行例；异常此前已教。",
+      "gaps": [
+        "exception只有长文字，补实际traceback例；starter叫formatter而不是build_formatter。"
+      ]
+    },
+    {
+      "section": "D11-stream",
+      "requires": "StringIO、StreamHandler、双层级别、清理",
+      "evidence": "本節完整运行INFO被过滤/WARNING保留及getvalue。",
+      "gaps": [
+        "现有通用补全无有效行为缺口，可加入专门handler级别补全；实际验收不足。"
+      ]
+    },
+    {
+      "section": "D11-file",
+      "requires": "UTF8 FileHandler、格式、flush/close/removeHandler、重复setup",
+      "evidence": "本节两例及说明覆盖基本API。",
+      "gaps": [
+        "说明/starter暗示返回tuple但生效验收只接logger；mkstemp丢弃fd违背资源示范；需行为验收。"
+      ]
+    },
+    {
+      "section": "D12-request",
+      "requires": "Request/GET；可调用参数；with；read bytes→decode",
+      "evidence": "D06-with已有StringIO.read；D12两卡教函数参数和bytes；Request字段实验",
+      "gaps": "核心已覆盖；缺可离线亲自观察的opener→with/read链路示例"
+    },
+    {
+      "section": "D12-response",
+      "requires": "status/2xx比较；decode；json.loads；RuntimeError与JSONDecodeError传播",
+      "evidence": "本节200<=status<300实验；D08-json-read；D06-raise示范RuntimeError/异常传播",
+      "gaps": "核心已覆盖；HTTPError/URLError是讲解术语，正式题不该额外要求处理"
+    },
+    {
+      "section": "D12-post",
+      "requires": "dumps→encode→POST Request；Content-Type；with/read/loads",
+      "evidence": "D08-json-report dumps/ensure_ascii；本节POST构造实验与bytes/callable卡",
+      "gaps": "核心已覆盖；无须加新独立课，保留离线响应脚手架说明"
+    },
+    {
+      "section": "D12-timeout",
+      "requires": "GET；timeout关键字；异常传播；单次调用",
+      "evidence": "本节fake_open记录timeout与抛TimeoutError；D04-default-keyword；D06-raise",
+      "gaps": "实验隐藏依赖type三参数动态造类（D02只教type(value)）；改普通Request"
+    },
+    {
+      "section": "D13-app",
+      "requires": "FastAPI；装饰器注册；dict响应；导入不启动；真实路由请求",
+      "evidence": "D13装饰器卡；D07-import/主入口；例只直接health()",
+      "gaps": "缺TestClient实际GET教学；原例直接给正式health完整答案；验收只查AST路由不查200/body"
+    },
+    {
+      "section": "D13-route",
+      "requires": "路径模板同名参数；查询默认值；框架类型转换/422",
+      "evidence": "D13-app注册语法；D04-type-hints说明Python不自动校验；本节口述路径/query",
+      "gaps": "例只是普通get_task调用/int手动转换，未演示真正FastAPI绑定；starter只首路由"
+    },
+    {
+      "section": "D13-response",
+      "requires": "BaseModel字段模板；response_model；status_code；POST",
+      "evidence": "D07-class-instance；本节模型卡/model_dump实验",
+      "gaps": "没有response_model路由可运行示例；POST路径/输入/输出未声明；只class就能过；同名TaskOut卡直接给模型答案"
+    },
+    {
+      "section": "D13-lifecycle",
+      "requires": "yield资源分界；asynccontextmanager；lifespan；Depends；生命周期TestClient",
+      "evidence": "D13明确D17后选修；当前同步contextmanager例",
+      "gaps": "不能把D05选修yield或D17未来知识当D13已知；需本节提供模板、D17后验证；路由/输出缺声明，任意def能过"
+    },
+    {
+      "section": "D14-model",
+      "requires": "BaseModel必填/default；model_dump；ValidationError≠HTTP422",
+      "evidence": "D13响应模型卡；本节直接构造/缺title实际异常",
+      "gaps": "已覆盖；当前TaskIn例是正式题完整模型应换别的模型；文字错误类型必拒绝需说明Pydantic可转换，额外字段不只由字段声明决定"
+    },
+    {
+      "section": "D14-service",
+      "requires": "strip/空文本判定/ValueError；传入repo.add；业务与路由分离",
+      "evidence": "D02-string-methods、D02-bool-none、D06-raise、D07-class-instance；本节空白拒绝实验",
+      "gaps": "提供完整create_task答案，假repo用未必学过lambda与type三参数；改普通类接口例"
+    },
+    {
+      "section": "D14-errors",
+      "requires": "repo.get结果None判断；HTTPException404/detail；保留原对象",
+      "evidence": "D02 is None；本节HTTPException对象字段与raise示例",
+      "gaps": "核心已覆盖；当前验收未核detail与返回原对象身份，建议补行为边界"
+    },
+    {
+      "section": "D14-deps",
+      "requires": "Depends传函数/框架调用；provider替换；override清理",
+      "evidence": "D12callable卡；本节说明Depends与dependency_overrides；starter给标记",
+      "gaps": "例/补全都只是普通函数调用，未运行真实Depends/覆盖；需要实际TestClient依赖替换示例"
+    },
+    {
+      "section": "D15-assert",
+      "requires": "test_收集/实际assert；被测函数；正常边界；pytest命令",
+      "evidence": "本节解释test_和AssertionError；D04函数；当前实验只有顶层assert",
+      "gaps": "示例直接给add_tax全答案；金额范围/税率舍入语义不充分；至少实际test_例与明确运行方式"
+    },
+    {
+      "section": "D15-fixture",
+      "requires": "@pytest.fixture；同名参数注入；tmp_path Path/function隔离",
+      "evidence": "D08-pathlib/UTF8；D13装饰器；starter有完整note_path",
+      "gaps": "文字说fixture但实验仅TemporaryDirectory；未明确同名形参注入与禁止直接调fixture；验收可无关test_通过"
+    },
+    {
+      "section": "D15-mock",
+      "requires": "Mock/MagicMock；with响应；patch查找位置；call_args；参数断言",
+      "evidence": "D12函数注入；本节Mock/patch.object例与MagicMock starter",
+      "gaps": "__enter__.return_value/read链未讲；call_args未教；提供模块timeout=10隐藏；sys.modules/metaclass/lambda未必学；无关测试+未使用patch即可通过"
+    },
+    {
+      "section": "D15-api",
+      "requires": "TestClient真实GET/POST(json=)；app fixture；200/201/404及字段",
+      "evidence": "D13app；D15fixture；本节文字与starterTestClient",
+      "gaps": "实验/补全造假type/lambda Response，不真实发送请求；未落实json参数与appfixture；无关test_可通过"
+    },
+    {
+      "section": "D16-connect",
+      "requires": "sqlite3.connect；:memory:/文件路径；连接所有权；close",
+      "evidence": "本节查询select1、关闭后ProgrammingError；已有with不close卡",
+      "gaps": "教学核心已覆盖；验收函数返回None但未调用代码提connect仍过，需真实连接/指定路径/关闭行为"
+    },
+    {
+      "section": "D16-schema",
+      "requires": "CREATE/IF NOT EXISTS；PRIMARYKEY/NOTNULL/DEFAULT；游标fetch",
+      "evidence": "本节建表/PRAGMA/default实验；D05索引",
+      "gaps": "建表例与正式题同表完整SQL；解释fetchone与代码fetchall不符；补全都只connect；只SQL字符串不建表也过"
+    },
+    {
+      "section": "D16-crud",
+      "requires": "INSERT/SELECT/UPDATE/DELETE/WHERE/参数tuple；lastrowid/fetchall/rowcount；bool字段",
+      "evidence": "当前只INSERT/?/rowcount实验；D05tuple/dict、D02bool",
+      "gaps": "UPDATE/DELETE语法、lastrowid、SQL行转dict/稳定排序未实际教；starter缺toggle/delete；未知ID返回模糊且验收缺失"
+    },
+    {
+      "section": "D16-transaction",
+      "requires": "commit/rollback；异常重新raise；多个操作原子性；借入连接不关闭",
+      "evidence": "D06 try/裸raise；本节with conn成功/失败计数实验",
+      "gaps": "显式commit/rollback仅口述；AST反而要求它们而拒绝正确with模式；完全不写库也过；资源关闭文字易误导"
+    },
+    {
+      "section": "D17-coroutine",
+      "requires": "async def/coroutine执行时机；await；sleep(0)；run入口",
+      "evidence": "本节完整async main/await卡及让出控制权实验",
+      "gaps": "核心已覆盖；正式wrapper没有签名/输入定义且没验收；应声明wrapper(value)与starter或删不明确要求"
+    },
+    {
+      "section": "D17-gather",
+      "requires": "多个coroutine；*展开动态列表；gather结果按输入顺序",
+      "evidence": "D04-varargs必修文字明确调用*；本节gather两个固定参数实验",
+      "gaps": "缺动态列表gather(*jobs)可运行范例；补全只return name；真正验收只值列表，同步list(values)会过"
+    },
+    {
+      "section": "D17-timeout",
+      "requires": "wait_for(awaitable,timeout)；超时取消；finally传播",
+      "evidence": "本节成功/超时实验；D06with/finally概念；starter给slow",
+      "gaps": "主要API已教且当前取消有真实注入验证；本节/后一节需可运行取消清理例；不要隐藏额外cleanup接口"
+    },
+    {
+      "section": "D17-boundary",
+      "requires": "await处异常；只捕获ValueError；Task/create_task/cancel/await；finally",
+      "evidence": "D06异常分类；本节只是正常run与外层ValueError",
+      "gaps": "任务创建/cancel等待/CancelledError没有可运行教学；补全只返回常量；固定invalid-input通过，未知异常和取消未检查"
+    },
+    {
+      "id": "D25-chat",
+      "formal": "请求体/POST/鉴权/超时/嵌套响应提取",
+      "examples": 2,
+      "drills": 2,
+      "evidence": [
+        "D12-post 示例完整讲 Request(data=JSON bytes, method, headers)",
+        "D12-request 讲响应 with/read；D12-timeout 讲超时真实调用点",
+        "D04-default-keyword 仅教普通关键字；单独 * 未明确讲",
+        "当前例子仅请求体序列化与模拟响应嵌套提取；BYTES 卡已给 encode/decode"
+      ],
+      "gaps": [
+        "Bearer 头的作用/写法未明确示范",
+        "单独 * 的关键字专用参数未明确教",
+        "本节示例没真正联网，须明确完整函数由学生实现但验证只访问本地 mock"
+      ],
+      "variation": "生成 prompt 未传本节卡/示例/规则/前置事实，无法证明只变更已教内容"
+    },
+    {
+      "id": "D25-errors",
+      "formal": "ApiError(status_code)、HTTP 非200/网络/坏JSON分别转换",
+      "examples": 2,
+      "drills": 0,
+      "evidence": [
+        "D06-custom 异常类型；D07-inheritance 讲 super/属性",
+        "D12-response 讲 JSONDecodeError；D12-timeout 只描述 HTTPError/URLError",
+        "本节演示 HTTPError.code 与 JSONDecodeError 两条"
+      ],
+      "gaps": [
+        "HTTPError 是 URLError 子类，捕获顺序未教",
+        "没有明确如何复用上一节自己的 call_chat；starter只有异常类，没有完整函数骨架",
+        "题面非200覆盖含201等正常响应状态；当前验证仅401，不足以证明契约"
+      ],
+      "variation": "同上"
+    },
+    {
+      "id": "D26-prompt",
+      "formal": "逐标题范围、索引边界、目标/要求/完成状态",
+      "examples": 2,
+      "drills": 2,
+      "evidence": [
+        "D02-string-methods 已教 join、f-string；D03 循环与 D05 容器已教",
+        "本节两个例子展示标题/目标与完成状态/要求"
+      ],
+      "gaps": [
+        "概念并无新的 Python 缺口；正文全是 code 通用模板，应改为具体输入边界/索引事实边界",
+        "验证只查目标/已完成字样，没有检查传入的 instructions 与 completed 实际值"
+      ],
+      "variation": "同上"
+    },
+    {
+      "id": "D26-parse",
+      "formal": "定位一段JSON对象、解析，缺失/错误抛ValueError",
+      "examples": 2,
+      "drills": 1,
+      "evidence": [
+        "D08-json-read 与 D12-response 已教 JSON/JSONDecodeError",
+        "D02字符串课讲 strip/split/join，未讲 find/rfind",
+        "当前示例直接 text.find、rfind 和切片组合"
+      ],
+      "gaps": [
+        "find/rfind 作用、写法、-1 与切片右端边界未教",
+        "第一个JSON片段 与 find首{/rfind末} 在多对象文本下不等价；应限定输入最多一个对象并说明范围，或系统教 JSONDecoder.raw_decode，不能模糊混用"
+      ],
+      "variation": "同上"
+    },
+    {
+      "id": "D27-client",
+      "formal": "消息封装，call_chat→parse_ai_json",
+      "examples": 2,
+      "drills": 2,
+      "evidence": [
+        "D07-import、D25/D26 接口；当前两例展示消息和文本→dict",
+        "平台确实写入 deepseek_client.py 与 prompt.py"
+      ],
+      "gaps": [
+        "需说明 API响应外层坏JSON→ApiError 与 content内层坏JSON→ValueError 的不同",
+        "验证“非JSON抛ApiError”实际 except Exception，可把 NameError 等实现错误误当正确拒绝"
+      ],
+      "variation": "同上"
+    },
+    {
+      "id": "D27-flow",
+      "formal": "build_prompt/send_message组合，四字段齐全后返回，否则ValueError",
+      "examples": 2,
+      "drills": 2,
+      "evidence": [
+        "D26-prompt；D27-client；D05 dict/set 已讲基本创建与修改",
+        "没有任何前课例子教 keys() 或 set <=、set -；本节直接使用"
+      ],
+      "gaps": [
+        "dict.keys 与子集/差集关系未就地解释",
+        "题面调用 send_message，但 starter只import build_prompt；两个平台模块均没有 send_message，也没有 workspace_deps，上一节实现不会自动在验证临时目录存在"
+      ],
+      "variation": "同上"
+    },
+    {
+      "id": "D28-test",
+      "formal": "离线mock：正常、401、非JSON均真实行为断言",
+      "examples": 2,
+      "drills": 2,
+      "evidence": [
+        "D15-mock 有 Mock(return_value)/assert_called_once_with 与 patch.object恢复",
+        "D15前课没有 __enter__.return_value、side_effect、pytest.raises 示例",
+        "本节仅 Mock.read.return_value 与 HTTPError构造两个例子"
+      ],
+      "gaps": [
+        "with 响应需要 MagicMock上下文绑定；side_effect模拟异常；pytest.raises检查异常字段需短卡",
+        "提供的 ai_client.py 只有call_chat/ApiError，没有题面声称的send_message",
+        "纯内存实证提供的客户端坏JSON抛JSONDecodeError，题面要求ApiError，合规测试会失败",
+        "仅pytest退出码可能允许三个pass测试通过；须行为/变异验收，不能用AST关键词代替"
+      ],
+      "variation": "同上"
+    },
+    {
+      "id": "D28-review",
+      "formal": "3-5句能力、mock、索引边界、重建交付证据",
+      "examples": 2,
+      "drills": 0,
+      "evidence": [
+        "D24-artifacts/runbook/review 已要求实际命令/错误/修正文件",
+        "当前例子仅两句话复盘方向，无Python新语法"
+      ],
+      "gaps": [
+        "text 小节套用 Python/code/边界运行 boilerplate 引导不适用",
+        "应给证据清单并引用真实验证输出；现有 min_chars+keywords 不能证明完成"
+      ],
+      "variation": "同上"
+    },
+    {
+      "section": "D18-scope",
+      "requires": [
+        "用户故事",
+        "边界",
+        "非目标"
+      ],
+      "evidence": "本节Given/When/Then；D14错误边界",
+      "gaps": [
+        "文本验收仅长度/关键词"
+      ]
+    },
+    {
+      "section": "D18-acceptance",
+      "requires": [
+        "场景",
+        "状态码",
+        "状态变化"
+      ],
+      "evidence": "D13/D14状态；本节场景",
+      "gaps": [
+        "旧PATCH路径缺/done"
+      ]
+    },
+    {
+      "section": "D18-data-contract",
+      "requires": [
+        "JSON",
+        "输入/输出",
+        "样例值/类型标记"
+      ],
+      "evidence": "D08 JSON；validate_contract实际约定",
+      "gaps": [
+        "输出类型字符串冲突",
+        "错误键名冲突",
+        "starter完整通过"
+      ]
+    },
+    {
+      "section": "D18-api-contract",
+      "requires": [
+        "路由",
+        "对象数组",
+        "状态码",
+        "保留前节"
+      ],
+      "evidence": "D13/D14；validate_contract六条路由",
+      "gaps": [
+        "routes/endpoints冲突",
+        "错误键冲突",
+        "旧GET单任务例不存在"
+      ]
+    },
+    {
+      "section": "D19-pyproject",
+      "requires": [
+        "TOML",
+        "build-system",
+        "运行/dev依赖",
+        "包/测试发现"
+      ],
+      "evidence": "D01安装；validate_project_file依赖要求",
+      "gaps": [
+        "必需依赖没教",
+        "未创建包就要求安装成功"
+      ]
+    },
+    {
+      "section": "D19-package",
+      "requires": [
+        "传统包",
+        "初始化",
+        "导入副作用"
+      ],
+      "evidence": "D07包/导入",
+      "gaps": [
+        "__all__无关",
+        "text类型可能误写说明"
+      ]
+    },
+    {
+      "section": "D19-config",
+      "requires": [
+        "env非空fallback",
+        "Path"
+      ],
+      "evidence": "D10-env；D08 Path",
+      "gaps": [
+        "正式完整答案",
+        "空字符串未验"
+      ]
+    },
+    {
+      "section": "D19-main",
+      "requires": [
+        "main",
+        "守卫",
+        "退出码",
+        "导入无副作用"
+      ],
+      "evidence": "D07/D09",
+      "gaps": [
+        "导入未来.api",
+        "提前初始化",
+        "未验import"
+      ]
+    },
+    {
+      "section": "D19-readme",
+      "requires": [
+        "安装/测试说明",
+        "当前/未来入口"
+      ],
+      "evidence": "D01及D19",
+      "gaps": [
+        "未来入口未标记",
+        "dev安装缺失"
+      ]
+    },
+    {
+      "section": "D20-connection",
+      "requires": [
+        "连接",
+        "Row",
+        "schema",
+        "commit/close"
+      ],
+      "evidence": "D16连接/建表/事务，Row术语",
+      "gaps": [
+        "旧配置接口",
+        "init_db参数错",
+        "Row没用法"
+      ]
+    },
+    {
+      "section": "D20-create-list",
+      "requires": [
+        "参数SQL",
+        "lastrowid",
+        "Row转dict",
+        "bool",
+        "排序"
+      ],
+      "evidence": "D16 CRUD；D05推导式",
+      "gaps": [
+        "cursor用法不足",
+        "done int/bool",
+        "未来测试命令",
+        "裸tuple fixture"
+      ]
+    },
+    {
+      "section": "D20-update-delete",
+      "requires": [
+        "UPDATE/DELETE",
+        "rowcount",
+        "commit",
+        "bool"
+      ],
+      "evidence": "D16 rowcount仅出现",
+      "gaps": [
+        "未知/bool验收不足",
+        "未来测试命令"
+      ]
+    },
+    {
+      "section": "D20-db-tests",
+      "requires": [
+        "fixture",
+        "导入真实函数",
+        "隔离连接",
+        "行为断言"
+      ],
+      "evidence": "D15；D16",
+      "gaps": [
+        "无project_file",
+        "db对象/conn冲突",
+        "assert True可过"
+      ]
+    },
+    {
+      "section": "D21-app",
+      "requires": [
+        "asynccontextmanager",
+        "yield资源",
+        "lifespan",
+        "Depends",
+        "TestClient上下文"
+      ],
+      "evidence": "D17 async；D14依赖，前期生命周期为选修",
+      "gaps": [
+        "async资源缺口",
+        "health旧路径",
+        "init_db/close_db错误",
+        "未来测试",
+        "弱AST"
+      ]
+    },
+    {
+      "section": "D21-schema",
+      "requires": [
+        "BaseModel",
+        "field_validator",
+        "classmethod",
+        "strip",
+        "ValidationError"
+      ],
+      "evidence": "D14模型；当前卡缺cls说明",
+      "gaps": [
+        "TaskOut/Task冲突",
+        "卡是整题答案",
+        "提前POST",
+        "弱AST"
+      ]
+    },
+    {
+      "section": "D21-crud-routes",
+      "requires": [
+        "Depends",
+        "真实DB函数",
+        "HTTP映射"
+      ],
+      "evidence": "D13/D14/D20与模型",
+      "gaps": [
+        "service假对象",
+        "DELETE204旧契约",
+        "Router新要求",
+        "弱AST"
+      ]
+    },
+    {
+      "section": "D21-static",
+      "requires": [
+        "__file__",
+        "Path.parent",
+        "FileResponse"
+      ],
+      "evidence": "D08路径；本节响应",
+      "gaps": [
+        "StaticFiles旧方案",
+        "未生成HTML提前200"
+      ]
+    },
+    {
+      "section": "D22-db-fixtures",
+      "requires": [
+        "pytest注入",
+        "tmp_path",
+        "yield/finally",
+        "隔离连接"
+      ],
+      "evidence": "D15 fixture；D21资源",
+      "gaps": [
+        "连接当业务对象",
+        "缺导入",
+        "测试质量不足"
+      ]
+    },
+    {
+      "section": "D22-api-tests",
+      "requires": [
+        "TestClient上下文",
+        "override函数映射",
+        "monkeypatch",
+        "临时DB"
+      ],
+      "evidence": "D15 API；D14依赖；D21生命周期",
+      "gaps": [
+        "override用法不足",
+        "PATCH旧路径",
+        "app fixture凭空"
+      ]
+    },
+    {
+      "section": "D22-api-errors",
+      "requires": [
+        "422/404",
+        "detail",
+        "不写库",
+        "重复删除"
+      ],
+      "evidence": "D14错误；前节客户端",
+      "gaps": [
+        "无关测试可过"
+      ]
+    },
+    {
+      "section": "D22-acceptance",
+      "requires": [
+        "读contract",
+        "当前API/DB",
+        "分步边界"
+      ],
+      "evidence": "D08；D20/D21",
+      "gaps": [
+        "contract依赖遗漏",
+        "无关测试可过"
+      ]
+    },
+    {
+      "section": "D23-cli-parser",
+      "requires": [
+        "argparse子命令",
+        "dispatch",
+        "共享配置",
+        "连接所有权"
+      ],
+      "evidence": "D09；D19；D20",
+      "gaps": [
+        "database_path旧名",
+        "关闭不足"
+      ]
+    },
+    {
+      "section": "D23-cli-mutate",
+      "requires": [
+        "done/rm",
+        "整数参数",
+        "stderr",
+        "退出码"
+      ],
+      "evidence": "D09错误；D20",
+      "gaps": [
+        "service假对象",
+        "结果字典旧协议",
+        "stderr未示范",
+        "未知ID未验"
+      ]
+    },
+    {
+      "section": "D23-html-structure",
+      "requires": [
+        "完整HTML",
+        "label/id",
+        "button type",
+        "空/错误区域"
+      ],
+      "evidence": "用户开发经验；本节控件",
+      "gaps": [
+        "starter缺外壳",
+        "静态属性弱验"
+      ]
+    },
+    {
+      "section": "D23-html-fetch",
+      "requires": [
+        "fetch协议",
+        "JSON body",
+        "response.ok",
+        "textContent",
+        "错误状态"
+      ],
+      "evidence": "已有JS经验；D12/D21协议",
+      "gaps": [
+        "只教GET/DELETE",
+        "starter仅函数",
+        "浏览器验收不足"
+      ]
+    },
+    {
+      "section": "D24-rebuild",
+      "requires": [
+        "源码副本",
+        "临时目录",
+        "venv解释器",
+        "dev安装",
+        "pytest"
+      ],
+      "evidence": "D01环境；D18-D23产物",
+      "gaps": [
+        "空目录无源码",
+        "仍用全局Python",
+        "dev缺失",
+        "强制uvicorn"
+      ]
+    },
+    {
+      "section": "D24-integrate",
+      "requires": [
+        "同一DB",
+        "三入口",
+        "启动停止",
+        "证据"
+      ],
+      "evidence": "D19-D23",
+      "gaps": [
+        "共享路径/停止范围不足"
+      ]
+    },
+    {
+      "section": "D24-artifacts",
+      "requires": [
+        "15文件映射",
+        "存在性",
+        "排除项",
+        "阶段/最终边界"
+      ],
+      "evidence": "_PROJECT_REQUIRED_FILES；D08 exists",
+      "gaps": [
+        "review尚未生成"
+      ]
+    },
+    {
+      "section": "D24-review",
+      "requires": [
+        "证据",
+        "failure/fix",
+        "取舍",
+        "下一步",
+        "最终验收"
+      ],
+      "evidence": "前课实际产物",
+      "gaps": [
+        "lifespan harness冲突",
+        "POST200兼容",
+        "HTML标记不足"
+      ]
+    },
+    {
+      "section": "D05-list-tuple",
+      "requires": "len、长度比较、raise ValueError、tuple转换",
+      "evidence": "本节四张可运行卡和四道渐进补全；D03 zip短卡也已补长度。",
+      "gaps": []
+    },
+    {
+      "section": "D05-dict-set",
+      "requires": "dict、set、sorted、strip和循环",
+      "evidence": "本节set/sorted卡；D02字符串，D03循环。",
+      "gaps": []
+    },
+    {
+      "section": "D05-mutability",
+      "requires": "引用、append、copy、浅复制",
+      "evidence": "本节两个独立对象示例和输出。",
+      "gaps": []
+    },
+    {
+      "section": "D05-unpacking",
+      "requires": "字典合并、星号解包、长度边界、ValueError",
+      "evidence": "本节解包示例；D05首节已讲len/raise，题面明确两个函数签名。",
+      "gaps": []
+    },
+    {
+      "section": "D05-traversal",
+      "requires": "列表遍历、dict.get、缺省值",
+      "evidence": "D03循环与本节get短卡；标题缺失边界明确。",
+      "gaps": []
+    },
+    {
+      "section": "D05-comprehensions",
+      "requires": "enumerate、lower、字典/集合推导",
+      "evidence": "D03 enumerate与推导；本节lower卡和补全。",
+      "gaps": []
+    },
+    {
+      "section": "D05-iterators-generators",
+      "requires": "iter、next、yield与耗尽",
+      "evidence": "本节两个可运行例；保持选修，不作为必修前置。",
+      "gaps": []
+    },
+    {
+      "section": "D05-tags",
+      "requires": "split、strip、成员判断、set/sorted、join",
+      "evidence": "D02字符串；本节成员判断卡和边界。",
+      "gaps": []
+    },
+    {
+      "section": "D05-counts",
+      "requires": "dict.get、遍历累加、键值更新",
+      "evidence": "本节get计数小例和补全；D03循环。",
+      "gaps": []
+    },
+    {
+      "section": "D05-cart",
+      "requires": "取字段、乘法、sum与generator expression",
+      "evidence": "本节sum小例和补全；D02数值与本节组合。",
+      "gaps": []
+    },
+    {
+      "section": "D09-argv",
+      "requires": "argv 是自选变量名，列表里的 '-3' 仍是字符串。；本节只观察输入，不转整数、不修改库存。",
+      "evidence": "scripts/d09_course.py 提供本节两份示例、两道补全和明确的前置小节；先观察输入与结果，再独立实现。",
+      "gaps": []
+    },
+    {
+      "section": "D09-position",
+      "requires": "固定方法名不用背实现；parser、args、product 都是本例自选名字。；先登记规则，再解析输入；本节不加入 --delta。",
+      "evidence": "scripts/d09_course.py 提供本节两份示例、两道补全和明确的前置小节；先观察输入与结果，再独立实现。",
+      "gaps": []
+    },
+    {
+      "section": "D09-options",
+      "requires": "--delta 的结果字段默认叫 delta，不带两个横线。；type=int 只检查整数形式，default=0 只负责省略时的值。",
+      "evidence": "scripts/d09_course.py 提供本节两份示例、两道补全和明确的前置小节；先观察输入与结果，再独立实现。",
+      "gaps": []
+    },
+    {
+      "section": "D09-stock",
+      "requires": "先解析成功，再修改 STOCK；本例商品明确已经存在。；Namespace 用点号取属性，库存字典用方括号读写。；本题返回新库存；只打印而不 return 仍会返回 None。",
+      "evidence": "scripts/d09_course.py 提供本节两份示例、两道补全和明确的前置小节；先观察输入与结果，再独立实现。",
+      "gaps": []
+    },
+    {
+      "section": "D09-command-name",
+      "requires": "dest 决定结果属性叫什么，add_parser 决定有哪些命令。；show 没有 product；只在 adjust 的结果中读取商品和调整量。",
+      "evidence": "scripts/d09_course.py 提供本节两份示例、两道补全和明确的前置小节；先观察输入与结果，再独立实现。",
+      "gaps": []
+    },
+    {
+      "section": "D09-if-dispatch",
+      "requires": "解析是整理输入；分派是根据命令选择代码。；先判断命令，再读取那个命令专有的参数。",
+      "evidence": "scripts/d09_course.py 提供本节两份示例、两道补全和明确的前置小节；先观察输入与结果，再独立实现。",
+      "gaps": []
+    },
+    {
+      "section": "D09-function-value",
+      "requires": "函数名不带括号：保存或传递函数；带括号：立即调用。；调用之后要 return 结果；print 不能代替返回。",
+      "evidence": "scripts/d09_course.py 提供本节两份示例、两道补全和明确的前置小节；先观察输入与结果，再独立实现。",
+      "gaps": []
+    }
+  ],
+  "updates": [
+    {
+      "id": "D06-with",
+      "replace": {
+        "examples": [
+          {
+            "language": "python",
+            "code": "with open('note.txt', 'w', encoding='utf-8') as stream:\n    stream.write('早安')\nwith open('note.txt', encoding='utf-8') as stream:\n    print(stream.read())\n",
+            "output": "早安",
+            "explanation": "第一段with用'w'模式把早安写入note.txt，第二段按UTF-8打开并用stream.read()读出全部文本，所以输出早安。两个with块退出时各自关闭文件，写入句柄不会持续占用资源。若路径不存在，默认读取模式会抛FileNotFoundError；写入模式则会创建文件并覆盖旧内容。",
+            "source_kind": "python",
+            "runnable": true
+          },
+          {
+            "language": "python",
+            "code": "with open('count.txt', 'w', encoding='utf-8') as stream:\n    stream.write('2')\nprint(stream.closed)\n",
+            "output": "True",
+            "explanation": "stream.write('2')发生在with缩进块内，离开该块后再读取stream.closed，所以输出True。closed描述文件对象是否关闭，与文件里保存的数字没有关系。若把print移进with块，句柄仍打开，会输出False；关闭后的文件对象不能继续用于读写。",
+            "source_kind": "python",
+            "runnable": true
+          }
+        ],
+        "practice.instructions": "定义 read_text(path)，用 with open 和 encoding='utf-8' 读取给定文件并返回原文本；path保证是存在的文本文件路径。",
+        "practice.expected_behavior": "含中文、换行或空文本均原样返回，离开with块自动关闭文件。",
+        "practice.starter_content": "def read_text(path):\n    # TODO：读取并返回文本\n    pass\n"
+      },
+      "append_cards": [
+        {
+          "title": "open 与 read：读写文本",
+          "rule": "作用：open 打开文件，read 读取文本。常用：读取配置或名单。写法：with open(路径, encoding='utf-8') as stream；离开缩进块自动关闭。'w' 表示写入并覆盖，默认模式是读取。",
+          "code": "with open('note.txt', 'w', encoding='utf-8') as stream:\n    stream.write('早安')\nwith open('note.txt', encoding='utf-8') as stream:\n    print(stream.read())\n",
+          "output": "早安",
+          "source_kind": "python",
+          "runnable": true
+        }
+      ],
+      "append_drills": [
+        {
+          "id": "prep-open-read",
+          "title": "补全：从文本流读取",
+          "instructions": "只补全 TODO 表达式，从平台提供的文本流读取内容。",
+          "reference": "with open('note.txt', 'w', encoding='utf-8') as stream:\n    stream.write('早安')\nwith open('note.txt', encoding='utf-8') as stream:\n    print(stream.read())\n",
+          "starter": "with open('note.txt', 'w', encoding='utf-8') as stream:\n    stream.write('早安')\nwith open('note.txt', encoding='utf-8') as stream:\n    print(None)  # TODO：读取stream\n",
+          "output": "早安",
+          "source_kind": "python",
+          "runnable": true
+        }
+      ],
+      "auto_drill_exclusions": []
+    },
+    {
+      "id": "D06-try-except",
+      "replace": {
+        "practice.instructions": "定义 parse_int(text)：合法整数返回 int，格式错误返回 None；只捕获 ValueError。None 不是字符串输入，int(None) 的 TypeError 应继续抛出。",
+        "practice.expected_behavior": "'42'返回42；'x'和''返回None；None继续抛TypeError，不被当格式错误吞掉。",
+        "practice.starter_content": "def parse_int(text):\n    # TODO：转换；只处理约定的格式错误\n    pass\n"
+      },
+      "append_cards": [],
+      "append_drills": [],
+      "auto_drill_exclusions": []
+    },
+    {
+      "id": "D06-raise",
+      "replace": {
+        "practice.instructions": "定义 require_nonempty(text)：None与空/空白字符串抛ValueError，其他非字符串抛TypeError，合法字符串返回去掉首尾空白的结果。只做本题明确的类型和空值判断。",
+        "practice.expected_behavior": "' ok '返回'ok'；None/空白字符串抛ValueError；整数等非字符串抛TypeError。",
+        "practice.starter_content": "def require_nonempty(text):\n    # TODO：按本节契约分类输入，再清理文本\n    pass\n",
+        "guided_practice.steps": [
+          {
+            "action": "先分别观察None、普通字符串、整数的类型与空值判断。",
+            "expected": "能区分本题规定的两种异常类别。"
+          },
+          {
+            "action": "再处理字符串的首尾空白，并检查清理后的结果。",
+            "expected": "合法文本保留内容，纯空白文本明确失败。"
+          }
+        ]
+      },
+      "append_cards": [
+        {
+          "title": "None 与类型检查的顺序",
+          "rule": "作用：is None 判断特殊空值，isinstance 判断类型。常用：先处理题目单独约定的空值，再做类型分类。写法：value is None、isinstance(value, str)；不能先对None调用字符串方法。",
+          "code": "value = None\nprint(value is None)\nprint(isinstance(12, str))\nprint(' note '.strip())\n",
+          "output": "True\nFalse\nnote",
+          "source_kind": "python",
+          "runnable": true
+        }
+      ],
+      "append_drills": [],
+      "auto_drill_exclusions": []
+    },
+    {
+      "id": "D07-import",
+      "replace": {},
+      "append_cards": [
+        {
+          "title": "Path 的名字与后缀",
+          "rule": "作用：Path 用对象表达路径。常用：取文件名或扩展名。写法：Path(路径).name 返回最后一段，.suffix 返回含点号的后缀；观察属性不要求文件存在。",
+          "code": "from pathlib import Path\npath = Path('docs/guide.md')\nprint(path.name)\nprint(path.suffix)\n",
+          "output": "guide.md\n.md",
+          "source_kind": "python",
+          "runnable": true
+        }
+      ],
+      "append_drills": [],
+      "auto_drill_exclusions": []
+    },
+    {
+      "id": "D07-package",
+      "replace": {
+        "examples": [
+          {
+            "language": "python",
+            "code": "import math as numbers\nprint(numbers.ceil(1.2))\n",
+            "output": "2",
+            "explanation": "import math as numbers把math模块绑定到当前文件的numbers名字，numbers.ceil(1.2)向上取整，因此输出2。as改变访问名称，模块仍然是math，函数行为不变。若只导入这个别名却继续写math.ceil，当前文件没有math绑定，会出现NameError。",
+            "source_kind": "python",
+            "runnable": true
+          },
+          {
+            "language": "python",
+            "code": "from pathlib import Path\nwith Path(__file__).with_name('labels.py').open('w', encoding='utf-8') as stream:\n    stream.write(\"def emphasize(text):\\n    return text + '!'\\n\")\nfrom labels import emphasize\nprint(emphasize('快跑'))\n",
+            "output": "快跑!",
+            "explanation": "把整段示例保存为import_example.py或插件生成的文件名再运行。from pathlib import Path引入路径类；Path(__file__).with_name('labels.py')定位当前示例文件旁的labels.py，避免终端工作目录不同导致模块写到别处。with在那里生成模块文件，其中emphasize返回传入文字加一个感叹号；随后from labels import emphasize取出这个函数。调用emphasize('快跑')得到快跑!，说明代码来自另一个模块文件。labels.py是生成的模块，不是整段示例的文件名；正式作业helpers.py由平台提供。导入名称不带.py后缀；若文件里没有同名名称，导入会失败，而不是自动找到其他名称。",
+            "source_kind": "python",
+            "runnable": true
+          }
+        ],
+        "practice_first.provided": "验证器提供helpers.py，其中greet(name)返回“你好，姓名”。只提交当前main.py，不用自己创建helpers.py；禁止复制greet的实现。"
+      },
+      "append_cards": [
+        {
+          "title": "模块文件提供可导入的函数",
+          "rule": "作用：from 把另一个.py文件中的名称引入当前文件。常用：把工具拆成模块。写法：from 模块名 import 函数名，不带.py后缀。把整段示例保存为import_example.py或插件生成的文件名运行；Path(__file__).with_name('labels.py')将生成的模块放在当前示例文件旁。labels.py是本示例生成的模块文件；正式作业helpers.py由平台提供。",
+          "code": "from pathlib import Path\nwith Path(__file__).with_name('labels.py').open('w', encoding='utf-8') as stream:\n    stream.write(\"def emphasize(text):\\n    return text + '!'\\n\")\nfrom labels import emphasize\nprint(emphasize('快跑'))\n",
+          "output": "快跑!",
+          "source_kind": "python",
+          "runnable": true
+        }
+      ],
+      "append_drills": [
+        {
+          "id": "prep-module-import",
+          "title": "补全：从另一个模块导入",
+          "instructions": "把整段示例保存为import_example.py或插件生成的文件名运行；它会在当前文件旁生成labels.py。替换TODO行，从labels模块引入emphasize。labels.py是生成的模块文件；正式作业helpers.py由平台提供。",
+          "reference": "from pathlib import Path\nwith Path(__file__).with_name('labels.py').open('w', encoding='utf-8') as stream:\n    stream.write(\"def emphasize(text):\\n    return text + '!'\\n\")\nfrom labels import emphasize\nprint(emphasize('快跑'))\n",
+          "starter": "from pathlib import Path\nwith Path(__file__).with_name('labels.py').open('w', encoding='utf-8') as stream:\n    stream.write(\"def emphasize(text):\\n    return text + '!'\\n\")\nemphasize = None  # TODO：从labels导入emphasize\nprint(emphasize('快跑'))\n",
+          "output": "快跑!",
+          "source_kind": "python",
+          "runnable": true
+        }
+      ],
+      "auto_drill_exclusions": []
+    },
+    {
+      "id": "D07-main",
+      "replace": {
+        "practice.instructions": "定义 main()，每次调用打印任意非空的一行；加 __name__ 守卫，直接运行调用main一次，导入不自动运行。",
+        "practice.expected_behavior": "直接执行与显式main()调用输出同一行；import main没有任何输出。",
+        "examples": [
+          {
+            "language": "python",
+            "code": "def show_banner():\n    print('示例入口')\nif __name__ == '__main__':\n    show_banner()\n",
+            "output": "示例入口",
+            "explanation": "show_banner的函数定义不会立即打印，只有守卫条件成立后调用它才输出示例入口。当前实验直接执行文件，__name__为__main__，因此输出恰好一行。这个文件被导入时条件不成立，函数仍可供调用；把show_banner()移到守卫外则会在导入时也打印。",
+            "source_kind": "python",
+            "runnable": true
+          },
+          {
+            "language": "python",
+            "code": "print(__name__)\n",
+            "output": "__main__",
+            "explanation": "当前实验直接执行文件，因此print(__name__)输出__main__，这是Python为直接入口设置的名称。相同文件被import时，__name__会是它的模块名，便于区分运行方式。这个print本身在模块顶层，导入仍会打印模块名；需要限制副作用时，应把动作放进前一个示例的守卫。",
+            "source_kind": "python",
+            "runnable": true
+          }
+        ]
+      },
+      "append_cards": [],
+      "append_drills": [],
+      "auto_drill_exclusions": []
+    },
+    {
+      "id": "D07-stdlib",
+      "replace": {
+        "practice.instructions": "定义 read_metadata(path)，读取UTF-8 JSON。顶层须为dict且name字段为字符串，否则抛ValueError；返回name原字符串。缺文件保留FileNotFoundError，坏JSON保留JSONDecodeError。输入路径和测试文件由验证器准备。",
+        "practice.expected_behavior": "合法文件返回name字符串；顶层数组、缺name或name非字符串为ValueError；缺文件与坏JSON保留原错误类型。",
+        "practice.starter_content": "import json\nfrom pathlib import Path\n\ndef read_metadata(path):\n    # TODO：读取、解析并按本题字段契约检查\n    pass\n"
+      },
+      "append_cards": [
+        {
+          "title": "文件先读成文本，再解析 JSON",
+          "rule": "作用：read_text读取文本，json.loads把JSON文本变成Python对象。常用：读取本地配置。写法：Path(路径).read_text(encoding='utf-8')后调用json.loads；解析成功后仍须检查顶层和字段类型。",
+          "code": "import json\nfrom pathlib import Path\npath = Path('prefs.json')\npath.write_text('{\"theme\": \"深蓝\"}', encoding='utf-8')\ndata = json.loads(path.read_text(encoding='utf-8'))\nprint(isinstance(data, dict))\nprint(data['theme'])\n",
+          "output": "True\n深蓝",
+          "source_kind": "python",
+          "runnable": true
+        }
+      ],
+      "append_drills": [],
+      "auto_drill_exclusions": []
+    },
+    {
+      "id": "D07-class-instance",
+      "replace": {
+        "examples": [
+          {
+            "language": "python",
+            "code": "class Book:\n    def __init__(self, name):\n        self.name = name\n    def caption(self):\n        return self.name\nbook = Book('星图')\nprint(book.caption())\n",
+            "output": "星图",
+            "explanation": "Book('星图')调用__init__，把参数保存到这个对象的self.name；caption通过self读回该属性，所以输出星图。self指向当前实例，方法可以使用构造时保存的数据。创建第二个Book会保存它自己的名称；若caption漏掉实例参数，绑定方法调用时会发生参数数量错误。",
+            "source_kind": "python",
+            "runnable": true
+          },
+          {
+            "language": "python",
+            "code": "class Meter:\n    def __init__(self):\n        self.value = 0\n    def advance(self):\n        self.value += 1\nfirst = Meter()\nsecond = Meter()\nfirst.advance()\nprint(first.value, second.value)\n",
+            "output": "1 0",
+            "explanation": "两个Meter构造时各自把self.value设置为0，只调用first.advance()让第一个对象加一，因此输出1 0。self.value的赋值和修改都属于当前实例，不使用共享全局计数。继续调用first会增加它自己的值，second仍应是0；在类体共享可变容器则不能由这个例子推断同样隔离。",
+            "source_kind": "python",
+            "runnable": true
+          }
+        ]
+      },
+      "append_cards": [],
+      "append_drills": [],
+      "auto_drill_exclusions": []
+    },
+    {
+      "id": "D07-inheritance",
+      "replace": {
+        "practice.instructions": "定义 Task(title) 与 TimedTask(title, deadline)。TimedTask继承Task，使用super初始化title并保存自己的deadline。Task.label()返回原title；TimedTask.label()返回同时包含title与deadline的字符串，分隔形式自选。",
+        "practice.expected_behavior": "父类标题原样返回；不同子类实例输出各自标题和deadline，父类初始化确实运行，实例状态不混用。",
+        "practice.starter_content": "class Task:\n    def __init__(self, title):\n        pass\n\n    def label(self):\n        pass\n\nclass TimedTask(Task):\n    def __init__(self, title, deadline):\n        pass\n\n    def label(self):\n        pass\n"
+      },
+      "append_cards": [
+        {
+          "title": "子类初始化先调用父类",
+          "rule": "作用：super().__init__复用父类初始化。常用：保留原属性并增加子类属性。写法：子类__init__先调用super().__init__(父类参数)，再设置self的新字段。",
+          "code": "class Device:\n    def __init__(self, model):\n        self.model = model\nclass Camera(Device):\n    def __init__(self, model, zoom):\n        super().__init__(model)\n        self.zoom = zoom\ncamera = Camera('mini', 3)\nprint(camera.model, camera.zoom)\n",
+          "output": "mini 3",
+          "source_kind": "python",
+          "runnable": true
+        }
+      ],
+      "append_drills": [],
+      "auto_drill_exclusions": []
+    },
+    {
+      "id": "D07-dataclass",
+      "replace": {
+        "examples": [
+          {
+            "language": "python",
+            "code": "from dataclasses import dataclass\n@dataclass\nclass Reading:\n    temperature: float\n    humidity: int\nprint(Reading(21.5, 60))\n",
+            "output": "Reading(temperature=21.5, humidity=60)",
+            "explanation": "@dataclass根据temperature和humidity字段生成构造方法与可读repr，Reading(21.5,60)因此输出Reading(temperature=21.5, humidity=60)。构造实参按声明的字段顺序进入对象。标注说明预期类型，但dataclass不会自动把错误文本转成数值；需要输入校验时还要另写规则。",
+            "source_kind": "python",
+            "runnable": true
+          },
+          {
+            "language": "python",
+            "code": "from dataclasses import dataclass, field\n@dataclass\nclass Bag:\n    items: list[str] = field(default_factory=list)\nprint(Bag())\n",
+            "output": "Bag(items=[])",
+            "explanation": "field(default_factory=list)在每次创建Bag时调用list生成新的空列表，所以输出Bag(items=[])。这让不同Bag对象的items独立，修改一个对象不会复用另一个对象的默认列表。若直接把[]写成dataclass字段默认值，dataclass会拒绝该可变默认值，不能替代default_factory。",
+            "source_kind": "python",
+            "runnable": true
+          }
+        ]
+      },
+      "append_cards": [],
+      "append_drills": [],
+      "auto_drill_exclusions": []
+    },
+    {
+      "id": "D07-slug",
+      "replace": {},
+      "append_cards": [
+        {
+          "title": "replace：替换指定文本",
+          "rule": "作用：replace返回替换后的新字符串。常用：更换分隔符或固定片段。写法：文本.replace(旧片段,新片段)；原字符串不变，也不会把制表符自动当成普通空格。",
+          "code": "text = 'two blue birds'\nprint(text.replace(' ', '_'))\nprint(text)\n",
+          "output": "two_blue_birds\ntwo blue birds",
+          "source_kind": "python",
+          "runnable": true
+        }
+      ],
+      "append_drills": [
+        {
+          "id": "prep-replace",
+          "title": "补全：替换分隔符",
+          "instructions": "保留原输入，用字符串方法把普通空格替换为下划线。",
+          "reference": "text = 'two blue birds'\nprint(text.replace(' ', '_'))\nprint(text)\n",
+          "starter": "text = 'two blue birds'\nprint(None)\nprint(text)\n",
+          "output": "two_blue_birds\ntwo blue birds",
+          "source_kind": "python",
+          "runnable": true
+        }
+      ],
+      "auto_drill_exclusions": []
+    },
+    {
+      "id": "D08-pathlib",
+      "replace": {},
+      "append_cards": [
+        {
+          "title": "存在与普通文件是两个判断",
+          "rule": "作用：exists判断路径存在，is_file判断是否为普通文件。常用：拒绝缺失输入、排除同后缀目录。写法：path.exists()、path.is_file()；glob匹配结果也可能包含目录。mkdir(exist_ok=True)允许目录已经存在，便于反复修改试跑。",
+          "code": "from pathlib import Path\nroot = Path('sample')\nroot.mkdir(exist_ok=True)\n(root / 'readme.md').write_text('note', encoding='utf-8')\n(root / 'chapter.md').mkdir(exist_ok=True)\nprint(root.exists(), (root / 'missing').exists())\nprint((root / 'readme.md').is_file(), (root / 'chapter.md').is_file())\nprint(sorted(path.name for path in root.glob('*.md')))\n",
+          "output": "True False\nTrue False\n['chapter.md', 'readme.md']",
+          "source_kind": "python",
+          "runnable": true
+        }
+      ],
+      "append_drills": [
+        {
+          "id": "prep-path-is-file",
+          "title": "补全：文件还是目录",
+          "instructions": "只补全TODO的两个判断，注意同样的后缀可以出现在目录名中。",
+          "reference": "from pathlib import Path\nroot = Path('sample')\nroot.mkdir(exist_ok=True)\n(root / 'readme.md').write_text('note', encoding='utf-8')\n(root / 'chapter.md').mkdir(exist_ok=True)\nprint(root.exists(), (root / 'missing').exists())\nprint((root / 'readme.md').is_file(), (root / 'chapter.md').is_file())\nprint(sorted(path.name for path in root.glob('*.md')))\n",
+          "starter": "from pathlib import Path\nroot = Path('sample')\nroot.mkdir(exist_ok=True)\n(root / 'readme.md').write_text('note', encoding='utf-8')\n(root / 'chapter.md').mkdir(exist_ok=True)\nprint(root.exists(), (root / 'missing').exists())\nprint(None, None)\nprint(sorted(path.name for path in root.glob('*.md')))\n",
+          "output": "True False\nTrue False\n['chapter.md', 'readme.md']",
+          "source_kind": "python",
+          "runnable": true
+        }
+      ],
+      "auto_drill_exclusions": []
+    },
+    {
+      "id": "D08-utf8",
+      "replace": {},
+      "append_cards": [
+        {
+          "title": "splitlines：把文本拆成行",
+          "rule": "作用：splitlines返回各行组成的列表。常用：名单、配置、日志逐行处理。写法：文本.splitlines()；中间空行保留为''，末尾换行不会额外生成末尾空行。",
+          "code": "text = '甲\\n\\n乙\\n'\nprint(text.splitlines())\n",
+          "output": "['甲', '', '乙']",
+          "source_kind": "python",
+          "runnable": true
+        }
+      ],
+      "append_drills": [],
+      "auto_drill_exclusions": []
+    },
+    {
+      "id": "D08-json-read",
+      "replace": {
+        "practice.instructions": "定义 read_task(text)：json.loads解析后，要求顶层为dict且title为非空字符串（去首尾空白后非空）。成功返回整个解析后的dict，不删除其他字段，不自动补字段。非法JSON保留JSONDecodeError；结构错误抛ValueError。",
+        "practice.expected_behavior": "{\"title\":\"学习\"}返回同样的dict；数组/缺title/空白title/非字符串title抛ValueError；坏JSON不变为空dict。",
+        "practice.starter_content": "import json\n\ndef read_task(text):\n    # TODO：解析并检查结构，返回解析对象\n    pass\n",
+        "practice.input_examples": [
+          {
+            "label": "合法对象",
+            "value": "print(read_task('{\"title\":\"学习\"}'))",
+            "expected": "{'title': '学习'}"
+          },
+          {
+            "label": "错误结构",
+            "value": "read_task('[]')",
+            "expected": "ValueError"
+          }
+        ]
+      },
+      "append_cards": [],
+      "append_drills": [],
+      "auto_drill_exclusions": []
+    },
+    {
+      "id": "D08-json-report",
+      "replace": {
+        "practice.instructions": "定义 write_report(rows, path)。rows保证是字典列表，每项必含布尔done。统计total/done/pending三个整数计数，使用ensure_ascii=False、indent=2、sort_keys=True写UTF-8 JSON到指定路径；成功无需返回值。允许覆盖指定报告文件。",
+        "practice.expected_behavior": "两条一完成一未完成记录写出total=2/done=1/pending=1；空列表全零。文件可再次解析且计数正确；统计报告本身不要求额外的中文字段。",
+        "practice.starter_content": "import json\n\ndef write_report(rows, path):\n    # TODO：统计并写入指定文件\n    pass\n"
+      },
+      "append_cards": [
+        {
+          "title": "dumps 返回文本，dump 写入文件",
+          "rule": "作用：dumps返回JSON字符串，dump写入已打开的文本流。常用：保存可读配置。写法：json.dump(对象,stream,ensure_ascii=False,indent=2,sort_keys=True)；文件编码仍由open指定。",
+          "code": "import json\nsettings = {'theme': '深蓝'}\nwith open('settings.json', 'w', encoding='utf-8') as stream:\n    json.dump(settings, stream, ensure_ascii=False, indent=2, sort_keys=True)\nwith open('settings.json', encoding='utf-8') as stream:\n    print(stream.read())\n",
+          "output": "{\n  \"theme\": \"深蓝\"\n}",
+          "source_kind": "python",
+          "runnable": true
+        },
+        {
+          "title": "sum：数值总和与布尔计数",
+          "rule": "作用：sum把数值相加，空输入得到0。常用：合计金额，或计数满足条件的项。写法：sum(数值列表)；True按1、False按0参与加法。也可用已学循环逐项累加。",
+          "code": "print(sum([2, 5, 8]))\nprint(sum([]))\nprint(sum([True, False, True]))\n",
+          "output": "15\n0\n2",
+          "source_kind": "python",
+          "runnable": true
+        }
+      ],
+      "append_drills": [],
+      "auto_drill_exclusions": []
+    },
+    {
+      "id": "D09-parser",
+      "replace": {},
+      "append_cards": [
+        {
+          "title": "store_true：不带值的开关",
+          "rule": "作用：store_true让出现的选项为True，未出现时为False。常用：调试、静默开关。写法：add_argument('--quiet',action='store_true')；命令中只写--quiet，不跟true。",
+          "code": "import argparse\nparser = argparse.ArgumentParser()\nparser.add_argument('--quiet', action='store_true')\nprint(parser.parse_args([]).quiet)\nprint(parser.parse_args(['--quiet']).quiet)\n",
+          "output": "False\nTrue",
+          "source_kind": "python",
+          "runnable": true
+        }
+      ],
+      "append_drills": [
+        {
+          "id": "prep-store-true",
+          "title": "补全：布尔开关",
+          "instructions": "修正TODO的action，使开关未出现/出现分别得到False/True。",
+          "reference": "import argparse\nparser = argparse.ArgumentParser()\nparser.add_argument('--quiet', action='store_true')\nprint(parser.parse_args([]).quiet)\nprint(parser.parse_args(['--quiet']).quiet)\n",
+          "starter": "import argparse\nparser = argparse.ArgumentParser()\nparser.add_argument('--quiet', action='store')  # TODO：选择开关action\nprint(parser.parse_args([]).quiet)\nprint(parser.parse_args(['--quiet']).quiet)\n",
+          "output": "False\nTrue",
+          "source_kind": "python",
+          "runnable": true
+        }
+      ],
+      "auto_drill_exclusions": []
+    },
+    {
+      "id": "D09-subcommands",
+      "replace": {
+        "practice.instructions": "定义build_parser()支持list和add TITLE，dest使用command。子命令必选。分别绑定两个不同的处理函数到args.func；函数接收Namespace，正常返回即可（可以是None），本题不规定返回内容或stdout。保留TITLE原字符串。空/未知命令及缺TITLE由argparse产生code=2错误。",
+        "practice.expected_behavior": "list/add分别绑定自己的可调用处理函数；add.title原样保留；调用对应处理函数不会出错；空命令、未知命令、缺TITLE被拒绝。",
+        "practice.starter_content": "import argparse\n\ndef handle_list(args):\n    # TODO：处理当前Namespace（本题不规定返回内容）\n    pass\n\ndef handle_add(args):\n    # TODO：处理当前Namespace（本题不规定返回内容）\n    pass\n\ndef build_parser():\n    # TODO：声明子命令并绑定处理函数\n    pass\n"
+      },
+      "append_cards": [
+        {
+          "title": "set_defaults 绑定处理函数",
+          "rule": "作用：set_defaults给解析结果附加字段。常用：把子命令绑定到处理函数。写法：子解析器.set_defaults(func=处理函数)，解析后调用args.func(args)；绑定时不加调用括号。",
+          "code": "import argparse\ndef notify(args):\n    return f'已收到 {args.message}'\nparser = argparse.ArgumentParser()\ncommands = parser.add_subparsers(dest='command', required=True)\nping = commands.add_parser('ping')\nping.add_argument('message')\nping.set_defaults(func=notify)\nargs = parser.parse_args(['ping', '测试'])\nprint(args.func(args))\n",
+          "output": "已收到 测试",
+          "source_kind": "python",
+          "runnable": true
+        }
+      ],
+      "append_drills": [
+        {
+          "id": "prep-dispatch",
+          "title": "补全：绑定而非提前调用",
+          "instructions": "把已提供的notify函数绑定到子命令；不要在绑定时执行它。",
+          "reference": "import argparse\ndef notify(args):\n    return f'已收到 {args.message}'\nparser = argparse.ArgumentParser()\ncommands = parser.add_subparsers(dest='command', required=True)\nping = commands.add_parser('ping')\nping.add_argument('message')\nping.set_defaults(func=notify)\nargs = parser.parse_args(['ping', '测试'])\nprint(args.func(args))\n",
+          "starter": "import argparse\ndef notify(args):\n    return f'已收到 {args.message}'\nparser = argparse.ArgumentParser()\ncommands = parser.add_subparsers(dest='command', required=True)\nping = commands.add_parser('ping')\nping.add_argument('message')\nping.set_defaults(func=None)\nargs = parser.parse_args(['ping', '测试'])\nprint(args.func(args))\n",
+          "output": "已收到 测试",
+          "source_kind": "python",
+          "runnable": true
+        }
+      ],
+      "auto_drill_exclusions": []
+    },
+    {
+      "id": "D09-errors",
+      "replace": {
+        "examples": [
+          {
+            "language": "python",
+            "code": "import argparse\nparser = argparse.ArgumentParser()\nparser.add_argument('--count', type=int)\nprint(parser.parse_args(['--count', '2']).count)\n",
+            "output": "2",
+            "explanation": "add_argument('--count',type=int)声明选项需要整数，parse_args把命令中的字符串'2'转换为整数，所以打印2。得到的是Namespace.count属性，不是修改原argv列表。若改传'x'，解析器会把转换失败写到stderr并请求退出；少给选项所需的值也会是参数错误。",
+            "source_kind": "python",
+            "runnable": true
+          },
+          {
+            "language": "python",
+            "code": "import argparse\nparser = argparse.ArgumentParser()\nparser.add_argument('--count', type=int)\ntry:\n    parser.parse_args(['--count', 'x'])\nexcept SystemExit as error:\n    print(error.code)\n",
+            "output": "2",
+            "explanation": "先注册--count且指定type=int，再传'x'，失败来自整数转换而不是未知选项。argparse把用法和错误原因写到stderr，并抛SystemExit(2)；示例捕获该异常后打印2。这个捕获是为了观察退出码，正式parse_or_error应让错误继续向调用者传播，不能把它当成功参数。",
+            "source_kind": "python",
+            "runnable": true
+          }
+        ],
+        "practice.instructions": "定义 parse_or_error(argv)，必填字符串位置参数TITLE（Namespace.title），可选--limit整数默认10。合法返回Namespace；缺TITLE、非法整数或未知参数由argparse产生SystemExit(2)，不捕获为成功。limit本题允许任意整数，不额外添加范围。",
+        "practice.expected_behavior": "正常输入得到title/limit；错误退出码2且提示在stderr，stdout不混入usage/error。",
+        "practice.starter_content": "import argparse\n\ndef parse_or_error(argv):\n    # TODO：声明参数并解析给定argv\n    pass\n"
+      },
+      "append_cards": [
+        {
+          "title": "parser.error：拒绝业务范围",
+          "rule": "作用：parser.error把原因写到stderr并以SystemExit(2)结束。常用：类型转换后再拒绝业务范围。写法：parser.error(提示文本)；不要把错误改成成功退出。",
+          "code": "import argparse\nparser = argparse.ArgumentParser()\nparser.add_argument('--age', type=int)\nargs = parser.parse_args(['--age', '-1'])\ntry:\n    if args.age < 0:\n        parser.error('age不能为负数')\nexcept SystemExit as error:\n    print(error.code)\n",
+          "output": "2",
+          "source_kind": "python",
+          "runnable": true
+        }
+      ],
+      "append_drills": [],
+      "auto_drill_exclusions": []
+    },
+    {
+      "id": "D09-entry",
+      "replace": {
+        "practice.instructions": "定义独立main(argv=None)和__name__守卫。支持--limit INTEGER默认10、--verbose开关（与D09-parser相同）。合法输入打印limit一行并返回0；非法参数返回2，提示仍由argparse写stderr；--help返回0且不额外打印limit。parse_args(None)读真实命令行，传列表便于测试。导入时不读参数/不打印，真正子进程回归由验证器运行。",
+        "practice.expected_behavior": "main([])打印10并返回0；--limit 3打印3；坏整数/未知选项退出2；--help退出0；import main无输出。",
+        "practice.starter_content": "import argparse\n\ndef main(argv=None):\n    # TODO：解析、输出并返回约定退出码\n    pass\n\nif __name__ == '__main__':\n    raise SystemExit(main())\n",
+        "guided_practice.steps": [
+          {
+            "action": "先显式传入空argv和自定义limit，分别观察返回值与stdout。",
+            "expected": "返回0，stdout仅一行limit。"
+          },
+          {
+            "action": "再传坏整数、未知选项与--help，观察argparse的退出请求。",
+            "expected": "错误映射为2，帮助映射为0；导入不解析参数。"
+          }
+        ]
+      },
+      "append_cards": [
+        {
+          "title": "subprocess：观察真正的退出码",
+          "rule": "作用：subprocess.run启动并等待子进程。常用：检查命令输出与退出码。写法：参数用列表；sys.executable为当前Python；capture_output=True捕获输出，text=True得到字符串。这里-c后的文本是本卡固定示例。",
+          "code": "import subprocess\nimport sys\nresult = subprocess.run([sys.executable, '-c', \"print('ready')\"], capture_output=True, text=True)\nprint(result.returncode)\nprint(result.stdout.strip())\nprint(result.stderr == '')\n",
+          "output": "0\nready\nTrue",
+          "source_kind": "python",
+          "runnable": true
+        }
+      ],
+      "append_drills": [],
+      "auto_drill_exclusions": []
+    },
+    {
+      "id": "D10-env",
+      "replace": {
+        "practice.instructions": "定义 get_setting(name, default, env=None)。env为None时使用os.environ；显式传入的字典（包括空字典）作为测试环境。返回非空字符串值，缺失/空字符串返回default。不打印或保存环境内容。",
+        "practice.expected_behavior": "覆盖值原样返回；缺失/空值用default；空env不会回退读取真实环境。",
+        "practice.starter_content": "import os\n\ndef get_setting(name, default, env=None):\n    # TODO：明确来源后读取当前键\n    pass\n"
+      },
+      "append_cards": [
+        {
+          "title": "缺失键与空字符串不同",
+          "rule": "作用：get的默认值只用于缺失键，不用于已存在的空字符串。常用：配置读取时区分这两种状态。写法：mapping.get(键,默认值)；空字符串可按本题规则另选默认。示例只用小字典，不读真实环境。",
+          "code": "settings = {}\nprint(settings.get('STYLE', 'backup'))\nsettings['STYLE'] = ''\nprint(settings.get('STYLE', 'backup'))\nprint(settings.get('STYLE') or 'backup')\n",
+          "output": "backup\n\nbackup",
+          "source_kind": "python",
+          "runnable": true
+        }
+      ],
+      "append_drills": [],
+      "auto_drill_exclusions": []
+    },
+    {
+      "id": "D10-convert",
+      "replace": {
+        "practice.instructions": "定义 parse_bool(text)和parse_port(text)，输入保证为字符串，先去首尾空白并允许大小写差异。布尔接受true/1/yes和false/0/no；端口转整数后须在1–65535。未知布尔、非整数、空文本或越界端口抛ValueError。",
+        "practice.expected_behavior": "合法文本返回bool/int；\" YES \"为True，\" false \"为False；非法文本和0/65536端口明确失败。"
+      },
+      "append_cards": [],
+      "append_drills": [],
+      "auto_drill_exclusions": []
+    },
+    {
+      "id": "D10-dotenv",
+      "replace": {
+        "examples": [
+          {
+            "language": "python",
+            "code": "line = '  NAME=task=one  '\ncleaned = line.strip()\nprint(cleaned.split('=', 1))\n",
+            "output": "['NAME', 'task=one']",
+            "explanation": "strip去掉整行两端空白，split('=',1)只在第一个等号处拆分，因此得到['NAME', 'task=one']。第二个等号保留在值里，适合处理本身带等号的配置内容。若省略最大拆分次数，结果会有三个元素；后续按键和值两项解包时会失败。",
+            "source_kind": "python",
+            "runnable": true
+          },
+          {
+            "language": "python",
+            "code": "lines = ['  # note ', '', ' COLOR=blue ']\nfor line in lines:\n    cleaned = line.strip()\n    print(bool(cleaned), cleaned.startswith('#'))\n",
+            "output": "True True\nFalse False\nTrue False",
+            "explanation": "每行先strip，注释行得到True True，空行得到False False，普通配置行得到True False。bool判断清理后是否还有内容，startswith('#')只判断第一个字符是否是注释前缀。保留前导空格直接检查startswith会漏掉缩进注释；值中间出现#不代表整行注释。",
+            "source_kind": "python",
+            "runnable": true
+          }
+        ],
+        "practice.instructions": "定义 load_dotenv(path)，读取UTF-8文本，忽略空行/去首尾空白后以#开头的注释。按第一个等号拆分，键和值去首尾空白；允许空值、值内等号、中文。输入的非注释行保证有等号且键非空，不包含引号/行内注释/插值语法；同名键后出现覆盖前值。缺文件返回{}。不执行文件文本。",
+        "practice.expected_behavior": "普通键值、中文、空值和带等号值原样解析到dict；同名键后值覆盖；缺文件空dict，文本不会被执行。"
+      },
+      "append_cards": [
+        {
+          "title": "startswith：识别固定前缀",
+          "rule": "作用：startswith判断是否以指定片段开头。常用：识别注释或协议前缀。写法：文本.startswith(前缀)；前导空白仍是字符，需要时先strip。",
+          "code": "text = '  // note  '\nprint(text.startswith('//'))\nprint(text.strip().startswith('//'))\n",
+          "output": "False\nTrue",
+          "source_kind": "python",
+          "runnable": true
+        }
+      ],
+      "append_drills": [],
+      "auto_drill_exclusions": []
+    },
+    {
+      "id": "D10-config",
+      "replace": {
+        "practice.instructions": "用dataclass定义Settings，字段db_path:str、debug:bool、port:int。类方法from_env(env)接收字符串键值字典（不读真实环境），默认DB_PATH=taskproj.db、DEBUG=False、PORT=8000；缺失键取默认，空DB_PATH也取默认。DEBUG/PORT若存在空字符串则抛ValueError，其余按前节布尔/端口规则清理转换。非法配置在构造时失败，不打印环境。",
+        "practice.expected_behavior": "Settings.from_env({})字段为taskproj.db/False/8000；合法覆盖类型正确；未知bool、空DEBUG/PORT、越界port为ValueError。",
+        "practice.starter_content": "from dataclasses import dataclass\n\n@dataclass\nclass Settings:\n    db_path: str\n    debug: bool\n    port: int\n\n    @classmethod\n    def from_env(cls, env):\n        # TODO：读取默认/覆盖并转换，再创建配置对象\n        pass\n",
+        "examples": [
+          {
+            "language": "python",
+            "code": "from dataclasses import dataclass\n@dataclass\nclass DisplayOptions:\n    theme: str = 'light'\n    width: int = 80\nprint(DisplayOptions())\n",
+            "output": "DisplayOptions(theme='light', width=80)",
+            "explanation": "DisplayOptions没有传构造参数，dataclass使用theme='light'和width=80两个默认字段，因此输出DisplayOptions(theme='light', width=80)。默认值属于对象构造规则，无需从环境取值。这个对象不会自行读取os.environ，也不会替调用者解析数字文本；外部来源与转换要在配置边界组合。",
+            "source_kind": "python",
+            "runnable": true
+          },
+          {
+            "language": "python",
+            "code": "from dataclasses import dataclass\n@dataclass\nclass DisplayOptions:\n    theme: str\n    width: int\nprint(DisplayOptions('dark', 100).width)\n",
+            "output": "100",
+            "explanation": "DisplayOptions('dark',100)按字段顺序保存theme和width，读取.width因此打印100。这里展示显式参数覆盖字段值，返回的字段仍可由对象访问。dataclass不会因为标注int就自动把字符串变为整数；配置工厂要先完成读取和转换，再把正确类型传进构造函数。",
+            "source_kind": "python",
+            "runnable": true
+          }
+        ]
+      },
+      "append_cards": [
+        {
+          "title": "classmethod：从其他输入创建对象",
+          "rule": "作用：classmethod让方法从类接收cls。常用：提供from_text等替代构造入口。写法：方法上写@classmethod，首参数cls，再用cls(...)构造对象；普通实例方法仍用self。",
+          "code": "class Label:\n    def __init__(self, text):\n        self.text = text\n    @classmethod\n    def from_number(cls, number):\n        return cls(str(number))\nlabel = Label.from_number(7)\nprint(label.text)\n",
+          "output": "7",
+          "source_kind": "python",
+          "runnable": true
+        }
+      ],
+      "append_drills": [
+        {
+          "id": "prep-classmethod",
+          "title": "补全：返回新对象",
+          "instructions": "用cls把数字文本保存为一个新的Label实例；只替换TODO。",
+          "reference": "class Label:\n    def __init__(self, text):\n        self.text = text\n    @classmethod\n    def from_number(cls, number):\n        return cls(str(number))\nlabel = Label.from_number(7)\nprint(label.text)\n",
+          "starter": "class Label:\n    def __init__(self, text):\n        self.text = text\n    @classmethod\n    def from_number(cls, number):\n        return None  # TODO：返回新对象\nlabel = Label.from_number(7)\nprint(label.text)\n",
+          "output": "7",
+          "source_kind": "python",
+          "runnable": true
+        }
+      ],
+      "auto_drill_exclusions": []
+    },
+    {
+      "id": "D11-logger",
+      "replace": {
+        "practice.instructions": "定义get_logger()，返回任意稳定名称的同一个logger，最低级别INFO，propagate=False，配置一个实际logging.Handler。重复调用不新增handler。可用本节展示的NullHandler练习基本配置，它不输出文字；也接受其他handler，真实输出在后续小节练。",
+        "practice.expected_behavior": "重复调用同一logger对象且只有一个有效logging.Handler；DEBUG不允许，INFO/WARNING允许；不向root传播。"
+      },
+      "append_cards": [
+        {
+          "title": "日志级别与重复添加",
+          "rule": "作用：setLevel设定logger最低级别，handlers保存处理器。常用：过滤诊断、避免重复初始化。写法：logger.setLevel(logging.WARNING)，添加前检查已有handler；isEnabledFor观察某级别是否允许。NullHandler本身不输出文字。",
+          "code": "import logging\nlogger = logging.getLogger('level-card')\nlogger.setLevel(logging.WARNING)\nprint(logger.isEnabledFor(logging.INFO), logger.isEnabledFor(logging.ERROR))\nfor _ in range(2):\n    if not logger.handlers:\n        logger.addHandler(logging.NullHandler())\nprint(len(logger.handlers))\n",
+          "output": "False True\n1",
+          "source_kind": "python",
+          "runnable": true
+        }
+      ],
+      "append_drills": [
+        {
+          "id": "prep-idempotent-handler",
+          "title": "补全：重复配置仍只有一次",
+          "instructions": "修正TODO条件，连续初始化两次仍只安装一个NullHandler。",
+          "reference": "import logging\nlogger = logging.getLogger('level-card')\nlogger.setLevel(logging.WARNING)\nprint(logger.isEnabledFor(logging.INFO), logger.isEnabledFor(logging.ERROR))\nfor _ in range(2):\n    if not logger.handlers:\n        logger.addHandler(logging.NullHandler())\nprint(len(logger.handlers))\n",
+          "starter": "import logging\nlogger = logging.getLogger('level-card')\nlogger.setLevel(logging.WARNING)\nprint(logger.isEnabledFor(logging.INFO), logger.isEnabledFor(logging.ERROR))\nfor _ in range(2):\n    if True:  # TODO：检查是否已有handler\n        logger.addHandler(logging.NullHandler())\nprint(len(logger.handlers))\n",
+          "output": "False True\n1",
+          "source_kind": "python",
+          "runnable": true
+        }
+      ],
+      "auto_drill_exclusions": []
+    },
+    {
+      "id": "D11-format",
+      "replace": {
+        "practice.instructions": "定义 build_formatter()返回logging.Formatter，格式含%(asctime)s时间、%(levelname)s级别、%(name)s记录器名、%(message)s消息，分隔符自选。参数化消息和logger.exception在本节实验中练习，验证器提供记录/handler来检查Formatter，不要求额外的业务函数。",
+        "practice.expected_behavior": "Formatter能渲染四个字段；参数化消息正确、异常记录含traceback；时间值不要求固定。",
+        "practice.starter_content": "import logging\n\ndef build_formatter():\n    # TODO：按约定字段创建Formatter\n    pass\n",
+        "practice_first.provided": "验证器提供LogRecord与捕获输出的handler；你只实现build_formatter。示例中的LogRecord是演示外壳，不必记忆全部构造参数。"
+      },
+      "append_cards": [
+        {
+          "title": "参数化消息与 exception 保留原因",
+          "rule": "作用：logger.info的%s填入独立参数，logger.exception在except中附带traceback。常用：可定位的异常日志。写法：logger.info('编号 %s',编号)；except内logger.exception(提示)。本卡提供内存流/handler外壳用于观察，下节详解；getvalue读出文本。",
+          "code": "import io\nimport logging\nstream = io.StringIO()\nhandler = logging.StreamHandler(stream)\nhandler.setFormatter(logging.Formatter('%(levelname)s:%(message)s'))\nlogger = logging.getLogger('exception-card')\nlogger.setLevel(logging.INFO)\nlogger.propagate = False\nlogger.addHandler(handler)\nlogger.info('book %s', 'B7')\ntry:\n    int('bad')\nexcept ValueError:\n    logger.exception('转换失败')\ntext = stream.getvalue()\nprint(text.splitlines()[0])\nprint('Traceback' in text)\nprint('ValueError' in text)\nhandler.close()\n",
+          "output": "INFO:book B7\nTrue\nTrue",
+          "source_kind": "python",
+          "runnable": true
+        }
+      ],
+      "append_drills": [
+        {
+          "id": "prep-exception-context",
+          "title": "补全：保留异常上下文",
+          "instructions": "只替换TODO日志调用，保留traceback和ValueError根因。",
+          "reference": "import io\nimport logging\nstream = io.StringIO()\nhandler = logging.StreamHandler(stream)\nhandler.setFormatter(logging.Formatter('%(levelname)s:%(message)s'))\nlogger = logging.getLogger('exception-card')\nlogger.setLevel(logging.INFO)\nlogger.propagate = False\nlogger.addHandler(handler)\nlogger.info('book %s', 'B7')\ntry:\n    int('bad')\nexcept ValueError:\n    logger.exception('转换失败')\ntext = stream.getvalue()\nprint(text.splitlines()[0])\nprint('Traceback' in text)\nprint('ValueError' in text)\nhandler.close()\n",
+          "starter": "import io\nimport logging\nstream = io.StringIO()\nhandler = logging.StreamHandler(stream)\nhandler.setFormatter(logging.Formatter('%(levelname)s:%(message)s'))\nlogger = logging.getLogger('exception-card')\nlogger.setLevel(logging.INFO)\nlogger.propagate = False\nlogger.addHandler(handler)\nlogger.info('book %s', 'B7')\ntry:\n    int('bad')\nexcept ValueError:\n    logger.error('转换失败')  # TODO：保留异常上下文\ntext = stream.getvalue()\nprint(text.splitlines()[0])\nprint('Traceback' in text)\nprint('ValueError' in text)\nhandler.close()\n",
+          "output": "INFO:book B7\nTrue\nTrue",
+          "source_kind": "python",
+          "runnable": true
+        }
+      ],
+      "auto_drill_exclusions": []
+    },
+    {
+      "id": "D11-stream",
+      "replace": {
+        "practice.instructions": "定义 build_stream_logger()，返回(logger, stream)，stream是io.StringIO，logger安装一个写向它的StreamHandler，只保留WARNING及以上。重复setup不复制输出，不因传播向root重复输出；handler可清理。",
+        "practice.expected_behavior": "INFO不出现，WARNING/ERROR各一次；返回流可读；重复setup仍一个有效handler。"
+      },
+      "append_cards": [],
+      "append_drills": [
+        {
+          "id": "prep-handler-level",
+          "title": "补全：handler级别过滤",
+          "instructions": "只修正TODO的handler级别，使INFO隐藏、WARNING与ERROR保留。",
+          "reference": "import logging\nimport io\nstream = io.StringIO()\nhandler = logging.StreamHandler(stream)\nhandler.setLevel(logging.WARNING)\nlogger = logging.getLogger('handler-drill')\nlogger.propagate = False\nlogger.setLevel(logging.INFO)\nlogger.addHandler(handler)\nlogger.info('hidden')\nlogger.warning('shown')\nlogger.error('urgent')\nprint(stream.getvalue().strip())\nhandler.close()\n",
+          "starter": "import logging\nimport io\nstream = io.StringIO()\nhandler = logging.StreamHandler(stream)\nhandler.setLevel(logging.CRITICAL)  # TODO：允许WARNING及以上\nlogger = logging.getLogger('handler-drill')\nlogger.propagate = False\nlogger.setLevel(logging.INFO)\nlogger.addHandler(handler)\nlogger.info('hidden')\nlogger.warning('shown')\nlogger.error('urgent')\nprint(stream.getvalue().strip())\nhandler.close()\n",
+          "output": "shown\nurgent",
+          "source_kind": "python",
+          "runnable": true
+        }
+      ],
+      "auto_drill_exclusions": []
+    },
+    {
+      "id": "D11-file",
+      "replace": {
+        "examples": [
+          {
+            "language": "python",
+            "code": "import logging\nfrom pathlib import Path\npath = Path('events.log')\nhandler = logging.FileHandler(path, encoding='utf-8')\nlogger = logging.getLogger('file-demo')\nlogger.propagate = False\nlogger.setLevel(logging.INFO)\nlogger.addHandler(handler)\nlogger.info('保存')\nhandler.flush()\nlogger.removeHandler(handler)\nhandler.close()\nprint(path.read_text(encoding='utf-8').strip().endswith('保存'))\n",
+            "output": "True",
+            "explanation": "FileHandler以UTF-8打开events.log，logger级别设为INFO后记录中文保存；flush、移除并close后读文件，末尾匹配所以输出True。文件位于本次实验目录，关闭handler释放文件句柄。若把logger级别提高到WARNING，INFO会被过滤，文件为空而结果为False；存在文件本身不能证明消息写入。",
+            "source_kind": "python",
+            "runnable": true
+          },
+          {
+            "language": "python",
+            "code": "import logging\nimport io\nstream = io.StringIO()\nhandler = logging.StreamHandler(stream)\nlogger = logging.getLogger('file-demo-2')\nlogger.propagate = False\nlogger.setLevel(logging.INFO)\nlogger.addHandler(handler)\nlogger.info('one')\nprint(stream.getvalue().count('one'))\nhandler.close()\n",
+            "output": "1",
+            "explanation": "StringIO保存handler写入的文本，logger.info('one')只发出一条记录，所以getvalue().count('one')输出1。logger与handler各配置一次，且propagate=False避免继续向root传播。若再向同一流安装第二个handler，同一消息会计数2；重复初始化是否幂等要用这个次数单独检查。",
+            "source_kind": "python",
+            "runnable": true
+          }
+        ],
+        "practice.instructions": "定义 configure_file_logger(path)，返回logger（不是tuple）。使用UTF-8 FileHandler，最低级别INFO，稳定Formatter至少含levelname/message。同一路径重复调用不产生重复文件记录。调用者通过logger.handlers取得资源，flush、移除并close。",
+        "practice.expected_behavior": "指定文件真实包含一次中文INFO与完整异常上下文；重复setup不重复；关闭全部文件handler后可读取/删除。",
+        "practice.starter_content": "import logging\n\ndef configure_file_logger(path):\n    # TODO：配置文件日志并返回logger\n    pass\n"
+      },
+      "append_cards": [],
+      "append_drills": [
+        {
+          "id": "prep-file-info",
+          "title": "补全：文件日志级别",
+          "instructions": "只修正TODO的logger最低级别，使INFO消息确实进入UTF-8文件；不要修改末尾读取与关闭代码。",
+          "reference": "import logging\nfrom pathlib import Path\npath = Path('events.log')\nhandler = logging.FileHandler(path, encoding='utf-8')\nlogger = logging.getLogger('file-demo')\nlogger.propagate = False\nlogger.setLevel(logging.INFO)\nlogger.addHandler(handler)\nlogger.info('保存')\nhandler.flush()\nlogger.removeHandler(handler)\nhandler.close()\nprint(path.read_text(encoding='utf-8').strip().endswith('保存'))\n",
+          "starter": "import logging\nfrom pathlib import Path\npath = Path('events.log')\nhandler = logging.FileHandler(path, encoding='utf-8')\nlogger = logging.getLogger('file-demo')\nlogger.propagate = False\nlogger.setLevel(logging.WARNING)  # TODO：允许INFO记录\nlogger.addHandler(handler)\nlogger.info('保存')\nhandler.flush()\nlogger.removeHandler(handler)\nhandler.close()\nprint(path.read_text(encoding='utf-8').strip().endswith('保存'))\n",
+          "output": "True",
+          "source_kind": "python",
+          "runnable": true
+        },
+        {
+          "id": "prep-logger-repeat",
+          "title": "补全：重复配置仍只写一次",
+          "instructions": "只修正TODO条件；两次初始化共用当前logger/stream，最终保存这条消息只能出现一次。",
+          "reference": "import logging\nimport io\nstream = io.StringIO()\nlogger = logging.getLogger('repeat-card')\nlogger.setLevel(logging.INFO)\nlogger.propagate = False\nfor _ in range(2):\n    if not logger.handlers:\n        logger.addHandler(logging.StreamHandler(stream))\nlogger.info('保存')\nprint(stream.getvalue().count('保存'))\nfor handler in logger.handlers.copy():\n    logger.removeHandler(handler)\n    handler.close()\n",
+          "starter": "import logging\nimport io\nstream = io.StringIO()\nlogger = logging.getLogger('repeat-card')\nlogger.setLevel(logging.INFO)\nlogger.propagate = False\nfor _ in range(2):\n    if True:  # TODO：已有handler时不要重复安装\n        logger.addHandler(logging.StreamHandler(stream))\nlogger.info('保存')\nprint(stream.getvalue().count('保存'))\nfor handler in logger.handlers.copy():\n    logger.removeHandler(handler)\n    handler.close()\n",
+          "output": "1",
+          "source_kind": "python",
+          "runnable": true
+        }
+      ],
+      "auto_drill_exclusions": [
+        0,
+        1
+      ]
+    },
+    {
+      "id": "D12-request",
+      "replace": {
+        "practice.input_examples": [
+          {
+            "label": "离线请求",
+            "value": "绝对URL https://example.test，平台提供opener(request, timeout=...)",
+            "expected": "按题目GET/POST协议调用一次，返回指定文本/JSON；不需要实际联网"
+          },
+          {
+            "label": "返回中文",
+            "value": "get_text('https://example.test/note', opener=fake_opener)",
+            "expected": "假响应提供UTF-8字节时读回中文文本；请求URL随参数变化"
+          }
+        ]
+      },
+      "append_cards": [
+        {
+          "title": "with 读取本地字节响应",
+          "rule": "作用：with 离开代码块时释放响应；read() 取 bytes，decode() 变文字。常用：HTTP 文本读取。写法：with 提供的读取器() as 响应；本例只用本地 BytesIO，不联网。",
+          "code": "from io import BytesIO\nbody = BytesIO('天气晴'.encode('utf-8'))\ndef local_open():\n    return body\nwith local_open() as response:\n    text = response.read().decode('utf-8')\nprint(text)\nprint(body.closed)\n",
+          "output": "天气晴\nTrue",
+          "source_kind": "python",
+          "runnable": true
+        }
+      ],
+      "append_drills": [
+        {
+          "id": "audit-read-bytes",
+          "title": "读取后解码",
+          "instructions": "只替换 TODO 占位部分，保留提供的输入和观察代码；先运行，再比较实际输出。",
+          "starter": "from io import BytesIO\nbody = BytesIO('天气晴'.encode('utf-8'))\ndef local_open():\n    return body\nwith local_open() as response:\n    text = None  # TODO：读取字节并还原文字\nprint(text)\nprint(body.closed)\n",
+          "reference": "from io import BytesIO\nbody = BytesIO('天气晴'.encode('utf-8'))\ndef local_open():\n    return body\nwith local_open() as response:\n    text = response.read().decode('utf-8')\nprint(text)\nprint(body.closed)\n",
+          "output": "天气晴\nTrue",
+          "source_kind": "python",
+          "runnable": true
+        }
+      ],
+      "auto_drill_exclusions": []
+    },
+    {
+      "id": "D12-timeout",
+      "replace": {
+        "examples": [
+          {
+            "language": "python",
+            "code": "from urllib.request import Request\ndef inspect_request(request, timeout):\n    return request.get_method(), request.full_url, timeout\nrequest = Request('https://example.invalid/weather', method='GET')\nprint(inspect_request(request, timeout=4))\n",
+            "output": "('GET', 'https://example.invalid/weather', 4)",
+            "explanation": "这个实验只构造请求对象，再把请求与超时秒数交给本地观察函数，整个过程不连接网站。输出依次显示请求方法、完整地址和传入的数字，所以最后的四表示四秒，而不是四次重试。关键字参数把数值绑定到 timeout，便于检查调用方有没有把题面要求交给实际执行请求的函数。",
+            "source_kind": "python",
+            "runnable": true
+          },
+          {
+            "language": "python",
+            "code": "from urllib.request import Request\ncalls = []\ndef fake_open(request, timeout):\n    calls.append(timeout)\n    raise TimeoutError('演示超时')\ntry:\n    fake_open(Request('https://example.invalid/weather'), timeout=0.1)\nexcept TimeoutError as error:\n    print(type(error).__name__, str(error))\nprint(calls)\n",
+            "output": "TimeoutError 演示超时\n[0.1]",
+            "source_kind": "python",
+            "runnable": true,
+            "explanation": "本地替身收到超时秒数后先记录，再主动抛出 TimeoutError，因此第一行显示异常类型和消息，第二行证明调用方实际传入了零点一秒。实验没有等待，也没有连接这个占位网址，所以它验证的是异常传播与参数传递，而不是测量网络速度。try 包住可能失败的调用，except 只接住明确展示的超时异常；其他错误仍会向上传播。"
+          }
+        ],
+        "practice.input_examples": [
+          {
+            "label": "离线请求",
+            "value": "绝对URL https://example.test，平台提供opener(request, timeout=...)",
+            "expected": "按题目GET/POST协议调用一次，返回指定文本/JSON；不需要实际联网"
+          },
+          {
+            "label": "超时边界",
+            "value": "fake_opener收到timeout=10并抛TimeoutError",
+            "expected": "按练习约定处理或继续传播该错误；不使用真实网络"
+          }
+        ]
+      },
+      "append_cards": [
+        {
+          "title": "假请求使用普通 Request",
+          "rule": "作用：Request 保存 URL 和方法，不会自己联网。常用：离线检查 HTTP 协议。写法：把 Request 对象与 timeout 秒数交给传入函数；不用三参数 type 动态造类。",
+          "code": "from urllib.request import Request\ndef inspect_request(request, timeout):\n    return request.get_method(), request.full_url, timeout\nrequest = Request('https://example.invalid/weather', method='GET')\nprint(inspect_request(request, timeout=4))\n",
+          "output": "('GET', 'https://example.invalid/weather', 4)",
+          "source_kind": "python",
+          "runnable": true
+        }
+      ],
+      "append_drills": [],
+      "auto_drill_exclusions": []
+    },
+    {
+      "id": "D13-app",
+      "replace": {
+        "examples": [
+          {
+            "language": "python",
+            "code": "from fastapi import FastAPI\nfrom fastapi.testclient import TestClient\napp = FastAPI()\n@app.get('/ping')\ndef ping():\n    return {'message': 'pong'}\nwith TestClient(app) as client:\n    response = client.get('/ping')\n    print(response.status_code, response.json())\n",
+            "output": "200 {'message': 'pong'}",
+            "explanation": "应用对象负责登记路由，装饰器把 GET 方法和指定路径对应到下面的函数。测试客户端在本进程发送请求，无须启动监听端口；进入 with 后再请求，也便于在以后带启动和关闭逻辑的应用中观察完整生命周期。返回的字典经框架转换成响应，状态码二百和解析后的消息字典分别验证请求是否成功以及内容是否正确。",
+            "source_kind": "python",
+            "runnable": true
+          },
+          {
+            "language": "python",
+            "code": "from fastapi import FastAPI\nfrom fastapi.testclient import TestClient\napp = FastAPI()\ncalls = []\n@app.get('/ping')\ndef ping():\n    calls.append('handler')\n    return {'message': 'pong'}\nwith TestClient(app) as client:\n    print(client.get('/missing').status_code)\nprint(calls)\n",
+            "output": "404\n[]",
+            "source_kind": "python",
+            "runnable": true,
+            "explanation": "应用只注册了探测路径，客户端请求不存在的地址时得到四百零四，记录列表仍为空。两个输出一起说明请求经过应用的路由查找，但没有执行这个处理函数；如果只查看函数是否定义，就看不见这类路径错误。calls 是普通列表，只有处理函数运行时才会添加一项，因此它帮助区分路由未匹配和函数内部失败。"
+          }
+        ]
+      },
+      "append_cards": [
+        {
+          "title": "TestClient 在进程内请求",
+          "rule": "作用：TestClient 真正经过框架路由和 JSON 编码。常用：不启动端口的接口验证。写法：with TestClient(app) as client，然后 client.get(路径)，读取 status_code/json()。",
+          "code": "from fastapi import FastAPI\nfrom fastapi.testclient import TestClient\napp = FastAPI()\n@app.get('/ping')\ndef ping():\n    return {'message': 'pong'}\nwith TestClient(app) as client:\n    response = client.get('/ping')\n    print(response.status_code, response.json())\n",
+          "output": "200 {'message': 'pong'}",
+          "source_kind": "python",
+          "runnable": true
+        }
+      ],
+      "append_drills": [],
+      "auto_drill_exclusions": [],
+      "fill_overrides": {
+        "1": {
+          "id": "fill-1",
+          "title": "补全练习 2",
+          "instructions": "补全输出表达式，显示当前实际结果；保留错误输入与其余代码，对比每一行输出。",
+          "starter": "from fastapi import FastAPI\nfrom fastapi.testclient import TestClient\napp = FastAPI()\ncalls = []\n@app.get('/ping')\ndef ping():\n    calls.append('handler')\n    return {'message': 'pong'}\nwith TestClient(app) as client:\n    print(None)  # TODO：输出当前操作的实际结果\nprint(calls)\n",
+          "reference": "from fastapi import FastAPI\nfrom fastapi.testclient import TestClient\napp = FastAPI()\ncalls = []\n@app.get('/ping')\ndef ping():\n    calls.append('handler')\n    return {'message': 'pong'}\nwith TestClient(app) as client:\n    print(client.get('/missing').status_code)\nprint(calls)\n",
+          "output": "404\n[]",
+          "source_kind": "python",
+          "runnable": true
+        }
+      }
+    },
+    {
+      "id": "D13-route",
+      "replace": {
+        "examples": [
+          {
+            "language": "python",
+            "code": "from fastapi import FastAPI\nfrom fastapi.testclient import TestClient\napp = FastAPI()\n@app.get('/double/{number}')\ndef double(number: int, bonus: int = 0):\n    return {'value': number * 2 + bonus}\nwith TestClient(app) as client:\n    print(client.get('/double/4?bonus=1').json())\n    print(client.get('/double/x').status_code)\n",
+            "output": "{'value': 9}\n422",
+            "explanation": "路径中的花括号把这一段取名为 number，函数里的同名参数说明它必须是整数；不在路径里的 bonus 则来自查询参数，并在省略时使用零。第一次请求把路径中的四与查询中的一交给函数，得到九；第二次的路径内容不能转换为整数，框架在调用函数之前返回四百二十二。这里的转换和请求校验由 FastAPI 完成，普通 Python 函数的类型标注本身不会自动做同样的工作。",
+            "source_kind": "python",
+            "runnable": true
+          },
+          {
+            "language": "python",
+            "code": "from fastapi import FastAPI\nfrom fastapi.testclient import TestClient\napp = FastAPI()\n@app.get('/double/{number}')\ndef double(number: int, bonus: int = 0):\n    return {'value': number * 2 + bonus}\nwith TestClient(app) as client:\n    print(client.get('/double/4').json())\n    print(client.get('/double/4?bonus=x').status_code)\n",
+            "output": "{'value': 8}\n422",
+            "source_kind": "python",
+            "runnable": true,
+            "explanation": "第一个请求没有提供 bonus，因此函数使用声明的默认值零，结果是八。第二个请求的路径数字仍然合法，但查询参数写成了字母，框架在整数转换时拒绝它并返回四百二十二。这个对比说明省略参数与提供错误参数是不同情况：默认值用于省略，不负责把任意错误内容变成零。"
+          }
+        ]
+      },
+      "append_cards": [
+        {
+          "title": "路径与查询由框架绑定",
+          "rule": "作用：路径模板中的名字绑定同名参数；其余参数通常来自查询。常用：资源 ID 与筛选条件。写法：number:int 在路径中，bonus:int=0 从 ?bonus=... 读取；框架转换失败为 422。",
+          "code": "from fastapi import FastAPI\nfrom fastapi.testclient import TestClient\napp = FastAPI()\n@app.get('/double/{number}')\ndef double(number: int, bonus: int = 0):\n    return {'value': number * 2 + bonus}\nwith TestClient(app) as client:\n    print(client.get('/double/4?bonus=1').json())\n    print(client.get('/double/x').status_code)\n",
+          "output": "{'value': 9}\n422",
+          "source_kind": "python",
+          "runnable": true
+        }
+      ],
+      "append_drills": [],
+      "auto_drill_exclusions": []
+    },
+    {
+      "id": "D13-response",
+      "replace": {
+        "examples": [
+          {
+            "language": "python",
+            "code": "from fastapi import FastAPI\nfrom fastapi.testclient import TestClient\nfrom pydantic import BaseModel\nclass Receipt(BaseModel):\n    code: int\n    accepted: bool = True\napp = FastAPI()\n@app.post('/receipts', response_model=Receipt, status_code=202)\ndef receipt():\n    return {'code': 8, 'internal': 'hidden'}\nwith TestClient(app) as client:\n    response = client.post('/receipts')\n    print(response.status_code, response.json())\n",
+            "output": "202 {'code': 8, 'accepted': True}",
+            "explanation": "响应模型声明对外提供一个必需的整数编号和一个带默认值的布尔字段。处理函数返回了编号与内部字段，框架按模型补上 accepted 的默认值，同时移除未声明的 internal，所以输出只包含两个公开字段。装饰器的 status_code 决定这个成功响应使用二百零二；模型和状态码分别约束内容与协议，二者都需要实际请求核对。",
+            "source_kind": "python",
+            "runnable": true
+          },
+          {
+            "language": "python",
+            "code": "from fastapi import FastAPI\nfrom fastapi.testclient import TestClient\nfrom pydantic import BaseModel\nclass Receipt(BaseModel):\n    code: int\n    accepted: bool = True\napp = FastAPI()\n@app.post('/receipts', response_model=Receipt)\ndef receipt():\n    return {'accepted': True}\nwith TestClient(app, raise_server_exceptions=False) as client:\n    print(client.post('/receipts').status_code)\n",
+            "output": "500",
+            "source_kind": "python",
+            "runnable": true,
+            "explanation": "这次仍然要求响应包含必需的 code，但处理函数只返回 accepted，因而是服务端输出违反了自己的声明。测试客户端通常会把服务端异常重新抛给测试代码，这里显式关闭该选项，目的是观察 HTTP 层返回的五百状态。它与客户端输入不合法时的四百二十二有不同含义：请求没有缺少正文，缺失的是服务器承诺返回的字段。"
+          }
+        ],
+        "practice.instructions": "定义 app 和 TaskOut(BaseModel)：id:int、title:str 为必填，done:bool=False。POST /tasks 用 response_model=TaskOut、status_code=201，接收 body:dict，返回 id=1、body中的title、done=False。输入由平台保证含有效字符串title；本节不要求额外请求体验证。",
+        "practice.starter_content": "from fastapi import FastAPI\nfrom pydantic import BaseModel\n\nclass TaskOut(BaseModel):\n    pass  # TODO：声明输出字段\n\napp = FastAPI()\n# TODO：注册 POST /tasks，并指定输出模型与201\n",
+        "practice.input_examples": [
+          {
+            "label": "创建",
+            "value": "POST /tasks JSON {'title':'风'}",
+            "expected": "201/{'id':1,'title':'风','done':False}"
+          },
+          {
+            "label": "变化",
+            "value": "POST /tasks JSON {'title':'雨'}",
+            "expected": "201/返回新title，done为bool"
+          }
+        ],
+        "syntax": "BaseModel字段描述输出结构；@app.post(path,response_model=模型类,status_code=201)注册创建接口。",
+        "practice_first.cards": [
+          {
+            "title": "输出模型放进路由声明",
+            "rule": "作用：response_model 决定对外字段和校验，status_code 决定成功 HTTP 状态。常用：创建资源后的稳定响应。写法：在 @app.post 中传模型类；本例是收据，不是任务作业。",
+            "code": "from fastapi import FastAPI\nfrom fastapi.testclient import TestClient\nfrom pydantic import BaseModel\nclass Receipt(BaseModel):\n    code: int\n    accepted: bool = True\napp = FastAPI()\n@app.post('/receipts', response_model=Receipt, status_code=202)\ndef receipt():\n    return {'code': 8, 'internal': 'hidden'}\nwith TestClient(app) as client:\n    response = client.post('/receipts')\n    print(response.status_code, response.json())\n",
+            "output": "202 {'code': 8, 'accepted': True}",
+            "source_kind": "python",
+            "runnable": true
+          }
+        ],
+        "practice_first.drills": [
+          {
+            "id": "audit-response-model",
+            "title": "使用响应模型",
+            "instructions": "只补 TODO 处，保留平台提供的其他输入与观察代码；运行并对比实际输出。",
+            "reference": "from fastapi import FastAPI\nfrom fastapi.testclient import TestClient\nfrom pydantic import BaseModel\nclass Receipt(BaseModel):\n    code: int\n    accepted: bool = True\napp = FastAPI()\n@app.post('/receipts', response_model=Receipt, status_code=202)\ndef receipt():\n    return {'code': 8, 'internal': 'hidden'}\nwith TestClient(app) as client:\n    response = client.post('/receipts')\n    print(response.status_code, response.json())\n",
+            "starter": "from fastapi import FastAPI\nfrom fastapi.testclient import TestClient\nfrom pydantic import BaseModel\nclass Receipt(BaseModel):\n    code: int\n    accepted: bool = True\napp = FastAPI()\n@app.post('/receipts', response_model=None, status_code=202)\ndef receipt():\n    return {'code': 8, 'internal': 'hidden'}\nwith TestClient(app) as client:\n    response = client.post('/receipts')\n    print(response.status_code, response.json())\n",
+            "output": "202 {'code': 8, 'accepted': True}",
+            "source_kind": "python",
+            "runnable": true
+          }
+        ]
+      },
+      "append_cards": [],
+      "append_drills": [],
+      "auto_drill_exclusions": [],
+      "fill_overrides": {
+        "1": {
+          "id": "fill-1",
+          "title": "补全练习 2",
+          "instructions": "补全输出表达式，显示当前实际结果；保留错误输入与其余代码，对比每一行输出。",
+          "starter": "from fastapi import FastAPI\nfrom fastapi.testclient import TestClient\nfrom pydantic import BaseModel\nclass Receipt(BaseModel):\n    code: int\n    accepted: bool = True\napp = FastAPI()\n@app.post('/receipts', response_model=Receipt)\ndef receipt():\n    return {'accepted': True}\nwith TestClient(app, raise_server_exceptions=False) as client:\n    print(None)  # TODO：输出当前操作的实际结果\n",
+          "reference": "from fastapi import FastAPI\nfrom fastapi.testclient import TestClient\nfrom pydantic import BaseModel\nclass Receipt(BaseModel):\n    code: int\n    accepted: bool = True\napp = FastAPI()\n@app.post('/receipts', response_model=Receipt)\ndef receipt():\n    return {'accepted': True}\nwith TestClient(app, raise_server_exceptions=False) as client:\n    print(client.post('/receipts').status_code)\n",
+          "output": "500",
+          "source_kind": "python",
+          "runnable": true
+        }
+      }
+    },
+    {
+      "id": "D13-lifecycle",
+      "replace": {
+        "practice.instructions": "D17 后选修。定义 events=[]、lifespan(app) 用 asynccontextmanager，进入时append('start')、退出时在finally append('stop')。创建app=FastAPI(lifespan=lifespan)，get_value()返回'ready'；GET /value 用 Depends(get_value) 返回 {'value': value}。导入时不启动生命周期，依赖替换应生效。",
+        "practice.starter_content": "from contextlib import asynccontextmanager\nfrom fastapi import FastAPI, Depends\nevents = []\n# TODO：按本节模板填写lifespan与依赖路由\n",
+        "practice.input_examples": [
+          {
+            "label": "导入",
+            "value": "import main; main.events",
+            "expected": "[]"
+          },
+          {
+            "label": "上下文",
+            "value": "with TestClient(app)",
+            "expected": "进入start，GET /value得到ready，退出stop"
+          }
+        ],
+        "optional": true
+      },
+      "append_cards": [
+        {
+          "title": "yield 把准备与清理分开",
+          "rule": "作用：yield 暂停上下文函数，把值交给 with 的代码块；离开后继续 finally。常用：创建资源后必定清理。写法：@contextmanager 与 try/yield/finally；模板已提供，不要求先学选修迭代器协议。",
+          "code": "from contextlib import contextmanager\n@contextmanager\ndef local_resource():\n    print('准备')\n    try:\n        yield '本地资源'\n    finally:\n        print('清理')\nwith local_resource() as value:\n    print(value)\n",
+          "output": "准备\n本地资源\n清理",
+          "source_kind": "python",
+          "runnable": true
+        },
+        {
+          "title": "异步上下文的最小模板",
+          "rule": "作用：asynccontextmanager 管理带 await 的资源准备和清理。常用：D17 后的应用生命周期。写法：async def 中 yield，调用端 async with；本例不启动服务，也不包含本题 lifespan/Depends 的完整组合。",
+          "code": "import asyncio\nfrom contextlib import asynccontextmanager\n@asynccontextmanager\nasync def local_resource():\n    await asyncio.sleep(0)\n    try:\n        yield 'ready'\n    finally:\n        print('closed')\nasync def main():\n    async with local_resource() as value:\n        print(value)\nasyncio.run(main())\n",
+          "output": "ready\nclosed",
+          "source_kind": "python",
+          "runnable": true
+        }
+      ],
+      "append_drills": [],
+      "auto_drill_exclusions": []
+    },
+    {
+      "id": "D14-service",
+      "replace": {
+        "examples": [
+          {
+            "language": "python",
+            "code": "name = '   '.strip()\nprint(repr(name), bool(name))\n",
+            "output": "'' False",
+            "explanation": "strip 返回去掉首尾空白后的新字符串，这个例子原来只有空格，因此结果是空字符串。repr 把空字符串显示为一对引号，避免控制台里只有空白而看不清；bool 则说明它在条件判断中属于假值。两个观察分别回答清理后的内容是什么，以及它能否代表一个有效名称。",
+            "source_kind": "python",
+            "runnable": true
+          },
+          {
+            "language": "python",
+            "code": "class Shelf:\n    def add(self, name):\n        return {'book': name}\nshelf = Shelf()\nprint(shelf.add('风'))\n",
+            "output": "{'book': '风'}",
+            "explanation": "Shelf 是一个普通类，实例的 add 方法接收名称并返回字典；调用时传入的风出现在返回字段里，说明参数确实经过了对象的方法。这个小例子展示服务与仓库对象之间约定的接口，不需要额外引入动态类、数据库或网页请求。服务层调用方法后，应按题意使用它的真实返回值，而不是重新拼一个看似相同的固定结果。",
+            "source_kind": "python",
+            "runnable": true
+          }
+        ],
+        "practice_first.cards": [
+          {
+            "title": "先观察空白清理后的值",
+            "rule": "作用：strip去掉两端空白，空字符串为假。常用：业务名称不能为空。写法：先观察清理后的值再用if判断；本例不是完整create_task函数。",
+            "code": "name = '   '.strip()\nprint(repr(name), bool(name))\n",
+            "output": "'' False",
+            "source_kind": "python",
+            "runnable": true
+          },
+          {
+            "title": "使用传入对象的方法",
+            "rule": "作用：repo 是提供约定方法的协作者，不是必须先建真实数据库。常用：业务函数接收可替换存储。写法：调用对象.add(值) 并使用返回值；普通 class 已在 D07 学过，无需 type 三参数或 lambda。",
+            "code": "class Shelf:\n    def add(self, name):\n        return {'book': name}\nshelf = Shelf()\nprint(shelf.add('风'))\n",
+            "output": "{'book': '风'}",
+            "source_kind": "python",
+            "runnable": true
+          }
+        ],
+        "practice_first.drills": [
+          {
+            "id": "audit-repo-method",
+            "title": "调用提供的方法",
+            "instructions": "只补 TODO 处，保留平台提供的其他输入与观察代码；运行并对比实际输出。",
+            "reference": "class Shelf:\n    def add(self, name):\n        return {'book': name}\nshelf = Shelf()\nprint(shelf.add('风'))\n",
+            "starter": "class Shelf:\n    def add(self, name):\n        return {'book': name}\nshelf = Shelf()\nprint(None)  # TODO：调用提供对象的方法\n",
+            "output": "{'book': '风'}",
+            "source_kind": "python",
+            "runnable": true
+          }
+        ]
+      },
+      "append_cards": [],
+      "append_drills": [],
+      "auto_drill_exclusions": []
+    },
+    {
+      "id": "D14-deps",
+      "replace": {
+        "examples": [
+          {
+            "language": "python",
+            "code": "from fastapi import FastAPI, Depends\nfrom fastapi.testclient import TestClient\napp = FastAPI()\ndef get_color():\n    return 'blue'\n@app.get('/color')\ndef color(value=Depends(get_color)):\n    return {'color': value}\ndef test_color():\n    return 'green'\nwith TestClient(app) as client:\n    print(client.get('/color').json())\n    app.dependency_overrides[get_color] = test_color\n    try:\n        print(client.get('/color').json())\n    finally:\n        app.dependency_overrides.clear()\n",
+            "output": "{'color': 'blue'}\n{'color': 'green'}",
+            "explanation": "Depends 接收依赖函数对象，由框架在处理请求时调用，再把结果交给路由参数。第一行来自真实依赖，所以颜色是蓝色；覆盖字典把原函数对象映射到测试函数后，第二行变成绿色，路由函数本身不需要修改。覆盖的键不是函数名称字符串，也不是提前调用后的返回值。",
+            "source_kind": "python",
+            "runnable": true
+          },
+          {
+            "language": "python",
+            "code": "from fastapi import FastAPI, Depends\nfrom fastapi.testclient import TestClient\napp = FastAPI()\ndef get_multiplier():\n    return 2\n@app.get('/times/{number}')\ndef times(number: int, multiplier=Depends(get_multiplier)):\n    return {'value': number * multiplier}\ndef test_multiplier():\n    return 3\nwith TestClient(app) as client:\n    print(client.get('/times/4').json())\n    app.dependency_overrides[get_multiplier] = test_multiplier\n    try:\n        print(client.get('/times/4').json())\n    finally:\n        app.dependency_overrides.clear()\n    print(client.get('/times/4').json())\n",
+            "output": "{'value': 8}\n{'value': 12}\n{'value': 8}",
+            "source_kind": "python",
+            "runnable": true,
+            "explanation": "同一条乘法路由先使用真实依赖给出的二，临时覆盖后使用三，清理覆盖后再次使用二，因此三个结果依次是八、十二和八。第三次请求专门证明恢复操作生效，比只看到替身返回值更能发现测试污染。依赖函数通过 Depends 传入，而路径中的 number 仍由框架按整数解析，两条数据来源有各自职责。"
+          }
+        ]
+      },
+      "append_cards": [
+        {
+          "title": "Depends 传函数，框架调用函数",
+          "rule": "作用：Depends 声明请求期需要的值；dependency_overrides 让测试替换来源。常用：数据库、配置的可替换边界。写法：传 get_color 函数本身，不能提前 get_color()；覆盖后在 finally 清理。",
+          "code": "from fastapi import FastAPI, Depends\nfrom fastapi.testclient import TestClient\napp = FastAPI()\ndef get_color():\n    return 'blue'\n@app.get('/color')\ndef color(value=Depends(get_color)):\n    return {'color': value}\ndef test_color():\n    return 'green'\nwith TestClient(app) as client:\n    print(client.get('/color').json())\n    app.dependency_overrides[get_color] = test_color\n    try:\n        print(client.get('/color').json())\n    finally:\n        app.dependency_overrides.clear()\n",
+          "output": "{'color': 'blue'}\n{'color': 'green'}",
+          "source_kind": "python",
+          "runnable": true
+        }
+      ],
+      "append_drills": [
+        {
+          "id": "audit-dependency-marker",
+          "title": "登记依赖函数",
+          "instructions": "只替换 TODO 占位部分，保留提供的输入和观察代码；先运行，再比较实际输出。",
+          "starter": "from fastapi import FastAPI, Depends\nfrom fastapi.testclient import TestClient\napp = FastAPI()\ndef get_color():\n    return 'blue'\n@app.get('/color')\ndef color(value=None):  # TODO：用 Depends 登记依赖\n    return {'color': value}\ndef test_color():\n    return 'green'\nwith TestClient(app) as client:\n    print(client.get('/color').json())\n    app.dependency_overrides[get_color] = test_color\n    try:\n        print(client.get('/color').json())\n    finally:\n        app.dependency_overrides.clear()\n",
+          "reference": "from fastapi import FastAPI, Depends\nfrom fastapi.testclient import TestClient\napp = FastAPI()\ndef get_color():\n    return 'blue'\n@app.get('/color')\ndef color(value=Depends(get_color)):\n    return {'color': value}\ndef test_color():\n    return 'green'\nwith TestClient(app) as client:\n    print(client.get('/color').json())\n    app.dependency_overrides[get_color] = test_color\n    try:\n        print(client.get('/color').json())\n    finally:\n        app.dependency_overrides.clear()\n",
+          "output": "{'color': 'blue'}\n{'color': 'green'}",
+          "source_kind": "python",
+          "runnable": true
+        }
+      ],
+      "auto_drill_exclusions": []
+    },
+    {
+      "id": "D15-assert",
+      "replace": {
+        "examples": [
+          {
+            "language": "python",
+            "code": "def perimeter(side):\n    return side * 4\ndef test_perimeter():\n    assert perimeter(3) == 12\n    assert perimeter(0) == 0\ntest_perimeter()\nprint('passed')\n",
+            "output": "passed",
+            "explanation": "测试函数用两个实际调用检查正边长和零边长的周长，断言比较的是函数返回值与题目期望，而不是函数源码里出现了哪些词。这个可运行实验主动调用测试函数，因此两个断言都通过后才打印 passed；若任一结果错误，断言会中断执行，成功消息不会出现。在 pytest 中，按约定命名的测试函数由测试工具收集调用，不必在正式测试文件底部自行运行。",
+            "source_kind": "python",
+            "runnable": true
+          },
+          {
+            "language": "python",
+            "code": "temperature = 21.236\nprint(round(temperature, 2))\nprint(round(temperature, 1))\n",
+            "output": "21.24\n21.2",
+            "explanation": "round 的第二个参数表示保留的小数位数，这里同一个温度分别保留两位和一位，得到二十一点二四和二十一点二。函数返回数字，不会保证打印时固定出现末尾的零，因此数字计算与字符串显示格式是两个问题。两次计算都使用原来的 temperature，调用 round 不会把变量原地修改成第一次的结果。",
+            "source_kind": "python",
+            "runnable": true
+          }
+        ],
+        "practice.instructions": "定义 add_tax(price)：price是平台提供的非负数，计算含13%税的金额并舍入到两位小数，返回数值，不要求额外输入校验。写test_函数，用assert覆盖100得到113.0和0得到0.0；平台用pytest实际收集执行。",
+        "practice.starter_content": "def add_tax(price):\n    return None  # TODO：计算并返回数值\n\ndef test_add_tax_normal():\n    assert add_tax(100) == 113\n\ndef test_add_tax_zero():\n    pass  # TODO：覆盖零值\n",
+        "practice_first.cards": [
+          {
+            "title": "测试函数使用行为断言",
+            "rule": "作用：test_ 函数让 pytest 收集，assert 失败会抛 AssertionError。常用：覆盖正常值与边界。写法：测试中调用被测函数并断言；本页实验直接调用测试函数，正式提交由 python -m pytest 执行。",
+            "code": "def perimeter(side):\n    return side * 4\ndef test_perimeter():\n    assert perimeter(3) == 12\n    assert perimeter(0) == 0\ntest_perimeter()\nprint('passed')\n",
+            "output": "passed",
+            "source_kind": "python",
+            "runnable": true
+          },
+          {
+            "title": "round 返回保留指定小数位的数值",
+            "rule": "作用：round(number, digits) 返回舍入后的数值，和f-string只改变显示不同。常用：本课数值结果需要比较到两位。写法：round(value, 2)；输入仍可为float，结果不保证显示尾随零。",
+            "code": "temperature = 21.236\nprint(round(temperature, 2))\nprint(round(temperature, 1))\n",
+            "output": "21.24\n21.2",
+            "source_kind": "python",
+            "runnable": true
+          }
+        ],
+        "practice_first.drills": []
+      },
+      "append_cards": [],
+      "append_drills": [],
+      "auto_drill_exclusions": []
+    },
+    {
+      "id": "D15-fixture",
+      "replace": {
+        "practice.instructions": "定义note_path fixture，默认function scope，返回本例tmp_path下的note.txt；测试使用此路径，用UTF-8写入你选择的中文文本并读回，通过断言确认内容相同，不依赖cwd或共享路径。可用Path.write_text/read_text、Path.open或open；平台用pytest实际注入fixture和运行测试。",
+        "practice.input_examples": [
+          {
+            "label": "注入",
+            "value": "test_函数声明note_path形参",
+            "expected": "收到本例tmp_path/note.txt的Path对象"
+          },
+          {
+            "label": "写读断言",
+            "value": "写入任选中文文本，UTF8读回",
+            "expected": "断言内容一致，错误读回内容能被测试发现"
+          }
+        ]
+      },
+      "append_cards": [
+        {
+          "title": "pytest 通过同名参数注入 fixture",
+          "rule": "作用：fixture 准备每例的值，测试形参同名就能接收；不要直接调用已装饰 fixture。常用：tmp_path 是 pytest 内置 Path 临时目录，每例独立。写法看 source 中的 @pytest.fixture/test_ 形参；外层临时运行与隐藏日志是平台演示外壳。",
+          "code": "from contextlib import redirect_stdout, redirect_stderr\nfrom io import StringIO\nfrom pathlib import Path\nfrom tempfile import TemporaryDirectory\nimport pytest\nsource = \"import pytest\\n@pytest.fixture\\ndef greeting(): return '晴天'\\ndef test_greeting(greeting): assert greeting == '晴天'\\n\"\nwith TemporaryDirectory() as folder:\n    path = Path(folder) / 'test_example.py'\n    path.write_text(source, encoding='utf-8')\n    with redirect_stdout(StringIO()), redirect_stderr(StringIO()):\n        result = pytest.main([str(path), '-q', '-p', 'no:cacheprovider', '--basetemp', str(Path(folder) / 'scratch')])\n    print('passed' if result == 0 else 'failed')\n",
+          "output": "passed",
+          "source_kind": "python",
+          "runnable": true
+        }
+      ],
+      "append_drills": [
+        {
+          "id": "audit-fixture-value",
+          "title": "由pytest注入准备值",
+          "instructions": "只补 TODO 处，保留平台提供的其他输入与观察代码；运行并对比实际输出。",
+          "reference": "from contextlib import redirect_stdout, redirect_stderr\nfrom io import StringIO\nfrom pathlib import Path\nfrom tempfile import TemporaryDirectory\nimport pytest\nsource = \"import pytest\\n@pytest.fixture\\ndef greeting(): return '晴天'\\ndef test_greeting(greeting): assert greeting == '晴天'\\n\"\nwith TemporaryDirectory() as folder:\n    path = Path(folder) / 'test_example.py'\n    path.write_text(source, encoding='utf-8')\n    with redirect_stdout(StringIO()), redirect_stderr(StringIO()):\n        result = pytest.main([str(path), '-q', '-p', 'no:cacheprovider', '--basetemp', str(Path(folder) / 'scratch')])\n    print('passed' if result == 0 else 'failed')\n",
+          "starter": "from contextlib import redirect_stdout, redirect_stderr\nfrom io import StringIO\nfrom pathlib import Path\nfrom tempfile import TemporaryDirectory\nimport pytest\nsource = \"import pytest\\n@pytest.fixture\\ndef greeting(): return None\\ndef test_greeting(greeting): assert greeting == '晴天'\\n\"\nwith TemporaryDirectory() as folder:\n    path = Path(folder) / 'test_example.py'\n    path.write_text(source, encoding='utf-8')\n    with redirect_stdout(StringIO()), redirect_stderr(StringIO()):\n        result = pytest.main([str(path), '-q', '-p', 'no:cacheprovider', '--basetemp', str(Path(folder) / 'scratch')])\n    print('passed' if result == 0 else 'failed')\n",
+          "output": "passed",
+          "source_kind": "python",
+          "runnable": true
+        }
+      ],
+      "auto_drill_exclusions": []
+    },
+    {
+      "id": "D15-mock",
+      "replace": {
+        "examples": [
+          {
+            "language": "python",
+            "code": "from unittest.mock import MagicMock\nresource = MagicMock()\nresource.__enter__.return_value.read.return_value = '本地笔记'.encode('utf-8')\nwith resource as stream:\n    print(stream.read().decode('utf-8'))\nprint(resource.__exit__.call_count)\n",
+            "output": "本地笔记\n1",
+            "explanation": "上下文管理器进入时会调用 __enter__，这里把其返回对象的 read 配置成中文文本的 UTF-8 字节。with 中实际读到的是字节，需要 decode 才恢复成可打印的中文；离开代码块时 __exit__ 被调用一次，所以第二行是一。MagicMock 帮助构造这个带特殊方法的替身，示例没有打开真实文件或发出网络请求。",
+            "source_kind": "python",
+            "runnable": true
+          },
+          {
+            "language": "python",
+            "code": "from unittest.mock import Mock\nreader = Mock(return_value='ok')\nreader('/notes', timeout=4)\nprint(reader.call_args.args[0])\nprint(reader.call_args.kwargs['timeout'])\nreader.assert_called_once_with('/notes', timeout=4)\n",
+            "output": "/notes\n4",
+            "explanation": "Mock 在调用后记录位置参数和关键字参数，call_args.args 的第一项是地址，call_args.kwargs 里的 timeout 是实际收到的秒数。两行输出分别展示这两个输入，再用 assert_called_once_with 检查只调用一次且所有指定实参一致。仅设置 return_value 不能证明调用正确：地址错误、超时遗漏或者重复请求，都可能得到相同的假结果。",
+            "source_kind": "python",
+            "runnable": true
+          },
+          {
+            "language": "python",
+            "code": "from unittest.mock import patch\nclass Clock:\n    def now(self):\n        return 5\nwith patch.object(Clock, 'now', return_value=99):\n    print(Clock().now())\nprint(Clock().now())\n",
+            "output": "99\n5",
+            "explanation": "patch.object 在 with 内暂时替换 Clock 类上的 now 方法，所以新实例调用得到九十九；离开代码块后原方法恢复，第二行又得到五。这个变化表明补丁的有效范围由上下文管理器控制，临时行为不会永久写进类定义。补丁应放在被测代码实际查找对象的位置，否则即使配置成功，也可能没有影响到真实调用。",
+            "source_kind": "python",
+            "runnable": true
+          }
+        ],
+        "practice.instructions": "提交HTTP客户端测试：平台提供client.py的get_json(url)、post_json(url,payload)。GET内部调用urllib.request.urlopen(url,timeout=10)；POST构造绝对URL的Request，method=POST、Content-Type=application/json、data=UTF-8 JSON，随后urlopen(request,timeout=10)，用with读取响应。用patch('client.urllib.request.urlopen')隔离网络，测试GET/POST的JSON返回值、URL/timeout和POST方法/头/请求体，Mock响应支持with/read。不要实际联网。",
+        "practice.file_name": "test_client.py",
+        "practice.input_examples": [
+          {
+            "label": "GET",
+            "value": "client.get_json('https://example.test')，假响应JSON",
+            "expected": "解析结果正确；URL和timeout=10被断言"
+          },
+          {
+            "label": "POST",
+            "value": "client.post_json('https://example.test',{'title':'风'})",
+            "expected": "JSON返回值与Request方法/头/请求体/timeout被断言"
+          }
+        ]
+      },
+      "append_cards": [
+        {
+          "title": "MagicMock 模拟 with/read",
+          "rule": "作用：MagicMock 提供 with 所需的特殊方法；__enter__.return_value 是进入 with 后得到的对象。常用：替换文件或HTTP响应。写法：设置该对象的 read.return_value 为 bytes，不把 Mock 字符串当真实响应。",
+          "code": "from unittest.mock import MagicMock\nresource = MagicMock()\nresource.__enter__.return_value.read.return_value = '本地笔记'.encode('utf-8')\nwith resource as stream:\n    print(stream.read().decode('utf-8'))\nprint(resource.__exit__.call_count)\n",
+          "output": "本地笔记\n1",
+          "source_kind": "python",
+          "runnable": true
+        },
+        {
+          "title": "从 call_args 读取实际参数",
+          "rule": "作用：call_args 保存最近一次实际调用，args 是位置参数 tuple，kwargs 是关键字参数 dict。常用：验证 Request 的方法/头/请求体及 timeout。写法：mock.call_args.args[0] 或 .kwargs[名字]；不是只断言 Mock 存在。",
+          "code": "from unittest.mock import Mock\nreader = Mock(return_value='ok')\nreader('/notes', timeout=4)\nprint(reader.call_args.args[0])\nprint(reader.call_args.kwargs['timeout'])\nreader.assert_called_once_with('/notes', timeout=4)\n",
+          "output": "/notes\n4",
+          "source_kind": "python",
+          "runnable": true
+        },
+        {
+          "title": "patch.object 临时替换已知类的方法",
+          "rule": "作用：patch 临时替换查找位置，with 退出后恢复。常用：隔离网络/时钟的边界方法。写法：patch.object(对象或类, 属性名, return_value=...)；本例用 D07 已学的普通类，不依赖 sys.modules 或 lambda。",
+          "code": "from unittest.mock import patch\nclass Clock:\n    def now(self):\n        return 5\nwith patch.object(Clock, 'now', return_value=99):\n    print(Clock().now())\nprint(Clock().now())\n",
+          "output": "99\n5",
+          "source_kind": "python",
+          "runnable": true
+        }
+      ],
+      "append_drills": [
+        {
+          "id": "audit-context-response",
+          "title": "配置假响应内容",
+          "instructions": "只替换 TODO 占位部分，保留提供的输入和观察代码；先运行，再比较实际输出。",
+          "starter": "from unittest.mock import MagicMock\nresource = MagicMock()\nresource.__enter__.return_value.read.return_value = None  # TODO：提供 UTF-8 bytes\nwith resource as stream:\n    print(stream.read().decode('utf-8'))\nprint(resource.__exit__.call_count)\n",
+          "reference": "from unittest.mock import MagicMock\nresource = MagicMock()\nresource.__enter__.return_value.read.return_value = '本地笔记'.encode('utf-8')\nwith resource as stream:\n    print(stream.read().decode('utf-8'))\nprint(resource.__exit__.call_count)\n",
+          "output": "本地笔记\n1",
+          "source_kind": "python",
+          "runnable": true
+        }
+      ],
+      "auto_drill_exclusions": []
+    },
+    {
+      "id": "D15-api",
+      "replace": {
+        "examples": [
+          {
+            "language": "python",
+            "code": "from fastapi import FastAPI\nfrom fastapi.testclient import TestClient\napp = FastAPI()\n@app.post('/echo', status_code=202)\ndef echo(body: dict):\n    return body\nwith TestClient(app) as client:\n    response = client.post('/echo', json={'word': '晴'})\n    print(response.status_code, response.json())\n    print(client.get('/missing').status_code)\n",
+            "output": "202 {'word': '晴'}\n404",
+            "explanation": "测试客户端使用 json 参数把字典编码成请求正文，处理函数收到字典后原样返回，所以第一行同时显示二百零二和解析后的中文字段。第二次请求的地址没有注册，得到四百零四，说明同一个应用也保留未知路径的失败行为。测试通过 HTTP 协议入口运行路由，而不是直接调用 echo，因此能够核对方法、地址、状态码与 JSON 数据。",
+            "source_kind": "python",
+            "runnable": true
+          },
+          {
+            "language": "python",
+            "code": "from fastapi import FastAPI\nfrom fastapi.testclient import TestClient\napp = FastAPI()\n@app.post('/echo', status_code=202)\ndef echo(body: dict):\n    return body\nwith TestClient(app) as client:\n    response = client.post('/echo', json=['晴'])\n    print(response.status_code)\n    print(type(response.json()['detail']).__name__)\n",
+            "output": "422\nlist",
+            "source_kind": "python",
+            "runnable": true,
+            "explanation": "这次请求把列表作为 JSON 正文，而路由明确声明 body 必须是字典。框架先解析并校验输入，在进入处理函数之前返回四百二十二；响应中的 detail 是错误列表，因此第二行打印 list。这里没有把某一版本的完整错误文案作为期望，测试关注稳定的失败状态和结构。"
+          }
+        ],
+        "practice.instructions": "平台提供app.py和app fixture：GET /health为200/{'status':'ok'}；POST /tasks接收JSON并返回201/{'id':1,**请求体}；未定义路径404。写test_函数，用TestClient实际请求，断言健康状态与JSON、创建状态与字段、未知路径404，不启动真实端口。",
+        "practice_first.cards": [
+          {
+            "title": "用 TestClient 发送 JSON 并观察404",
+            "rule": "作用：client.post(..., json=对象) 发送JSON；响应 status_code/json() 是断言依据。常用：接口正常路径和未知路径回归。写法：TestClient 在进程内请求；本例echo与任务创建作业不同。",
+            "code": "from fastapi import FastAPI\nfrom fastapi.testclient import TestClient\napp = FastAPI()\n@app.post('/echo', status_code=202)\ndef echo(body: dict):\n    return body\nwith TestClient(app) as client:\n    response = client.post('/echo', json={'word': '晴'})\n    print(response.status_code, response.json())\n    print(client.get('/missing').status_code)\n",
+            "output": "202 {'word': '晴'}\n404",
+            "source_kind": "python",
+            "runnable": true
+          }
+        ],
+        "practice_first.drills": [
+          {
+            "id": "audit-post-json",
+            "title": "给请求传JSON",
+            "instructions": "只替换 TODO 占位部分，保留提供的输入和观察代码；先运行，再比较实际输出。",
+            "starter": "from fastapi import FastAPI\nfrom fastapi.testclient import TestClient\napp = FastAPI()\n@app.post('/echo', status_code=202)\ndef echo(body: dict):\n    return body\nwith TestClient(app) as client:\n    response = client.post('/echo', json=None)  # TODO：传入 JSON 对象\n    print(response.status_code, response.json())\n    print(client.get('/missing').status_code)\n",
+            "reference": "from fastapi import FastAPI\nfrom fastapi.testclient import TestClient\napp = FastAPI()\n@app.post('/echo', status_code=202)\ndef echo(body: dict):\n    return body\nwith TestClient(app) as client:\n    response = client.post('/echo', json={'word': '晴'})\n    print(response.status_code, response.json())\n    print(client.get('/missing').status_code)\n",
+            "output": "202 {'word': '晴'}\n404",
+            "source_kind": "python",
+            "runnable": true
+          }
+        ]
+      },
+      "append_cards": [],
+      "append_drills": [],
+      "auto_drill_exclusions": [],
+      "fill_overrides": {
+        "1": {
+          "id": "fill-1",
+          "title": "补全练习 2",
+          "instructions": "补全输出表达式，显示当前实际结果；保留错误输入与其余代码，对比每一行输出。",
+          "starter": "from fastapi import FastAPI\nfrom fastapi.testclient import TestClient\napp = FastAPI()\n@app.post('/echo', status_code=202)\ndef echo(body: dict):\n    return body\nwith TestClient(app) as client:\n    response = client.post('/echo', json=['晴'])\n    print(None)  # TODO：输出当前操作的实际结果\n    print(type(response.json()['detail']).__name__)\n",
+          "reference": "from fastapi import FastAPI\nfrom fastapi.testclient import TestClient\napp = FastAPI()\n@app.post('/echo', status_code=202)\ndef echo(body: dict):\n    return body\nwith TestClient(app) as client:\n    response = client.post('/echo', json=['晴'])\n    print(response.status_code)\n    print(type(response.json()['detail']).__name__)\n",
+          "output": "422\nlist",
+          "source_kind": "python",
+          "runnable": true
+        }
+      }
+    },
+    {
+      "id": "D16-schema",
+      "replace": {
+        "examples": [
+          {
+            "language": "python",
+            "code": "import sqlite3\nconn = sqlite3.connect(':memory:')\ntry:\n    conn.execute('CREATE TABLE IF NOT EXISTS books (code INTEGER PRIMARY KEY, label TEXT NOT NULL, pages INTEGER DEFAULT 1)')\n    conn.execute('INSERT INTO books (label) VALUES (?)', ('风',))\n    print(conn.execute('SELECT label, pages FROM books').fetchone())\nfinally:\n    conn.close()\n",
+            "output": "('风', 1)",
+            "explanation": "建表语句声明自动编号、不可为 NULL 的名称，以及省略时默认是一的页数。插入语句只提供名称，因此查询得到风和一，直接证明默认值参与了数据库写入。问号表示参数占位，后面的单元素元组用逗号与普通字符串区分；数据由驱动传入，不把文字拼进 SQL。",
+            "source_kind": "python",
+            "runnable": true
+          },
+          {
+            "language": "python",
+            "code": "import sqlite3\nconn = sqlite3.connect(':memory:')\ntry:\n    conn.execute('CREATE TABLE books (code INTEGER PRIMARY KEY, label TEXT NOT NULL, pages INTEGER DEFAULT 1)')\n    try:\n        conn.execute('INSERT INTO books (label) VALUES (?)', (None,))\n    except sqlite3.IntegrityError:\n        print('label required')\n    print(conn.execute('SELECT COUNT(*) FROM books').fetchone()[0])\nfinally:\n    conn.close()\n",
+            "output": "label required\n0",
+            "source_kind": "python",
+            "runnable": true,
+            "explanation": "Python 的 None 通过参数绑定成为 SQL 的 NULL，而 label 的 NOT NULL 约束拒绝它，驱动抛出 IntegrityError。捕获后打印说明，再查询总行数得到零，验证失败插入没有偷偷留下记录。COUNT(*) 的查询结果仍是一行元组，所以使用下标取出数字。"
+          }
+        ],
+        "practice_first.cards": [
+          {
+            "title": "建表约束与查询游标",
+            "rule": "作用：SQL 描述表和约束，execute 返回游标；fetchone 是一行tuple，fetchall 是多行列表。常用：初始化本地SQLite。写法：INTEGER PRIMARY KEY、TEXT NOT NULL、DEFAULT；重复初始化加IF NOT EXISTS，不能DROP旧表。",
+            "code": "import sqlite3\nconn = sqlite3.connect(':memory:')\ntry:\n    conn.execute('CREATE TABLE IF NOT EXISTS books (code INTEGER PRIMARY KEY, label TEXT NOT NULL, pages INTEGER DEFAULT 1)')\n    conn.execute('INSERT INTO books (label) VALUES (?)', ('风',))\n    print(conn.execute('SELECT label, pages FROM books').fetchone())\nfinally:\n    conn.close()\n",
+            "output": "('风', 1)",
+            "source_kind": "python",
+            "runnable": true
+          }
+        ],
+        "practice_first.drills": []
+      },
+      "append_cards": [],
+      "append_drills": [],
+      "auto_drill_exclusions": []
+    },
+    {
+      "id": "D16-crud",
+      "replace": {
+        "examples": [
+          {
+            "language": "python",
+            "code": "import sqlite3\nconn = sqlite3.connect(':memory:')\ntry:\n    conn.execute('CREATE TABLE books (code INTEGER PRIMARY KEY, label TEXT)')\n    cursor = conn.execute('INSERT INTO books (label) VALUES (?)', (\"it's\",))\n    print(cursor.lastrowid)\n    print(conn.execute('SELECT code, label FROM books ORDER BY code').fetchall())\nfinally:\n    conn.close()\n",
+            "output": "1\n[(1, \"it's\")]",
+            "explanation": "插入值包含单引号，但它作为参数元组中的数据传入，所以不会破坏 SQL 语句；单元素元组末尾的逗号是 Python 写法的一部分。cursor.lastrowid 给出刚生成的编号，第一行是一，随后按编号排序的查询返回一行包含编号和名称的元组。fetchall 返回的是列表，即使只有一条记录，也与 fetchone 的单行结果不同。",
+            "source_kind": "python",
+            "runnable": true
+          },
+          {
+            "language": "python",
+            "code": "import sqlite3\nconn = sqlite3.connect(':memory:')\ntry:\n    conn.execute('CREATE TABLE books (code INTEGER PRIMARY KEY, pages INTEGER)')\n    conn.execute('INSERT INTO books VALUES (1, 10)')\n    changed = conn.execute('UPDATE books SET pages = ? WHERE code = ?', (20, 1))\n    print(changed.rowcount, conn.execute('SELECT pages FROM books').fetchone()[0])\n    missing = conn.execute('DELETE FROM books WHERE code = ?', (9,))\n    print(missing.rowcount)\n    removed = conn.execute('DELETE FROM books WHERE code = ?', (1,))\n    print(removed.rowcount, conn.execute('SELECT count(*) FROM books').fetchone()[0])\nfinally:\n    conn.close()\n",
+            "output": "1 20\n0\n1 0",
+            "explanation": "更新时参数顺序对应新页数和目标编号，第一行的一表示匹配了一行，二十来自更新后的实际查询。删除不存在的编号得到零，删除现有编号则得到一，最后总行数也变成零。rowcount 表示语句实际影响的记录数，不能用固定的真值代替；未匹配记录是正常的零行结果，并不是必然抛异常。",
+            "source_kind": "python",
+            "runnable": true
+          },
+          {
+            "language": "python",
+            "code": "row = (3, '风', 1)\nbook = {'code': row[0], 'label': row[1], 'borrowed': bool(row[2])}\nprint(book)\nprint(bool(0), bool(1))\n",
+            "output": "{'code': 3, 'label': '风', 'borrowed': True}\nFalse True",
+            "explanation": "数据库取出的行按查询列顺序存放在元组中，这里编号、名称和借出标记分别在零、一、二的位置，映射后成为公开字典。最后一项使用 bool 把零或一转换成明确的布尔值，因此字典里显示 True，后两项分别展示零是假、一是真。字段顺序必须跟 SELECT 对齐，不能凭字段名称猜元组的位置。",
+            "source_kind": "python",
+            "runnable": true
+          }
+        ],
+        "practice.instructions": "定义 add_task(conn,title)返回新增整数ID；list_tasks(conn)按id升序返回包含id/title/done的字典列表，其中done为bool；toggle_task(conn,task_id)翻转done；delete_task(conn,task_id)删除。修改成功返回True，不存在ID返回False。所有值使用SQL参数，不拼接；写入成功后提交。平台提供含id/title/done的tasks表，函数不关闭借入连接。",
+        "practice.starter_content": "def add_task(conn, title):\n    pass\n\ndef list_tasks(conn):\n    pass\n\ndef toggle_task(conn, task_id):\n    pass\n\ndef delete_task(conn, task_id):\n    pass\n",
+        "practice.input_examples": [
+          {
+            "label": "新增与查询",
+            "value": "add_task(conn, \"it's\"); list_tasks(conn)",
+            "expected": "标题完整，字典字段为id/title/done，done是bool"
+          },
+          {
+            "label": "存在",
+            "value": "toggle_task(conn, existing_id); delete_task(conn, existing_id)",
+            "expected": "命中返回True，状态/记录实际改变"
+          },
+          {
+            "label": "不存在",
+            "value": "toggle_task(conn, 999); delete_task(conn, 999)",
+            "expected": "返回False，不影响已有记录"
+          }
+        ],
+        "practice_first.cards": [
+          {
+            "title": "单项tuple、lastrowid与参数化查询",
+            "rule": "作用：? 让SQL结构与数据分开，单项tuple需要逗号；lastrowid是新行ID，fetchall是所有行。常用：保存含引号的数据。写法：execute(SQL,(value,))，读取cursor.lastrowid，不把值拼进SQL。",
+            "code": "import sqlite3\nconn = sqlite3.connect(':memory:')\ntry:\n    conn.execute('CREATE TABLE books (code INTEGER PRIMARY KEY, label TEXT)')\n    cursor = conn.execute('INSERT INTO books (label) VALUES (?)', (\"it's\",))\n    print(cursor.lastrowid)\n    print(conn.execute('SELECT code, label FROM books ORDER BY code').fetchall())\nfinally:\n    conn.close()\n",
+            "output": "1\n[(1, \"it's\")]",
+            "source_kind": "python",
+            "runnable": true
+          },
+          {
+            "title": "UPDATE/DELETE、WHERE与rowcount",
+            "rule": "作用：UPDATE修改命中行，DELETE移除命中行，WHERE限定对象；rowcount报告影响行数。常用：判断未知ID没有被修改。写法：UPDATE ... SET ... WHERE ... = ? 和 DELETE FROM ... WHERE ... = ?，值仍通过tuple传入。",
+            "code": "import sqlite3\nconn = sqlite3.connect(':memory:')\ntry:\n    conn.execute('CREATE TABLE books (code INTEGER PRIMARY KEY, pages INTEGER)')\n    conn.execute('INSERT INTO books VALUES (1, 10)')\n    changed = conn.execute('UPDATE books SET pages = ? WHERE code = ?', (20, 1))\n    print(changed.rowcount, conn.execute('SELECT pages FROM books').fetchone()[0])\n    missing = conn.execute('DELETE FROM books WHERE code = ?', (9,))\n    print(missing.rowcount)\n    removed = conn.execute('DELETE FROM books WHERE code = ?', (1,))\n    print(removed.rowcount, conn.execute('SELECT count(*) FROM books').fetchone()[0])\nfinally:\n    conn.close()\n",
+            "output": "1 20\n0\n1 0",
+            "source_kind": "python",
+            "runnable": true
+          },
+          {
+            "title": "把SQL行整理成Python结构",
+            "rule": "作用：默认查询行是tuple，按SELECT列顺序取值；bool(0)为False，bool(1)为True。常用：整理API或CLI可用的dict。写法：显式写列名、ORDER BY稳定排序，再把整数标志转换为bool。",
+            "code": "row = (3, '风', 1)\nbook = {'code': row[0], 'label': row[1], 'borrowed': bool(row[2])}\nprint(book)\nprint(bool(0), bool(1))\n",
+            "output": "{'code': 3, 'label': '风', 'borrowed': True}\nFalse True",
+            "source_kind": "python",
+            "runnable": true
+          }
+        ],
+        "practice_first.drills": [
+          {
+            "id": "audit-update-sql",
+            "title": "参数化更新一行",
+            "instructions": "只替换 TODO 占位部分，保留提供的输入和观察代码；先运行，再比较实际输出。",
+            "starter": "import sqlite3\nconn = sqlite3.connect(':memory:')\ntry:\n    conn.execute('CREATE TABLE books (code INTEGER PRIMARY KEY, pages INTEGER)')\n    conn.execute('INSERT INTO books VALUES (1, 10)')\n    changed = conn.execute('TODO SQL', (20, 1))\n    print(changed.rowcount, conn.execute('SELECT pages FROM books').fetchone()[0])\n    missing = conn.execute('DELETE FROM books WHERE code = ?', (9,))\n    print(missing.rowcount)\n    removed = conn.execute('DELETE FROM books WHERE code = ?', (1,))\n    print(removed.rowcount, conn.execute('SELECT count(*) FROM books').fetchone()[0])\nfinally:\n    conn.close()\n",
+            "reference": "import sqlite3\nconn = sqlite3.connect(':memory:')\ntry:\n    conn.execute('CREATE TABLE books (code INTEGER PRIMARY KEY, pages INTEGER)')\n    conn.execute('INSERT INTO books VALUES (1, 10)')\n    changed = conn.execute('UPDATE books SET pages = ? WHERE code = ?', (20, 1))\n    print(changed.rowcount, conn.execute('SELECT pages FROM books').fetchone()[0])\n    missing = conn.execute('DELETE FROM books WHERE code = ?', (9,))\n    print(missing.rowcount)\n    removed = conn.execute('DELETE FROM books WHERE code = ?', (1,))\n    print(removed.rowcount, conn.execute('SELECT count(*) FROM books').fetchone()[0])\nfinally:\n    conn.close()\n",
+            "output": "1 20\n0\n1 0",
+            "source_kind": "python",
+            "runnable": true
+          },
+          {
+            "id": "audit-insert-sql",
+            "title": "插入含引号数据",
+            "instructions": "只补 TODO 处，保留平台提供的其他输入与观察代码；运行并对比实际输出。",
+            "reference": "import sqlite3\nconn = sqlite3.connect(':memory:')\ntry:\n    conn.execute('CREATE TABLE books (code INTEGER PRIMARY KEY, label TEXT)')\n    cursor = conn.execute('INSERT INTO books (label) VALUES (?)', (\"it's\",))\n    print(cursor.lastrowid)\n    print(conn.execute('SELECT code, label FROM books ORDER BY code').fetchall())\nfinally:\n    conn.close()\n",
+            "starter": "import sqlite3\nconn = sqlite3.connect(':memory:')\ntry:\n    conn.execute('CREATE TABLE books (code INTEGER PRIMARY KEY, label TEXT)')\n    cursor = conn.execute('TODO SQL', (\"it's\",))\n    print(cursor.lastrowid)\n    print(conn.execute('SELECT code, label FROM books ORDER BY code').fetchall())\nfinally:\n    conn.close()\n",
+            "output": "1\n[(1, \"it's\")]",
+            "source_kind": "python",
+            "runnable": true
+          },
+          {
+            "id": "audit-select-sql",
+            "title": "查询稳定列与顺序",
+            "instructions": "只补 TODO 处，保留平台提供的其他输入与观察代码；运行并对比实际输出。",
+            "reference": "import sqlite3\nconn = sqlite3.connect(':memory:')\ntry:\n    conn.execute('CREATE TABLE books (code INTEGER PRIMARY KEY, label TEXT)')\n    cursor = conn.execute('INSERT INTO books (label) VALUES (?)', (\"it's\",))\n    print(cursor.lastrowid)\n    print(conn.execute('SELECT code, label FROM books ORDER BY code').fetchall())\nfinally:\n    conn.close()\n",
+            "starter": "import sqlite3\nconn = sqlite3.connect(':memory:')\ntry:\n    conn.execute('CREATE TABLE books (code INTEGER PRIMARY KEY, label TEXT)')\n    cursor = conn.execute('INSERT INTO books (label) VALUES (?)', (\"it's\",))\n    print(cursor.lastrowid)\n    print(conn.execute('TODO SQL').fetchall())\nfinally:\n    conn.close()\n",
+            "output": "1\n[(1, \"it's\")]",
+            "source_kind": "python",
+            "runnable": true
+          },
+          {
+            "id": "audit-delete-sql",
+            "title": "删除命中/未命中记录",
+            "instructions": "只补 TODO 处，保留平台提供的其他输入与观察代码；运行并对比实际输出。",
+            "reference": "import sqlite3\nconn = sqlite3.connect(':memory:')\ntry:\n    conn.execute('CREATE TABLE books (code INTEGER PRIMARY KEY, pages INTEGER)')\n    conn.execute('INSERT INTO books VALUES (1, 10)')\n    changed = conn.execute('UPDATE books SET pages = ? WHERE code = ?', (20, 1))\n    print(changed.rowcount, conn.execute('SELECT pages FROM books').fetchone()[0])\n    missing = conn.execute('DELETE FROM books WHERE code = ?', (9,))\n    print(missing.rowcount)\n    removed = conn.execute('DELETE FROM books WHERE code = ?', (1,))\n    print(removed.rowcount, conn.execute('SELECT count(*) FROM books').fetchone()[0])\nfinally:\n    conn.close()\n",
+            "starter": "import sqlite3\nconn = sqlite3.connect(':memory:')\ntry:\n    conn.execute('CREATE TABLE books (code INTEGER PRIMARY KEY, pages INTEGER)')\n    conn.execute('INSERT INTO books VALUES (1, 10)')\n    changed = conn.execute('UPDATE books SET pages = ? WHERE code = ?', (20, 1))\n    print(changed.rowcount, conn.execute('SELECT pages FROM books').fetchone()[0])\n    missing = conn.execute('TODO SQL', (9,))\n    print(missing.rowcount)\n    removed = conn.execute('DELETE FROM books WHERE code = ?', (1,))\n    print(removed.rowcount, conn.execute('SELECT count(*) FROM books').fetchone()[0])\nfinally:\n    conn.close()\n",
+            "output": "1 20\n0\n1 0",
+            "source_kind": "python",
+            "runnable": true
+          },
+          {
+            "id": "audit-row-mapping",
+            "title": "整理SQL行结构",
+            "instructions": "只补 TODO 处，保留平台提供的其他输入与观察代码；运行并对比实际输出。",
+            "reference": "row = (3, '风', 1)\nbook = {'code': row[0], 'label': row[1], 'borrowed': bool(row[2])}\nprint(book)\nprint(bool(0), bool(1))\n",
+            "starter": "row = (3, '风', 1)\nbook = None  # TODO：整理字段与布尔标志\nprint(book)\nprint(bool(0), bool(1))\n",
+            "output": "{'code': 3, 'label': '风', 'borrowed': True}\nFalse True",
+            "source_kind": "python",
+            "runnable": true
+          }
+        ]
+      },
+      "append_cards": [],
+      "append_drills": [],
+      "auto_drill_exclusions": []
+    },
+    {
+      "id": "D16-transaction",
+      "replace": {
+        "examples": [
+          {
+            "language": "python",
+            "code": "import sqlite3\nconn = sqlite3.connect(':memory:')\ntry:\n    conn.execute('CREATE TABLE balances (amount INTEGER)')\n    conn.execute('INSERT INTO balances VALUES (40)')\n    conn.commit()\n    try:\n        conn.execute('UPDATE balances SET amount = 36')\n        raise ValueError('演示失败')\n    except ValueError:\n        conn.rollback()\n    print(conn.execute('SELECT amount FROM balances').fetchone()[0])\nfinally:\n    conn.close()\n",
+            "output": "40",
+            "explanation": "先把四十提交成已确认状态，再执行更新并主动制造失败，回滚后查询仍然得到四十。这样能把失败前已保存的数据与本次尚未提交的修改区分开：rollback 撤销的是当前事务，不能用于恢复任何时间点的全部历史。内层 except 仅为演示观察回滚结果，正式业务仍应遵循题面规定的错误传播。",
+            "source_kind": "python",
+            "runnable": true
+          },
+          {
+            "language": "python",
+            "code": "import sqlite3\nconn = sqlite3.connect(':memory:')\ntry:\n    conn.execute('CREATE TABLE balances (amount INTEGER)')\n    with conn:\n        conn.execute('INSERT INTO balances VALUES (?)', (20,))\n        conn.execute('INSERT INTO balances VALUES (?)', (30,))\n    print(conn.execute('SELECT amount FROM balances ORDER BY amount').fetchall())\n    print(conn.in_transaction)\nfinally:\n    conn.close()\n",
+            "output": "[(20,), (30,)]\nFalse",
+            "source_kind": "python",
+            "runnable": true,
+            "explanation": "两个插入放在同一个连接的 with 代码块中，正常退出时事务自动提交，查询得到按数值排序的两行，且 in_transaction 显示 False。单元素元组中的逗号说明每一行只有一个字段，并不表示额外的空值。连接上下文负责提交或回滚，不会自动关闭连接；因此退出 with 后仍能查询，最后由外层 finally 释放本例创建的资源。"
+          }
+        ],
+        "syntax": "commit保存事务；rollback撤销尚未提交内容；with conn也提供事务提交/回滚，退出不会关闭连接。",
+        "explanation": [
+          "事务让多个SQL操作全成或全撤销。成功提交，异常回滚后继续传播，不能返回伪成功。",
+          "with conn与显式commit/rollback均可表达事务；finally里的关闭只由连接创建者负责。传入add_two的连接由调用者管理，不在函数里关闭。",
+          "平台提供title为NOT NULL的tasks表；用第二个title=None产生IntegrityError，查询确认首条写入也没留下。"
+        ],
+        "practice.instructions": "定义 add_two(conn,first,second)，向平台提供的tasks表插入两条title。成功时提交；第二条为None触发IntegrityError时，两条本次写入都撤销并保留异常。可用with conn或显式commit/rollback。不要关闭借入连接，不要求特殊返回值。",
+        "practice.input_examples": [
+          {
+            "label": "成功",
+            "value": "add_two(conn,'A','B')",
+            "expected": "两条记录已提交"
+          },
+          {
+            "label": "失败",
+            "value": "add_two(conn,'C',None)",
+            "expected": "IntegrityError继续传播，C不留下，连接仍可查询"
+          }
+        ],
+        "practice_first.drills": [
+          {
+            "id": "audit-rollback",
+            "title": "撤销未提交修改",
+            "instructions": "只补 TODO 处，保留平台提供的其他输入与观察代码；运行并对比实际输出。",
+            "reference": "import sqlite3\nconn = sqlite3.connect(':memory:')\ntry:\n    conn.execute('CREATE TABLE balances (amount INTEGER)')\n    conn.execute('INSERT INTO balances VALUES (40)')\n    conn.commit()\n    try:\n        conn.execute('UPDATE balances SET amount = 36')\n        raise ValueError('演示失败')\n    except ValueError:\n        conn.rollback()\n    print(conn.execute('SELECT amount FROM balances').fetchone()[0])\nfinally:\n    conn.close()\n",
+            "starter": "import sqlite3\nconn = sqlite3.connect(':memory:')\ntry:\n    conn.execute('CREATE TABLE balances (amount INTEGER)')\n    conn.execute('INSERT INTO balances VALUES (40)')\n    conn.commit()\n    try:\n        conn.execute('UPDATE balances SET amount = 36')\n        raise ValueError('演示失败')\n    except ValueError:\n        pass  # TODO：撤销修改\n    print(conn.execute('SELECT amount FROM balances').fetchone()[0])\nfinally:\n    conn.close()\n",
+            "output": "40",
+            "source_kind": "python",
+            "runnable": true
+          }
+        ]
+      },
+      "append_cards": [
+        {
+          "title": "commit/rollback与重新抛出",
+          "rule": "作用：commit保存当前事务，rollback撤销尚未提交修改；裸raise把原错误交回调用者。常用：多个写入要全成或全撤销。写法：成功commit，except rollback再raise；传入连接的关闭责任留给调用者。with conn也可管理同样事务，不能因没写commit字样判错。",
+          "code": "import sqlite3\nconn = sqlite3.connect(':memory:')\ntry:\n    conn.execute('CREATE TABLE balances (amount INTEGER)')\n    conn.execute('INSERT INTO balances VALUES (40)')\n    conn.commit()\n    try:\n        conn.execute('UPDATE balances SET amount = 36')\n        raise ValueError('演示失败')\n    except ValueError:\n        conn.rollback()\n    print(conn.execute('SELECT amount FROM balances').fetchone()[0])\nfinally:\n    conn.close()\n",
+          "output": "40",
+          "source_kind": "python",
+          "runnable": true
+        }
+      ],
+      "append_drills": [],
+      "auto_drill_exclusions": []
+    },
+    {
+      "id": "D17-gather",
+      "replace": {
+        "examples": [
+          {
+            "language": "python",
+            "code": "import asyncio\nasync def label(value):\n    await asyncio.sleep(0)\n    return 'read:' + value\nasync def main():\n    jobs = [label(value) for value in ['wind', 'sun']]\n    return await asyncio.gather(*jobs)\nprint(asyncio.run(main()))\n",
+            "output": "['read:wind', 'read:sun']",
+            "explanation": "调用异步函数产生协程对象，列表推导式先为两个输入创建待执行工作；星号把列表展开为 gather 的位置参数。await 等待这组工作完成，并按提交顺序返回结果列表，所以打印的两项分别对应风与太阳的英文标记。函数内部的 sleep(0) 主动让出执行机会，不表示真实下载或耗时测量。",
+            "source_kind": "python",
+            "runnable": true
+          },
+          {
+            "language": "python",
+            "code": "import asyncio\nevents = []\nasync def read(name):\n    events.append(name + ':start')\n    await asyncio.sleep(0)\n    events.append(name + ':end')\n    return name\nasync def main():\n    return await asyncio.gather(read('wind'), read('sun'))\nprint(asyncio.run(main()))\nprint(events)\n",
+            "output": "['wind', 'sun']\n['wind:start', 'sun:start', 'wind:end', 'sun:end']",
+            "source_kind": "python",
+            "runnable": true,
+            "explanation": "事件列表先出现两个开始标记，再出现两个结束标记，说明第一个协程在 sleep(0) 处让出执行机会，第二个协程因此有机会启动。结果列表仍按 gather 接收的协程顺序返回，与事件发生次序是两个不同观察。这个安排没有使用真实网络和时间延迟，所以可以稳定展示交错过程，同时避免用运行秒数推断并发。"
+          }
+        ],
+        "practice_first.drills": [
+          {
+            "id": "audit-gather-unpack",
+            "title": "展开一组协程",
+            "instructions": "只替换 TODO 占位部分，保留提供的输入和观察代码；先运行，再比较实际输出。",
+            "starter": "import asyncio\nasync def label(value):\n    await asyncio.sleep(0)\n    return 'read:' + value\nasync def main():\n    jobs = [label(value) for value in ['wind', 'sun']]\n    return None  # TODO：等待多个协程并收集结果\nprint(asyncio.run(main()))\n",
+            "reference": "import asyncio\nasync def label(value):\n    await asyncio.sleep(0)\n    return 'read:' + value\nasync def main():\n    jobs = [label(value) for value in ['wind', 'sun']]\n    return await asyncio.gather(*jobs)\nprint(asyncio.run(main()))\n",
+            "output": "['read:wind', 'read:sun']",
+            "source_kind": "python",
+            "runnable": true
+          }
+        ]
+      },
+      "append_cards": [
+        {
+          "title": "把列表展开成gather的多个参数",
+          "rule": "作用：* 将列表展开成位置实参，gather安排这些协程并按输入顺序收集结果。常用：数量变化的独立等待任务。写法：先创建coroutine列表，再 await gather(*列表)；不要把列表作为单个awaitable。",
+          "code": "import asyncio\nasync def label(value):\n    await asyncio.sleep(0)\n    return 'read:' + value\nasync def main():\n    jobs = [label(value) for value in ['wind', 'sun']]\n    return await asyncio.gather(*jobs)\nprint(asyncio.run(main()))\n",
+          "output": "['read:wind', 'read:sun']",
+          "source_kind": "python",
+          "runnable": true
+        }
+      ],
+      "append_drills": [],
+      "auto_drill_exclusions": []
+    },
+    {
+      "id": "D17-boundary",
+      "replace": {
+        "examples": [
+          {
+            "language": "python",
+            "code": "import asyncio\nasync def work(events):\n    try:\n        await asyncio.sleep(10)\n    finally:\n        events.append('closed')\nasync def main():\n    events = []\n    task = asyncio.create_task(work(events))\n    await asyncio.sleep(0)\n    task.cancel()\n    try:\n        await task\n    except asyncio.CancelledError:\n        print('cancelled')\n    print(events)\nasyncio.run(main())\n",
+            "output": "cancelled\n['closed']",
+            "explanation": "create_task 安排工作协程执行，主协程先让出一次机会，使工作进入 try 并开始等待，再请求取消。cancel 提出取消请求，随后 await 任务才观察到 CancelledError；因此输出先说明取消已被接住，再显示 finally 已记录关闭。这个例子不会真的等待十秒，取消打断了休眠。",
+            "source_kind": "python",
+            "runnable": true
+          },
+          {
+            "language": "python",
+            "code": "import asyncio\nasync def local_read():\n    await asyncio.sleep(0)\n    raise ValueError('资料为空')\nasync def main():\n    try:\n        await local_read()\n    except ValueError as error:\n        print(type(error).__name__, str(error))\nasyncio.run(main())\n",
+            "output": "ValueError 资料为空",
+            "source_kind": "python",
+            "runnable": true,
+            "explanation": "local_read 是异步函数，创建其协程并不会立即抛出异常；执行推进到 await 后，它在让出一次机会再恢复时抛出 ValueError。主协程的 try 必须包住这个 await，才能接到实际运行中的业务失败，输出于是包含异常类型和中文消息。这里只处理明确演示的值错误，其他异常以及任务取消没有被宽泛捕获。"
+          }
+        ],
+        "practice.instructions": "平台在起始代码提供async fail()，默认抛ValueError。定义async safe_call()，在await fail()处只把ValueError转换成'invalid-input'；成功则返回原值，RuntimeError与CancelledError继续传播。需要清理的资源由拥有者finally处理，不创建未声明cleanup接口；验证器替换fail检查这些路径。",
+        "practice.input_examples": [
+          {
+            "label": "业务错误",
+            "value": "asyncio.run(safe_call())，fail抛ValueError",
+            "expected": "invalid-input"
+          },
+          {
+            "label": "成功",
+            "value": "平台将fail替换为返回'success'的async函数",
+            "expected": "success"
+          },
+          {
+            "label": "未知错误/取消",
+            "value": "fail抛RuntimeError或任务被取消",
+            "expected": "错误继续传播，已进入资源的finally清理运行"
+          }
+        ],
+        "practice_first.drills": [
+          {
+            "id": "audit-await-cancel",
+            "title": "等待被取消的任务",
+            "instructions": "只替换 TODO 占位部分，保留提供的输入和观察代码；先运行，再比较实际输出。",
+            "starter": "import asyncio\nasync def work(events):\n    try:\n        await asyncio.sleep(10)\n    finally:\n        events.append('closed')\nasync def main():\n    events = []\n    task = asyncio.create_task(work(events))\n    await asyncio.sleep(0)\n    task.cancel()\n    try:\n        pass  # TODO：等待任务以观察取消\n    except asyncio.CancelledError:\n        print('cancelled')\n    print(events)\nasyncio.run(main())\n",
+            "reference": "import asyncio\nasync def work(events):\n    try:\n        await asyncio.sleep(10)\n    finally:\n        events.append('closed')\nasync def main():\n    events = []\n    task = asyncio.create_task(work(events))\n    await asyncio.sleep(0)\n    task.cancel()\n    try:\n        await task\n    except asyncio.CancelledError:\n        print('cancelled')\n    print(events)\nasyncio.run(main())\n",
+            "output": "cancelled\n['closed']",
+            "source_kind": "python",
+            "runnable": true
+          }
+        ]
+      },
+      "append_cards": [
+        {
+          "title": "创建任务、取消、等待与finally",
+          "rule": "作用：create_task安排协程，cancel提出取消，await任务才能观察CancelledError和清理。常用：切换请求/超时时释放资源。写法：任务内部finally清理，外层只在演示边界捕获取消；普通业务函数不吞取消。",
+          "code": "import asyncio\nasync def work(events):\n    try:\n        await asyncio.sleep(10)\n    finally:\n        events.append('closed')\nasync def main():\n    events = []\n    task = asyncio.create_task(work(events))\n    await asyncio.sleep(0)\n    task.cancel()\n    try:\n        await task\n    except asyncio.CancelledError:\n        print('cancelled')\n    print(events)\nasyncio.run(main())\n",
+          "output": "cancelled\n['closed']",
+          "source_kind": "python",
+          "runnable": true
+        }
+      ],
+      "append_drills": [],
+      "auto_drill_exclusions": []
+    },
+    {
+      "id": "D14-model",
+      "replace": {
+        "examples": [
+          {
+            "language": "python",
+            "code": "from pydantic import BaseModel, ValidationError\nclass BookIn(BaseModel):\n    label: str\n    count: int = 1\nprint(BookIn(label='风').model_dump())\ntry:\n    BookIn()\nexcept ValidationError:\n    print('label required')\n",
+            "output": "{'label': '风', 'count': 1}\nlabel required",
+            "explanation": "BookIn 的 label 没有默认值，因此它是必需字段；count 有默认值一，第一次只传名称也能得到完整字典。model_dump 把模型转换为普通数据，适合核对字段和值，输出没有请求状态码，因为这里直接创建模型而没有发送 HTTP 请求。第二次漏掉名称触发 ValidationError，说明模型确实执行了校验。",
+            "source_kind": "python",
+            "runnable": true
+          },
+          {
+            "language": "python",
+            "code": "from pydantic import BaseModel, ValidationError\nclass BookIn(BaseModel):\n    label: str\n    count: int = 1\nprint(BookIn(label='雪', count='3').model_dump())\ntry:\n    BookIn(label='雪', count='bad')\nexcept ValidationError:\n    print('count invalid')\n",
+            "output": "{'label': '雪', 'count': 3}\ncount invalid",
+            "source_kind": "python",
+            "runnable": true,
+            "explanation": "整数项收到文本形式的三时，模型按默认转换规则得到整数三，因此输出字典里的数字不带引号。随后传入无法转换的文本，模型才抛出 ValidationError，进入错误分支并打印说明。这个对比区分可转换输入与错误输入，不能简单认为有类型标注就会拒绝所有字符串。"
+          }
+        ],
+        "explanation": [
+          "BaseModel按字段标注解析和校验输入，model_dump返回普通dict。没有默认值的字段是必填。",
+          "Pydantic可能将可转换的文本转为int，不能把类型标注理解为一概拒绝所有其它原始类型。当前只检查title/priority，不需要额外字段策略。",
+          "直接构造模型抛ValidationError；FastAPI接收模型请求时才把校验失败映射为422。"
+        ],
+        "practice.starter_content": "from pydantic import BaseModel\nclass TaskIn(BaseModel):\n    title: str\n    priority: int = None  # TODO：设置题目要求的默认值\n",
+        "practice_first.drills": [
+          {
+            "id": "audit-model-default",
+            "title": "观察不同模型的默认字段",
+            "instructions": "只补 TODO 处，保留平台提供的其他输入与观察代码；运行并对比实际输出。",
+            "reference": "from pydantic import BaseModel, ValidationError\nclass BookIn(BaseModel):\n    label: str\n    count: int = 1\nprint(BookIn(label='风').model_dump())\ntry:\n    BookIn()\nexcept ValidationError:\n    print('label required')\n",
+            "starter": "from pydantic import BaseModel, ValidationError\nclass BookIn(BaseModel):\n    label: str\n    count: int = None\nprint(BookIn(label='风').model_dump())\ntry:\n    BookIn()\nexcept ValidationError:\n    print('label required')\n",
+            "output": "{'label': '风', 'count': 1}\nlabel required",
+            "source_kind": "python",
+            "runnable": true
+          }
+        ]
+      },
+      "append_cards": [],
+      "append_drills": [],
+      "auto_drill_exclusions": [],
+      "fill_overrides": {
+        "1": {
+          "id": "fill-1",
+          "title": "补全练习 2",
+          "instructions": "补全输出表达式，显示当前实际结果；保留错误输入与其余代码，对比每一行输出。",
+          "starter": "from pydantic import BaseModel, ValidationError\nclass BookIn(BaseModel):\n    label: str\n    count: int = 1\nprint(None)  # TODO：输出当前操作的实际结果\ntry:\n    BookIn(label='雪', count='bad')\nexcept ValidationError:\n    print('count invalid')\n",
+          "reference": "from pydantic import BaseModel, ValidationError\nclass BookIn(BaseModel):\n    label: str\n    count: int = 1\nprint(BookIn(label='雪', count='3').model_dump())\ntry:\n    BookIn(label='雪', count='bad')\nexcept ValidationError:\n    print('count invalid')\n",
+          "output": "{'label': '雪', 'count': 3}\ncount invalid",
+          "source_kind": "python",
+          "runnable": true
+        }
+      }
+    },
+    {
+      "id": "D17-coroutine",
+      "replace": {
+        "practice.instructions": "定义async fetch_value(value)，让出一次控制权后返回value；定义async wrapper(value)，await fetch_value(value)并返回得到的值。调用者在脚本边界用asyncio.run(wrapper(...))，不要在已有事件循环里再次run。",
+        "practice.starter_content": "import asyncio\n\nasync def fetch_value(value):\n    pass\n\nasync def wrapper(value):\n    pass\n",
+        "practice.input_examples": [
+          {
+            "label": "单个值",
+            "value": "asyncio.run(fetch_value(3))",
+            "expected": "3"
+          },
+          {
+            "label": "await调用链",
+            "value": "asyncio.run(wrapper(0))",
+            "expected": "0；真正等待fetch_value返回值"
+          }
+        ]
+      },
+      "append_cards": [],
+      "append_drills": [],
+      "auto_drill_exclusions": []
+    },
+    {
+      "id": "D12-post",
+      "replace": {
+        "practice.input_examples": [
+          {
+            "label": "离线请求",
+            "value": "绝对URL https://example.test，平台提供opener(request, timeout=...)",
+            "expected": "按题目GET/POST协议调用一次，返回指定文本/JSON；不需要实际联网"
+          },
+          {
+            "label": "变化请求体",
+            "value": "post_json('https://example.test/note', {'title':'雨'}, opener=fake_opener)",
+            "expected": "POST请求体保持新title；按响应JSON解码返回对象"
+          }
+        ]
+      },
+      "append_cards": [],
+      "append_drills": [],
+      "auto_drill_exclusions": []
+    },
+    {
+      "id": "D25-chat",
+      "replace": {
+        "explanation": [
+          "这是一次普通 HTTP POST：URL 决定接口，请求体决定模型与消息，Authorization 决定调用者。",
+          "先分别观察演示请求头、JSON请求体与响应 content；组装函数时沿用 D12 的 Request/with/urlopen，给真实 I/O 设置 timeout。",
+          "本地正式验证使用127.0.0.1假服务，不需要真实Key。单独 * 后的 base_url 必须按名字传入。"
+        ],
+        "syntax": "Request(url, data=JSON bytes, headers=..., method=\"POST\")；urlopen(request, timeout=...)；response.read() 读取 bytes。 实际I/O传正的有限数字timeout（例如7），不用True/False，不要求固定60。",
+        "practice.expected_behavior": "本地mock收到正确路径、POST、model、messages、stream=False 与 Bearer演示Key；函数返回 mock 的 content。"
+      },
+      "append_cards": [
+        {
+          "title": "星号后只接受关键字参数",
+          "rule": "作用：函数签名中的单独 * 把后面参数限定为按名称传入。用途：配置项不易错位。写法：fn(value, option=...)；*args 是另一种语法，不要混淆。",
+          "code": "def format_price(amount, *, unit=\"元\"):\n    return f\"{amount}{unit}\"\nprint(format_price(12, unit=\"港币\"))\ntry:\n    format_price(12, \"港币\")\nexcept TypeError:\n    print(\"unit 必须写名字\")",
+          "output": "12港币\nunit 必须写名字",
+          "source_kind": "python",
+          "runnable": true,
+          "output_verified": "在本机纯内存离线执行，实际 stdout 与 output 相同"
+        },
+        {
+          "title": "Authorization 与 Bearer",
+          "rule": "作用：Authorization 请求头携带鉴权信息。用途：服务验证调用者。写法：Authorization 的值为 Bearer 加空格再加 Key。例子使用演示字符串；不打印真实 Key。",
+          "code": "from urllib.request import Request\nrequest = Request(\"https://example.invalid/notes\", headers={\"Authorization\": \"Bearer demo-key\"})\nprint(request.get_header(\"Authorization\"))",
+          "output": "Bearer demo-key",
+          "source_kind": "python",
+          "runnable": true,
+          "output_verified": "在本机纯内存离线执行，实际 stdout 与 output 相同"
+        }
+      ],
+      "append_drills": [
+        {
+          "id": "bearer-header",
+          "title": "补全：演示鉴权头",
+          "instructions": "把演示 Key 拼成正确的 Bearer 头。这里只使用演示字符串，不读取真实 Key。",
+          "starter": "demo_key = \"local-only\"\nauthorization = None\nprint(authorization)",
+          "reference": "demo_key = \"local-only\"\nauthorization = f\"Bearer {demo_key}\"\nprint(authorization)",
+          "output": "Bearer local-only",
+          "runnable": true,
+          "source_kind": "python",
+          "verification": "实际运行 reference；未修改 starter 输出不符或报错，不能通过"
+        }
+      ]
+    },
+    {
+      "id": "D25-errors",
+      "replace": {
+        "explanation": [
+          "复用上一节你自己通过的 call_chat，在同一文件中补上 ApiError 定义和分类型捕获。",
+          "HTTPError 的 code 是失败状态，URLError 表示网络失败；先捕获更具体的 HTTPError。合法HTTP响应中的非200也要按题面拒绝。",
+          "收到响应不等于成功：外层响应不是合法JSON时转换为ApiError；这些失败不能返回空字符串假装成功。"
+        ],
+        "syntax": "class ApiError(RuntimeError) 保存 status_code；except HTTPError 在 except URLError 之前；JSONDecodeError 单独处理。",
+        "practice.starter_content": "import json\nimport urllib.request\nfrom urllib.error import HTTPError, URLError\n\nclass ApiError(RuntimeError):\n    def __init__(self, message, status_code=None):\n        super().__init__(message)\n        self.status_code = status_code\n\ndef call_chat(api_key, messages, *, base_url=\"https://api.deepseek.com\"):\n    # 复制上一节你自己的实现，再补上本节错误转换。\n    raise NotImplementedError(\"完成当前函数体\")\n",
+        "practice.starter_policy": "function_body"
+      },
+      "append_cards": [
+        {
+          "title": "HTTPError 与 URLError 的顺序",
+          "rule": "作用：HTTPError 表示收到失败状态，URLError 表示请求无法完成。用途：区分鉴权/接口问题与网络问题。写法：先 except HTTPError，再 except URLError，因为 HTTPError 是其子类；状态码从 error.code 取。",
+          "code": "from urllib.error import HTTPError, URLError\nerrors = [HTTPError(\"https://example.invalid\", 403, \"blocked\", {}, None), URLError(\"offline\")]\nfor error in errors:\n    if isinstance(error, HTTPError):\n        print(\"HTTP\", error.code)\n    else:\n        print(\"网络\", error.reason)\nprint(issubclass(HTTPError, URLError))",
+          "output": "HTTP 403\n网络 offline\nTrue",
+          "source_kind": "python",
+          "runnable": true,
+          "output_verified": "在本机纯内存离线执行，实际 stdout 与 output 相同"
+        }
+      ],
+      "append_drills": [
+        {
+          "id": "error-status",
+          "title": "补全：错误状态",
+          "instructions": "从提供的 HTTPError 对象读状态码，不靠消息字符串猜。",
+          "starter": "from urllib.error import HTTPError\nerror = HTTPError(\"https://example.invalid\", 403, \"blocked\", {}, None)\nstatus_code = None\nprint(status_code)",
+          "reference": "from urllib.error import HTTPError\nerror = HTTPError(\"https://example.invalid\", 403, \"blocked\", {}, None)\nstatus_code = error.code\nprint(status_code)",
+          "output": "403",
+          "runnable": true,
+          "source_kind": "python",
+          "verification": "实际运行 reference；未修改 starter 输出不符或报错，不能通过"
+        }
+      ]
+    },
+    {
+      "id": "D26-prompt",
+      "replace": {
+        "explanation": [
+          "提示词输入有四部分：标题列表界定知识范围，goal说明目的，instructions说明本题要求，completed说明是否已完成。",
+          "join 把多个标题连接为文本，f-string把具体值放进模板；空标题列表应明确说明无标题，不虚构内容。",
+          "索引只提供标题，不能声称包含或看过视频正文。变式和反馈必须遵守这一事实边界。"
+        ],
+        "syntax": "separator.join(strings) 连接标题；f\"{value}\" 放入传入值；各段用换行分隔。",
+        "practice.expected_behavior": "所有传入标题、goal、instructions、completed实际状态均出现在返回字符串，并明确索引不代表视频正文。"
+      },
+      "append_cards": [],
+      "append_drills": []
+    },
+    {
+      "id": "D26-parse",
+      "replace": {
+        "explanation": [
+          "本节输入是字符串，至多含一个JSON对象，可有普通文字前后缀。先定位首个 { 和末个 }，没有标记或顺序不对就拒绝。",
+          "find/rfind 未找到返回 -1，不能直接拿 -1切片；切片右端不包含，是否包含结束标记要想清楚。",
+          "定位文本之后 json.loads 才决定格式是否有效。解析失败仍抛 ValueError，不能返回 {} 冒充成功；多段JSON或任意复杂提取不属于本节输入范围。"
+        ],
+        "syntax": "text.find(mark)、text.rfind(mark) 返回下标/-1；text[start:end] 不包含 end；json.loads 失败抛 JSONDecodeError（也是ValueError）。",
+        "practice.instructions": "实现 parse_ai_json(text) -> dict。输入至多包含一个JSON对象，可有不含花括号的普通文字前后缀；定位首个 { 至末个 } 的片段并 json.loads。找不到、边界顺序错误或片段不是合法JSON时抛ValueError。多段JSON拒绝。"
+      },
+      "append_cards": [
+        {
+          "title": "find、rfind 与未找到的 -1",
+          "rule": "作用：find 返回首次匹配的位置，rfind 返回最后一次位置；没有匹配都返回 -1。用途：定位标记并截取文本。写法：text.find(mark)，text.rfind(mark)；先判断是否找到，再切片，右端不包含。",
+          "code": "text = \"备注 [green] end\"\nstart = text.find(\"[\")\nend = text.rfind(\"]\")\nprint(start, end, text.find(\"@\"))\nprint(text[start + 1:end])",
+          "output": "3 9 -1\ngreen",
+          "source_kind": "python",
+          "runnable": true,
+          "output_verified": "在本机纯内存离线执行，实际 stdout 与 output 相同"
+        }
+      ],
+      "append_drills": [
+        {
+          "id": "marker-search",
+          "title": "补全：位置与未找到",
+          "instructions": "补全查找表达式；对照不存在标记返回 -1。",
+          "starter": "text = \"A [red] B\"\nposition = None\nprint(position, text.find(\"@\"))",
+          "reference": "text = \"A [red] B\"\nposition = text.find(\"[\")\nprint(position, text.find(\"@\"))",
+          "output": "2 -1",
+          "runnable": true,
+          "source_kind": "python",
+          "verification": "实际运行 reference；未修改 starter 输出不符或报错，不能通过"
+        }
+      ]
+    },
+    {
+      "id": "D27-client",
+      "replace": {
+        "explanation": [
+          "组合函数不重新实现HTTP：把 prompt 放进 user 消息，调用已提供的 call_chat，再把返回文本交给已提供的 parse_ai_json。",
+          "区分两层JSON：接口响应外层坏JSON由客户端抛ApiError；content中的文本不是合法对象则由parse_ai_json抛ValueError。",
+          "本节只实现send_message，平台提供两个依赖模块；它们是练习夹具，不代表你前面自己的代码已经组装成完整项目。"
+        ],
+        "syntax": "from module import function 后按接口调用；先取得文本，再交给解析函数。"
+      },
+      "append_cards": [],
+      "append_drills": []
+    },
+    {
+      "id": "D27-flow",
+      "replace": {
+        "explanation": [
+          "把提交内容和评审要求交给 build_prompt，再调用平台提供的 send_message 获取结构化结果。",
+          "四个字段是返回契约；keys()观察实际键，子集判断是否全部存在，差集定位缺项。缺少必需字段时明确抛ValueError。",
+          "只替换业务组合层，不在这里再写HTTP客户端；依赖模块与具体提供内容列在下方。"
+        ],
+        "syntax": "required <= result.keys() 判断齐全；required - result.keys() 得到缺项。",
+        "practice.starter_content": "from prompt import build_prompt\nfrom ai_client import send_message\n\ndef review_submission(api_key, submission, rubric, catalog_titles, *, base_url):\n    raise NotImplementedError(\"完成当前函数体\")\n",
+        "practice.starter_policy": "function_body",
+        "practice_first.provided": "平台提供 deepseek_client.py（call_chat/ApiError）、prompt.py（build_prompt/parse_ai_json）和 ai_client.py（send_message）；当前仅提交 review_submission。"
+      },
+      "append_cards": [
+        {
+          "title": "检查必需字段：keys 与集合关系",
+          "rule": "作用：dict.keys() 给出键的视图；集合 A <= B 判断 A 是否全在 B 中，A - B 得到缺少的项。用途：检查输出字段。写法：required <= data.keys()；sorted(required - data.keys()) 便于稳定显示。",
+          "code": "record = {\"name\": \"青\", \"city\": \"苏州\"}\nrequired = {\"name\", \"age\"}\nprint(required <= record.keys())\nprint(sorted(required - record.keys()))",
+          "output": "False\n['age']",
+          "source_kind": "python",
+          "runnable": true,
+          "output_verified": "在本机纯内存离线执行，实际 stdout 与 output 相同"
+        }
+      ],
+      "append_drills": [
+        {
+          "id": "required-fields",
+          "title": "补全：字段是否齐全",
+          "instructions": "补全集合关系；记录缺少 age，所以结果应为 False。",
+          "starter": "record = {\"name\": \"青\"}\nrequired = {\"name\", \"age\"}\ncomplete = None\nprint(complete)",
+          "reference": "record = {\"name\": \"青\"}\nrequired = {\"name\", \"age\"}\ncomplete = required <= record.keys()\nprint(complete)",
+          "output": "False",
+          "runnable": true,
+          "source_kind": "python",
+          "verification": "实际运行 reference；未修改 starter 输出不符或报错，不能通过"
+        }
+      ]
+    },
+    {
+      "id": "D28-test",
+      "replace": {
+        "explanation": [
+          "测试仍执行真实call_chat，只替换 ai_client 实际查找的网络边界。MagicMock配置with返回自身，再配置status=200和read返回bytes。",
+          "正常响应使用return_value；HTTP失败使用side_effect抛HTTPError；坏JSON让read返回非法bytes。pytest.raises检查真实ApiError与status_code。",
+          "三条测试既要能通过正确客户端，也要让故意损坏的客户端失败；仅测试函数pass或断言常量不能证明覆盖。"
+        ],
+        "syntax": "MagicMock.__enter__.return_value=fake；fake.status=200；read.return_value=bytes；patch(..., side_effect=error)；pytest.raises(ApiError) 检查 caught.value。",
+        "practice.instructions": "目录已提供 ai_client.py（call_chat/ApiError/send_message）及其离线依赖。编写 test_ai_client.py：替换 ai_client.urllib.request.urlopen（兼容查找路径见平台说明），覆盖正常content、HTTP401抛ApiError且status_code=401、非法响应JSON抛ApiError且status_code=None。每个测试调用真实call_chat并断言行为，不访问网络。",
+        "practice_first.provided": "平台提供可离线测试的客户端；精确patch目标由提供文件结构决定。兼容草案使用独立ai_client函数，目标保持 ai_client.urllib.request.urlopen，底层同一个urllib模块。"
+      },
+      "append_cards": [
+        {
+          "title": "Mock 支持 with 的对象",
+          "rule": "作用：with 会调用 __enter__ 和 __exit__。用途：替代文件、HTTP 响应等资源对象。写法：使用 MagicMock，再把 fake.__enter__.return_value 设为 fake，read.return_value 放实际读取内容；退出 patch 会恢复。",
+          "code": "from unittest.mock import MagicMock, patch\nimport io\nfake = MagicMock()\nfake.__enter__.return_value = fake\nfake.read.return_value = \"样本\"\nwith patch(\"io.StringIO\", return_value=fake):\n    with io.StringIO(\"original\") as stream:\n        print(stream.read())\nprint(fake.__enter__.call_count, fake.read.call_count)",
+          "output": "样本\n1 1",
+          "source_kind": "python",
+          "runnable": true,
+          "output_verified": "在本机纯内存离线执行，实际 stdout 与 output 相同"
+        },
+        {
+          "title": "side_effect 让替身抛出异常",
+          "rule": "作用：side_effect 为调用设置异常或逐次结果。用途：稳定复现失败路径。写法：patch(target, side_effect=ValueError(\"原因\"))；return_value 用于正常返回，不用于模拟异常。",
+          "code": "from unittest.mock import patch\nimport io\nwith patch(\"io.StringIO\", side_effect=ValueError(\"格式不支持\")):\n    try:\n        io.StringIO(\"original\")\n    except ValueError as error:\n        print(type(error).__name__, error)",
+          "output": "ValueError 格式不支持",
+          "source_kind": "python",
+          "runnable": true,
+          "output_verified": "在本机纯内存离线执行，实际 stdout 与 output 相同"
+        },
+        {
+          "title": "用 pytest.raises 断言指定异常",
+          "rule": "作用：pytest.raises 确认块内抛出指定类型，否则测试失败。用途：测试拒绝、解析与网络失败路径。写法：with pytest.raises(Error) as caught；caught.value 是真实异常对象。",
+          "code": "import pytest\nwith pytest.raises(KeyError) as caught:\n    {}[\"missing\"]\nprint(type(caught.value).__name__)",
+          "output": "KeyError",
+          "source_kind": "python",
+          "runnable": true,
+          "output_verified": "在本机纯内存离线执行，实际 stdout 与 output 相同"
+        }
+      ],
+      "append_drills": [
+        {
+          "id": "mock-enter",
+          "title": "补全：with 使用哪个替身",
+          "instructions": "设置 __enter__ 的返回对象，使 with 内读取到给定的样本。",
+          "starter": "from unittest.mock import MagicMock\nfake = MagicMock()\nfake.__enter__.return_value = None\nfake.read.return_value = \"样本\"\nwith fake as stream:\n    print(stream.read())",
+          "reference": "from unittest.mock import MagicMock\nfake = MagicMock()\nfake.__enter__.return_value = fake\nfake.read.return_value = \"样本\"\nwith fake as stream:\n    print(stream.read())",
+          "output": "样本",
+          "runnable": true,
+          "source_kind": "python",
+          "verification": "实际运行 reference；未修改 starter 输出不符或报错，不能通过"
+        },
+        {
+          "id": "mock-failure",
+          "title": "补全：失败替身",
+          "instructions": "把异常放在 side_effect，观察真正的异常类型；不是给 return_value 填异常对象。",
+          "starter": "from unittest.mock import Mock\nreader = Mock(side_effect=None)\ntry:\n    reader()\nexcept ValueError:\n    print(\"已拒绝\")",
+          "reference": "from unittest.mock import Mock\nreader = Mock(side_effect=ValueError(\"格式不支持\"))\ntry:\n    reader()\nexcept ValueError:\n    print(\"已拒绝\")",
+          "output": "已拒绝",
+          "runnable": true,
+          "source_kind": "python",
+          "verification": "实际运行 reference；未修改 starter 输出不符或报错，不能通过"
+        }
+      ]
+    },
+    {
+      "id": "D28-review",
+      "replace": {
+        "explanation": [
+          "用短文说明实际应用能力及对应验证证据，不需要写Python程序。",
+          "引用三条离线测试的实际输出、如何限制标题知识范围、重建命令和演示步骤。",
+          "再写一个仍未覆盖的限制和下一步。已有D24需求/验收/重建流程可复用，不重复背一遍术语。"
+        ],
+        "syntax": "3-5句话：能力→证据→边界→重建/演示→具体下一步。",
+        "guided_practice.goal": "把真实测试、边界和重建证据写成短交付说明。",
+        "guided_practice.steps": [
+          {
+            "action": "列出一项实际能力和对应测试名。",
+            "expected": "能力有可重复运行证据。"
+          },
+          {
+            "action": "写出隔离网络的位置与索引事实边界。",
+            "expected": "说明哪些是本地mock证据，哪些还未验证。"
+          },
+          {
+            "action": "给出重建/演示命令和一项限制。",
+            "expected": "另一位开发者按说明能复现。"
+          }
+        ],
+        "practice.starter_content": "待填写你的实际验证证据与下一步。"
+      },
+      "append_cards": [],
+      "append_drills": []
+    }
+  ],
+  "validator_fixes": [
+    {
+      "section": "D13-app",
+      "requirements": "真实TestClient GET /health为200且JSON=status ok；安全导入（不启动服务）",
+      "counterexample": "只注册路由但返回None/错误字典应失败"
+    },
+    {
+      "section": "D13-response",
+      "requirements": "真实POST响应201/字段类型/请求title；route.response_model是TaskOut；先澄清路径和输入",
+      "counterexample": "class Unrelated: pass 当前实际通过"
+    },
+    {
+      "section": "D13-lifecycle",
+      "requirements": "D17后选修；导入events空；TestClient上下文start/stop；GET依赖覆盖有效；先澄清路由输出",
+      "counterexample": "def unrelated(): pass 当前实际通过"
+    },
+    {
+      "section": "D16-connect",
+      "requirements": "返回真正Connection；内存查询与调用者关闭；指定文件可持久读回",
+      "counterexample": "create_connection返回None，未调用函数提connect 当前实际通过"
+    },
+    {
+      "section": "D16-schema",
+      "requirements": "实际schema约束/default/id；重复初始化不丢行；不用AST字符串当验收",
+      "counterexample": "init_db只赋CREATE TABLE nowhere字符串 当前实际通过"
+    },
+    {
+      "section": "D16-transaction",
+      "requirements": "两个INSERT成功；第二个NOTNULL错误回滚第一条并继续抛；借入conn保持可用；with或显式事务均接受",
+      "counterexample": "add_two完全不写库，仅未触发except里rollback 当前实际通过"
+    },
+    {
+      "section": "D17-gather",
+      "requirements": "真实调用gather并给每个值一个awaitable；结果顺序/空输入；避免AST关键字验收",
+      "counterexample": "async run_all仅return list(values) 当前实际通过"
+    },
+    {
+      "section": "D17-boundary",
+      "requirements": "注入fail正常/ValueError/RuntimeError/取消；捕获范围与清理；先声明成功返回契约",
+      "counterexample": "safe_call固定返回invalid-input 当前实际通过"
+    },
+    {
+      "section": "D15-fixture",
+      "requirements": "真pytest+真实note_path fixture使用、functionscope、tmp_path/note.txt、中文写读；坏读内容时测试应失败",
+      "counterexample": "def test_irrelevant(): assert 1+1==2 静态确认会被接受（尚未单独执行）"
+    },
+    {
+      "section": "D15-mock",
+      "requirements": "真pytest；GET/POST行为与请求协议覆盖；提供模块错误返回/参数变异时学员测试应失败",
+      "counterexample": "未调用patch或只使用patch测无关函数仍能通过当前AST+pytest结构"
+    },
+    {
+      "section": "D15-api",
+      "requirements": "健康/创建/未知路径真实覆盖；提供app状态/字段/404变异时测试应失败",
+      "counterexample": "无关test_断言当前静态可通过；不要用TestClient关键字当验收"
+    },
+    {
+      "id": "d28-json-error",
+      "severity": "blocks_compliant_work",
+      "source": "learnctl/practice.py:_AI_REFERENCE_FIXTURES[0]",
+      "observed": "已纯内存mock实证：坏JSON→JSONDecodeError，isinstance(ApiError)=False；正常、401、URLError行为分别正确",
+      "fix": "call_chat 捕获json.JSONDecodeError/UnicodeDecodeError转ApiError(\"响应不是 JSON\",None)；保持现有签名、路径与ApiError属性。"
+    },
+    {
+      "id": "d27-missing-composition",
+      "severity": "missing_declared_dependency",
+      "source": "learnctl/practice.py:_v_d27_flow",
+      "observed": "写入的deepseek_client.py/prompt.py均没有send_message；无workspace_deps；D27-client上一编辑器代码不自动可见",
+      "fix": "提供声明清楚的ai_client.py组合夹具，D27-flow starter导入send_message；不要静默复制或覆盖旧用户项目。"
+    },
+    {
+      "id": "d28-missing-function",
+      "severity": "contract_mismatch",
+      "source": "D28-test practice.instructions + _pytest_validator fixtures",
+      "observed": "纯内存执行提供源码后，函数仅有ApiError/call_chat，没有声称的send_message",
+      "fix": "提供可独立执行的ai_client完整组合夹具，或明确删去send_message声称。草案选择提供真实函数。"
+    },
+    {
+      "id": "d28-vacuous-tests",
+      "severity": "false_pass_risk",
+      "source": "learnctl/practice.py:_pytest_validator",
+      "observed": "已在 task-2 临时验证实际运行原封不动 starter：passed=True，pytest 3 passed in 0.06s；三个 pass 测试确实误通过。",
+      "fix": "执行原测试针对正确夹具及至少三种行为变异（错误content/吞401/接受非法JSON）。正确夹具须通过，相关变异须失败；不以AST关键字验收。限定D28-test，其他测试课是否扩展由统一审查决定。"
+    },
+    {
+      "id": "d25-request-contract",
+      "severity": "partial_oracle",
+      "source": "_v_d25_chat + _DeepSeekMockHandler",
+      "observed": "只检返回auth字符串；handler未要求model/stream/path。body虽读取messages但完整契约未验证",
+      "fix": "本地mock记录/断言路径、POST、Content-Type、Bearer实际输入、model=\"deepseek-chat\"、stream is False、messages保真与timeout调用点。至少两组不同消息和Key防常量。"
+    },
+    {
+      "id": "d25-error-oracle",
+      "severity": "partial_oracle",
+      "source": "_v_d25_errors",
+      "observed": "仅401/非JSON/正常三条；网络/非200成功状态及错误消息/status_code=None未完整检查",
+      "fix": "增加纯fake opener的URLError/TimeoutError/201/坏JSON；异常类型和status_code必须符合声明，成功仍用本地服务。"
+    },
+    {
+      "id": "d26-prompt-values",
+      "severity": "partial_oracle",
+      "source": "_v_d26_prompt",
+      "observed": "检查目标和已完成字段标签，没检查传入instructions/状态真实值",
+      "fix": "改变goal、instructions与completed并验证各值；空标题列表不虚构标题。"
+    },
+    {
+      "id": "d26-parse-contract",
+      "severity": "ambiguous_input",
+      "source": "D26-parse + _v_d26_parse",
+      "observed": "第一个JSON片段与find/rfind算法冲突；未测坏JSON/倒序标记/嵌套/转义",
+      "fix": "本稿限定至多一个对象；补纯对象、前后缀、嵌套、字符串转义、缺标记、倒序、非法JSON、多对象拒绝，保持ValueError约定。"
+    },
+    {
+      "id": "d27-error-type",
+      "severity": "wrong_exception_accepted",
+      "source": "_v_d27_client",
+      "observed": "标注ApiError但except Exception为通过",
+      "fix": "准确catch ApiError检查传输坏JSON；另测content坏JSON→ValueError；NameError/TypeError等实现错误必须失败。"
+    },
+    {
+      "id": "variation-scope",
+      "severity": "unbounded_new_content",
+      "source": "learnctl/ai.py:build_generate_prompt lines159-184",
+      "observed": "只传任务/题面/预期/索引标题，不传本节cards/examples/rules/prerequisites；没有已教知识边界",
+      "fix": "传公开短教学与已声明前置事实，明确仅变数据/场景，不引入新导入/语法/API/网络/额外产物；私有参考答案不发。生成后仍需范围校验；提示词只能减小风险，不能宣称所有动态变式已审核。"
+    },
+    {
+      "where": "learnctl/practice.py:_D20_CRUD_SETUP",
+      "fix": "使用当前M.create_connection(DB)并保持Row，避免正确dict(row)实现收到tuple。只用已生成方法。"
+    },
+    {
+      "where": "D19-config/main/package",
+      "fix": "配置缺失/空/覆盖和Path；入口直接运行0/提示、import无副作用；包应验合法Python，文本关键词会误拒绝合法版本。"
+    },
+    {
+      "where": "D20-update-delete",
+      "fix": "实际已有/未知/重复删除返回bool并改变状态。"
+    },
+    {
+      "where": "D20-db-tests/D22 tests",
+      "fix": "临时副本行为mutation证明测试发现当前错误，不能凭assert关键字/无关True。behavior_d18_d24负责。"
+    },
+    {
+      "where": "D21 app/schema/CRUD/static",
+      "fix": "真实分步行为：app only health/lifespan/get_db；schema直接模型；CRUD不查首页；static只目标路径不读未来HTML。behavior_d18_d24负责。"
+    },
+    {
+      "where": "D22-acceptance deps",
+      "fix": "本overlay补contract.json和已生成包/配置/DB依赖，不补未来产物。"
+    },
+    {
+      "where": "D23 CLI/HTML",
+      "fix": "CLI未知ID非零stderr；HTML结构解析属性，浏览器真实四步/错误/textContent；仅关键词不足。"
+    },
+    {
+      "where": "D24 validate_command",
+      "fix": "当前仅重建/安装/pytest；uvicorn留D24-integrate，不能额外提前验。"
+    },
+    {
+      "where": "learnctl/practice.py:_ACCEPT_API_HARNESS",
+      "fix": "with TestClient触发生命周期，POST严格201，DELETE200 JSON；behavior_d18_d24负责。"
+    }
+  ]
+}

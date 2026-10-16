@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import ast
 import json
 import os
 import urllib.request
@@ -35,8 +36,10 @@ class SchemaError(AiError):
 class AiSession:
     """内存中的 API Key 会话。Key 绝不落盘、不进日志、不返回给前端。"""
 
-    def __init__(self) -> None:
+    def __init__(self, *, model: str = MODEL, thinking: bool | None = None) -> None:
         self._key: str | None = None
+        self.model = model
+        self.thinking = thinking
 
     def set_key(self, key: str) -> None:
         self._key = key
@@ -84,13 +87,15 @@ def chat(session: AiSession, messages: list[dict[str, str]], *, temperature: flo
     if not api_key:
         raise AiError("未配置 DeepSeek API Key：请在 AI 助教中输入本次会话的 Key，或设置环境变量 DEEPSEEK_API_KEY")
     payload = {
-        "model": MODEL,
+        "model": session.model,
         "messages": messages,
         "stream": False,
         "temperature": temperature,
     }
     if json_output:
         payload["response_format"] = {"type": "json_object"}
+    if session.thinking is not None:
+        payload["thinking"] = {"type": "enabled" if session.thinking else "disabled"}
     status, raw = _request(f"{BASE_URL}{CHAT_PATH}", payload, api_key)
     if len(raw) > MAX_RESPONSE_BYTES:
         raise AiError("DeepSeek 响应超长，已拒绝解析")
@@ -156,11 +161,25 @@ def _task_section(curriculum: dict[str, Any], task_id: str, section_id: str) -> 
     raise UsageError(f"课程小节 ID 不存在：{section_id}")
 
 
+def _prior_teaching(curriculum: dict[str, Any], section: dict[str, Any]) -> list[dict[str, str]]:
+    """Earlier mandatory teaching only; never future/optional or private answers."""
+    taught = []
+    for task in curriculum['tasks']:
+        for item in task['lesson']:
+            if item['id'] == section['id']:
+                return taught
+            if not item.get('optional'):
+                taught.append({'id': item['id'], 'title': item['title'],
+                               'syntax': item.get('syntax', '')[:240]})
+    return []
+
+
 def build_generate_prompt(
     task: dict[str, Any],
     section: dict[str, Any],
     titles: list[str],
     completed: bool,
+    *, prior_teaching: list[dict[str, str]] | None = None,
 ) -> str:
     practice = section["practice"]
     lines = [
@@ -179,6 +198,28 @@ def build_generate_prompt(
         lines.append("知识范围标题：无对应索引标题（索引仅代表标题知识范围，不代表视频正文）")
     if section.get("supplemental"):
         lines.append(f"补充说明（本节为真实开发补充，非原索引内容）：{section.get('supplemental_note', '')}")
+    brief = section.get('practice_first', {})
+    teaching = {
+        '已教前课': prior_teaching or [],
+        '本节短规则': brief.get('rules', []),
+        '本节所需知识': brief.get('knowledge_scope', []),
+        '已声明前置': brief.get('prerequisites', []),
+        '平台提供与文件边界': brief.get('provided', ''),
+        '当前文件': practice.get('project_file', practice.get('file_name', '')),
+        '已生成依赖文件': practice.get('workspace_deps', []),
+        '本节教学卡': [{k: c.get(k, '') for k in ('title', 'rule', 'code', 'output')}
+                     for c in brief.get('cards', [])],
+        '本节示例': [{k: c.get(k, '') for k in ('code', 'output', 'explanation')}
+                   for c in section.get('examples', [])],
+    }
+    lines.append('已教知识与本节边界（不包含补全题参考答案）：' + json.dumps(teaching, ensure_ascii=False))
+    lines.append(
+        '变式只改变输入、场景或一个组合点，严格使用上述已教概念、语法与API；'
+        '不得要求未来课程、未声明选修、尚未生成的文件、真实网络或真实密钥。'
+        '常用函数也不能只报名字让学习者自查；若上述教学不足以支持新要求，缩小变式，保留原知识范围。'
+        'starter_content只给签名、必要导入或明确标注的平台外壳与TODO，'
+        '不得包含完整实现、参考答案或可直接照抄的解法。要求、输入范围、返回格式和评审标准保持一致。'
+    )
     lines.append(f"当前完成状态：{'已完成' if completed else '未完成'}")
     lines.append(GENERATE_OUTPUT_CONSTRAINT)
     return "\n".join(lines)
@@ -397,6 +438,60 @@ def _chat_schema_checked(
             raise AiError(f"结构修复后仍未通过：{exc2}") from exc2
 
 
+def _check_variation_starter(curriculum: dict[str, Any], section: dict[str, Any], data: dict[str, Any]) -> None:
+    """Reject new imports/calls in Python scaffolds; prose still needs model care.
+
+    This is a teaching-scope check, not a sandbox or proof of semantic alignment.
+    Only public teaching and the provided starter contribute known APIs.
+    """
+    if section['practice'].get('kind') != 'code':
+        return
+    known_calls, known_modules = set(), set()
+    def collect(source, *, proposed=False):
+        try:
+            tree = ast.parse(source)
+        except SyntaxError:
+            if proposed:
+                raise AiError('变式起始代码不是合法 Python，请重试生成')
+            return set(), set(), set()
+        calls, modules, definitions = set(), set(), set()
+        for node in ast.walk(tree):
+            if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)):
+                definitions.add(node.name)
+            elif isinstance(node, ast.Call):
+                name = getattr(node.func, 'id', getattr(node.func, 'attr', ''))
+                if name:
+                    calls.add(name)
+            elif isinstance(node, ast.Import):
+                modules.update(alias.name for alias in node.names)
+            elif isinstance(node, ast.ImportFrom) and node.module:
+                modules.add(node.module)
+                definitions.update(alias.name for alias in node.names)
+        return calls, modules, definitions
+    before = True
+    for task in curriculum['tasks']:
+        for item in task['lesson']:
+            current = item['id'] == section['id']
+            if before and (not item.get('optional') or current):
+                sources = [item['practice'].get('starter_content', '')]
+                sources += [example.get('code', '') for example in item.get('examples', [])
+                            if example.get('source_kind') == 'python']
+                sources += [card.get('code', '') for card in item.get('practice_first', {}).get('cards', [])]
+                for source in sources:
+                    calls, modules, definitions = collect(source)
+                    known_calls.update(calls | definitions)
+                    known_modules.update(modules)
+            if current:
+                before = False
+    calls, modules, definitions = collect(data['starter_content'], proposed=True)
+    unknown_modules = modules - known_modules
+    unknown_calls = calls - known_calls - definitions
+    if unknown_modules or unknown_calls:
+        # Names are from the model's public scaffold, never account configuration.
+        names = sorted(unknown_modules | unknown_calls)
+        raise AiError('变式起始代码使用尚未教过的 API：' + '、'.join(names[:5]) + '；请重试生成本节范围内的题目')
+
+
 def generate(
     session: AiSession,
     curriculum: dict[str, Any],
@@ -406,8 +501,10 @@ def generate(
 ) -> dict[str, Any]:
     task, section = _task_section(curriculum, task_id, section_id)
     titles = _catalog_titles(curriculum, section)
-    prompt = build_generate_prompt(task, section, titles, completed)
-    return _chat_schema_checked(session, prompt, _validate_generate_data, GENERATE_OUTPUT_CONSTRAINT)
+    prompt = build_generate_prompt(task, section, titles, completed, prior_teaching=_prior_teaching(curriculum, section))
+    data = _chat_schema_checked(session, prompt, _validate_generate_data, GENERATE_OUTPUT_CONSTRAINT)
+    _check_variation_starter(curriculum, section, data)
+    return data
 
 
 REVIEW_KEYS = {"summary", "strengths", "issues", "next_steps"}

@@ -370,6 +370,29 @@ def apply_practice_first(data: dict[str, Any]) -> None:
                     drill['starter'] = c['code'].replace('if width < 0 or height < 0:', 'if False:  # TODO：填写 or 条件')
                     pf['drills'].append(drill)
     # Register the revision separately: existing verified IDs and learner drafts survive.
-    data['meta']['practice_first_revision'] = 1
-    data['meta']['suggested_cycle'] = '按可投入时间推进，D01–D28 是任务编号，不是固定天数；先完成核心实践，再做选修巩固。'
-    data['meta']['learning_mode'] = '先看短例子 → 补全代码 → 独立作业 → 对比实际结果；详细原理折叠查看'
+    from course_readiness_content import apply_course_readiness
+    apply_course_readiness(data)
+    # 保留题目和验证契约，只把基础之后的主流程转到真实文件。
+    for task in data['tasks']:
+        if int(task['id'][1:]) < 7:
+            continue
+        if task['id'] in {f'D{i:02d}' for i in range(7, 18)} | {f'D{i:02d}' for i in range(25, 29)}:
+            task['artifacts'] = [f"learner_workspace/lessons/{task['id']}/"]
+        task['actions'] = [
+            '阅读当前小节要求，准备本地作业文件。',
+            '在本地编辑器修改并保存文件；需要时再复习知识卡和示例。',
+            '从项目根目录运行 practice check，或在网页验证已保存文件。',
+            '全部必修通过后，填写实际运行证据并标记任务完成。',
+        ]
+        for section in task['lesson']:
+            brief = section['practice_first']
+            provided = brief.get('provided', '')
+            provided = provided.replace('主作业只提交当前编辑器内容。', '主作业验收读取指定本地文件。')
+            provided = provided.replace('仅提交当前编辑器；', '仅验收指定本地文件；')
+            if section['id'] == 'D07-package':
+                provided = 'prepare 在同目录提供 helpers.py 教学文件；check 读取你保存的 main.py 和 helpers.py，不能用隐藏模块替代。'
+            brief['provided'] = '在本地编辑器完成并保存本节文件。' + provided
+            if section['id'] in {'D15-mock', 'D15-api', 'D27-client', 'D27-flow', 'D28-test'}:
+                brief['provided'] += '支持模块/fixture 由 practice check 在临时测试目录提供；直接运行此文件不会自动获得这些依赖。'
+    data['meta']['suggested_cycle'] = '按可投入时间推进，D01–D29 是任务编号，不是固定天数；完成基础后从 D07 转入本地编辑器。'
+    data['meta']['learning_mode'] = 'D01–D06 网页基础练习 → D07 编辑器衔接 → D08–D29 本地文件实操与终端验收；网页提供讲解与反馈'

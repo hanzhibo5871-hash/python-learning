@@ -4,12 +4,12 @@
 
 ## 事实来源
 
-当前为 schema 3、curriculum 3.0.0、practice_first_revision 1：4 阶段、28 任务、153 小节（含 D02–D09 的24节选修加练），38 张前置知识卡和174道补全练习。旧 CLAUDE.md 和 v2 构建脚本不是当前主线。以 README、生成数据和实际测试为准。
+当前为 schema 3、curriculum 3.0.0、practice_first_revision 2：4 阶段、29 任务、156 小节（含 D02–D09 的24节选修加练），115 张前置知识卡和230道补全练习。D01–D06 为网页入门，D07 起正式作业在本地编辑器完成。旧 CLAUDE.md 和 v2 构建脚本不是当前主线。以 README、生成数据和实际测试为准。
 
 ## 构建与测试
 
-- `data/curriculum.json` 是生成文件。编辑 `scripts/build_curriculum_v3.py` 、`scripts/practice_first_content.py` 和 D09 专用的 `scripts/d09_course.py`，然后从仓库根运行 `python scripts/build_curriculum_v3.py`。必须同步提交生成结果与 `teaching-catalog.js`，重复生成不得漂移。
-- `python -m pip install -e ".[dev]"` 安装开发依赖；`python -m pytest -q tool_tests` 运行工具测试。学习者测试仍只经 `python -m learnctl test <exercise_id>` 执行白名单文件。
+- `data/curriculum.json` 是生成文件。编辑 `scripts/build_curriculum_v3.py` 和 `scripts/practice_first_content.py`、`scripts/teaching_comments.json` 和 `scripts/d09_course.py`，然后从仓库根运行 `python scripts/build_curriculum_v3.py`。必须同步提交生成结果与 teaching-catalog.js，重复生成不得漂移。
+- `python -m pip install -e ".[dev]"` 安装开发依赖；`python -m pytest -q tool_tests` 运行工具测试。`learner_tests` 仍只经 `python -m learnctl test <exercise_id>` 执行白名单文件；D07 起小节作业另用 `python -m learnctl practice check <TASK> <SECTION>`。
 - `node --check learnctl/web/static/app.js` 检查前端语法。
 - 可选浏览器回归：安装 playwright/Chromium 后，`python scripts/browser_smoke.py`。只操作临时工作区，不修改学习者进度。
 
@@ -23,6 +23,7 @@
 
 - `curriculum.py` + `practice_first_schema.py` 严格校验数据与已声明前置关系。
 - `workflow.py` 组织任务和完成逻辑，公开 payload 不包含补全题参考答案。
+- `local_practice.py` 为 D07+ 提供准备/磁盘验收；已有本地文件权威且不得覆盖，check 不允许缺文件改用网页草稿。
 - `practice.py` 保留既有验证/工作区基础；`contract_checks.py` 维护本轮对齐的行为用例。
 - `experiments.py` 只执行显式点击的 Python 实验，临时目录、限时、限输出、shell=False，不是安全沙箱。
 - `web/server.py` 仅绑定 127.0.0.1，保留同源写检查。实验端点不修改学习进度，正式作业仍经过后端解锁和验证。

@@ -1,0 +1,6 @@
+include README.md
+recursive-include data *.json
+recursive-include scripts *.py *.json
+recursive-include docs *.md
+recursive-include tool_tests *.py
+recursive-include tool_tests/fixtures *.json

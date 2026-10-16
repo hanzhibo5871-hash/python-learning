@@ -1,8 +1,8 @@
 "use strict";
 
 // learnctl 学习工作台 —— 原生 JS，无任何外部依赖。
-// 说明：本地验证只在本机 127.0.0.1 执行代码，不会对外发送；
-// 只有点击 AI 助教里的 DeepSeek 按钮，才会把当前练习内容发往模型。
+// 本地验证保留权威结论；配置 Key 后，提交按钮会继续 AI 判题。
+// AI 只展示原因和渐进提示，不显示模型代码或答案。
 
 const state = {
   route: window.location.hash || "#/dashboard",
@@ -29,8 +29,8 @@ const AI_DRAWER_FOCUS_DELAY_MS = 220;
 const AI_CHAT_HISTORY_LIMIT = 6;
 let aiDrawerFocusTimer = null;
 
-async function api(method, path, body) {
-  const options = { method, headers: {} };
+async function api(method, path, body, extra = {}) {
+  const options = { method, headers: {}, ...extra };
   if (body !== undefined) {
     options.headers["Content-Type"] = "application/json";
     options.body = JSON.stringify(body);
@@ -92,6 +92,7 @@ window.addEventListener("hashchange", () => {
   if (window.location.hash !== target) {
     history.replaceState(null, "", "#/dashboard");
   }
+  cancelGradingRequests();
   state.route = target;
   render();
 });
@@ -198,18 +199,17 @@ async function loadTask(taskId) {
 
 async function refreshTaskState() {
   if (!state.taskId) return;
-  const taskId = state.taskId;
-  const previousSection = state.currentSection;
-  // Validation and env actions update progress on the server. Re-read both
-  // payloads so locks, counts, current section, and dashboard state agree.
-  state.task = await api("GET", `/api/tasks/${encodeURIComponent(taskId)}`);
-  state.bootstrap = await api("GET", "/api/bootstrap");
-  const lesson = state.task.task.lesson;
-  state.currentSection = lesson.sections.some((section) => section.id === previousSection)
-    ? previousSection
-    : lesson.current_section;
-  const section = lesson.sections.find((item) => item.id === state.currentSection);
-  if (section) state.editorValue = initialContent(section);
+  const taskId = state.taskId, previousSection = state.currentSection, task = state.task;
+  const version = gradingVersions.get(mainGradingKey());
+  const fresh = await api("GET", `/api/tasks/${encodeURIComponent(taskId)}`);
+  const bootstrap = await api("GET", "/api/bootstrap");
+  if (state.taskId !== taskId || state.currentSection !== previousSection || state.task !== task) return;
+  state.task = fresh;
+  state.bootstrap = bootstrap;
+  const lesson = fresh.task.lesson;
+  state.currentSection = lesson.sections.some(section => section.id === previousSection) ? previousSection : lesson.current_section;
+  const section = lesson.sections.find(item => item.id === state.currentSection);
+  if (section && gradingVersions.get(mainGradingKey()) === version) state.editorValue = initialContent(section);
 }
 
 function initialContent(section) {
@@ -263,7 +263,9 @@ async function renderTask(taskId) {
     <p class="muted">${escapeHtml(task.learning_goal)}</p>
     <div class="notice info">${task.id === "D01"
       ? "<strong>今天只做一件事：</strong>让这台电脑能运行后面的练习。先写一句学习目标，再按顺序检测环境、创建项目专用环境、安装工具、最终检查。每步完成后继续下一节；全部通过后在页面底部填写证据。"
-      : "<strong>本任务怎样做：</strong>选中小节，先读目标和示例，再在本页的实践区输入并运行验证。保存草稿只保留输入；验证通过才完成小节；全部必修小节通过后，在页面底部填写证据并标记任务完成。"}</div>
+      : Number(task.id.slice(1)) >= 7
+        ? "<strong>本任务在本地编辑器中完成：</strong>准备作业文件，在编辑器修改并保存，用终端命令或本页按钮验证已保存文件。示例和补全题只在需要时复习；全部必修通过后填写证据并标记完成。"
+        : "<strong>本任务怎样做：</strong>选中小节，先读目标和示例，再在本页的实践区输入并运行验证。保存草稿只保留输入；验证通过才完成小节；全部必修小节通过后，在页面底部填写证据并标记任务完成。"}</div>
     ${task.modules.length ? `<p class="small">知识模块：${task.modules.map((m) => `${escapeHtml(m.id)} [${escapeHtml(m.status)}]${m.supplemental ? " ⚡补充" : ""}`).join("，")}</p>` : ""}
     ${blockedHtml}
     ${navHtml}
@@ -302,15 +304,16 @@ function experimentBlock(section, item, mode, index) {
   const source = experimentDrafts.has(key) ? experimentDrafts.get(key) : (item.starter ?? item.code ?? "");
   const title = item.title || (mode === "example" ? `示例 ${index + 1}` : `练习 ${index + 1}`);
   const result = experimentResults.get(key);
+  const why = item.explanation ? `<details><summary>为什么是这个结果</summary><p>${escapeHtml(item.explanation)}</p></details>` : "";
   if (!item.runnable || item.source_kind !== "python") {
-    return `<details class="mini-example"><summary>${escapeHtml(title)} · 文件/命令片段</summary><p>操作位置：${escapeHtml(item.target_path || "按题目指定位置")}</p><pre>${escapeHtml(source)}</pre><h4>预期效果（不是实际执行结果）</h4><pre>${escapeHtml(item.output || "")}</pre></details>`;
+    return `<details class="mini-example"><summary>${escapeHtml(title)} · 文件/命令片段</summary><p>操作位置：${escapeHtml(item.target_path || "按题目指定位置")}</p><pre>${escapeHtml(source)}</pre><h4>预期效果（不是实际执行结果）</h4><pre>${escapeHtml(item.output || "")}</pre>${why}</details>`;
   }
   return `<details class="mini-example" ${mode === "card" ? "open" : ""} data-experiment-key="${escapeHtml(key)}">
     <summary>${escapeHtml(title)}${mode === "card" ? " · 先补这个知识" : " · 可编辑运行"}</summary>
     <p>${escapeHtml(item.rule || item.instructions || "先运行原例子，再改一个值观察结果；不覆盖下方正式作业。")}</p>
     <div class="experiment-grid"><div><label class="small">独立实验代码<textarea class="mono experiment-editor" data-experiment-editor="${escapeHtml(key)}" spellcheck="false">${escapeHtml(source)}</textarea></label>
-    <button type="button" data-run-experiment data-mode="${mode}" data-index="${index}" data-section-id="${escapeHtml(section.id)}">${mode === "drill" ? "运行这道练习" : "运行并观察"}</button></div>
-    <div><h4>预期输出（参考）</h4><pre class="expected-output">${escapeHtml(item.output ?? "")}</pre><div data-experiment-result aria-live="polite">${result ? renderExperimentResult(result) : '<p class="muted">尚未运行；实际输出将在这里出现。</p>'}</div></div></div>
+    <button type="button" data-run-experiment data-mode="${mode}" data-index="${index}" data-section-id="${escapeHtml(section.id)}">${mode === "drill" ? "运行这道练习并 AI 判题" : "运行并观察"}</button></div>
+    <div><h4>预期输出（参考）</h4><pre class="expected-output">${escapeHtml(item.output ?? "")}</pre><div data-experiment-result aria-live="polite">${result ? renderExperimentResult(result) : '<p class="muted">尚未运行；实际输出将在这里出现。</p>'}</div>${gradingSlot(key)}</div></div>${why}
   </details>`;
 }
 
@@ -330,11 +333,20 @@ function renderSection(section) {
   const storedResult = state.lastValidation?.section_id === section.id ? state.lastValidation : null;
   const isEnvironment = kind === "env_action";
   const isOnboarding = section.id === "D01-onboarding";
-  const editor = isEnvironment ? renderEnvActions(p, locked) : `
+  const editor = section.local_file ? `
+    <p><strong>在本地编辑器中编写并保存本节作业。</strong></p>
+    <p class="small">打开项目目录：<code>${escapeHtml(state.task.project_root)}</code></p>
+    <p class="small">作业文件：<code>${escapeHtml(section.local_file)}</code></p>
+    <ol><li>准备文件，已有文件会保留。</li><li>用编辑器打开该文件，按本题要求修改并保存。</li><li>在项目根目录的终端运行下面的验收命令，或点击验证按钮。</li></ol>
+    <pre>python -m learnctl practice prepare ${escapeHtml(state.taskId)} ${escapeHtml(section.id)}
+python -m learnctl practice check ${escapeHtml(state.taskId)} ${escapeHtml(section.id)}</pre>
+    <p class="small muted">check 会运行本题测试并记录通过；未保存的编辑内容不参与验收。函数文件直接运行没有输出是正常的。题目声明的测试夹具由验收命令提供。</p>
+    <div class="row"><button data-prepare-local ${locked ? "disabled" : ""}>准备本地作业文件</button><button id="run-validate" class="primary" data-validate ${locked ? "disabled" : ""}>验证已保存文件并 AI 判题</button></div>`
+    : isEnvironment ? renderEnvActions(p, locked) : `
     <label for="editor">${kind === "code" ? "在这里编写正式作业" : kind === "command" ? "在这里编写命令说明（不执行）" : "在这里填写本节内容"}</label>
     ${p.file_name ? `<p class="small muted">提交文件：${escapeHtml(p.file_name)}</p>` : ""}
     <textarea class="mono" id="editor" spellcheck="false" ${locked ? "disabled" : ""}>${escapeHtml(state.editorValue)}</textarea>
-    <div class="row"><button id="run-validate" class="primary" data-validate ${locked ? "disabled" : ""}>${isOnboarding ? "保存目标并验证" : "验证正式作业"}</button><button id="save-draft" data-save-draft ${locked ? "disabled" : ""}>保存草稿</button><button data-reset ${locked ? "disabled" : ""}>重置为起始内容</button></div>`;
+    <div class="row"><button id="run-validate" class="primary" data-validate ${locked ? "disabled" : ""}>${isOnboarding ? "保存目标并验证" : "验证正式作业并 AI 判题"}</button><button id="save-draft" data-save-draft ${locked ? "disabled" : ""}>保存草稿</button><button data-reset ${locked ? "disabled" : ""}>重置为起始内容</button></div>`;
   const inputExamples = (p.input_examples || []).map(x => `<tr><td><pre>${escapeHtml(x.value)}</pre></td><td><pre>${escapeHtml(x.expected)}</pre></td></tr>`).join("");
   const prereqs = (pf.prerequisites || []).map(id => `<button type="button" data-review-section="${escapeHtml(id)}">复习 ${escapeHtml(id)}</button>`).join("");
   return `<h2>${escapeHtml(section.title)}</h2>
@@ -344,7 +356,7 @@ function renderSection(section) {
     <p class="small">${escapeHtml((pf.rules || [section.syntax]).slice(0, 2).join("\n"))}</p>
     ${pf.provided ? `<p class="small muted">${escapeHtml(pf.provided)}</p>` : ""}
     ${prereqs ? `<details><summary>需要回顾的前置知识</summary><div class="row">${prereqs}</div></details>` : ""}</div>
-    ${(pf.cards || []).map((x,i) => experimentBlock(section,x,"card",i)).join("")}
+    ${section.local_file ? `<details><summary>按需复习知识卡</summary>${(pf.cards || []).map((x,i) => experimentBlock(section,x,"card",i)).join("")}</details>` : (pf.cards || []).map((x,i) => experimentBlock(section,x,"card",i)).join("")}
     <div class="practice-grid"><div class="practice-writing">
       <h3>${isEnvironment ? "环境操作" : "独立作业"}</h3><div id="practice-editor" data-practice-kind="${kind}">${editor}</div>
       ${projectArtifactNote(section)}
@@ -352,9 +364,10 @@ function renderSection(section) {
       <details><summary>卡住时看提示</summary><p>${escapeHtml(p.hints || "对比输入与预期，再检查最先失败的一项。")}</p></details>
     </div><aside class="practice-output"><h3>结果对照</h3>
       <div id="validation-result" aria-live="polite">${storedResult ? renderValidationResult(storedResult, kind) : '<p class="muted">尚未验证。下方是目标，不是你的实际运行结果。</p>'}</div>
+      ${gradingSlot(mainGradingKey())}
       <details ${storedResult ? "" : "open"}><summary>本题输入与预期</summary><div class="table-scroll"><table class="case-table"><thead><tr><th>输入 / 操作</th><th>预期返回、输出或异常</th></tr></thead><tbody>${inputExamples}</tbody></table></div></details>
     </aside></div>
-    ${(pf.drills || []).length ? `<section class="drill-section"><h3>多写几次：补全与改写</h3><p class="small muted">独立编辑器，不覆盖正式作业。先补全再换输入；不同输出不一定是错误。</p>${pf.drills.map((x,i) => experimentBlock(section,x,"drill",i)).join("")}</section>` : ""}
+    ${(pf.drills || []).length ? `${section.local_file ? '<details><summary>按需复习补全与改写</summary>' : ''}<section class="drill-section"><h3>多写几次：补全与改写</h3><p class="small muted">独立编辑器，不覆盖正式作业。先补全再换输入；不同输出不一定是错误。</p>${pf.drills.map((x,i) => experimentBlock(section,x,"drill",i)).join("")}</section>${section.local_file ? '</details>' : ''}` : ""}
     <details class="examples-reference"><summary>查看并运行完整示例</summary>${(section.examples || []).map((x,i) => experimentBlock(section,x,"example",i)).join("")}</details>
     <details class="long-reference"><summary>详细原理、常见错误与 JavaScript 对照（按需阅读）</summary>
       <h3>本节目标</h3><p>${escapeHtml(section.objective)}</p>
@@ -383,13 +396,30 @@ function renderValidationResult(result, kind = "code") {
 
 document.addEventListener("input", event => {
   const el = event.target;
-  if (el.matches("[data-experiment-editor]")) experimentDrafts.set(el.dataset.experimentEditor, el.value);
-  if (el.id === "editor") state.editorValue = el.value;
+  if (el.matches("[data-experiment-editor]")) {
+    experimentDrafts.set(el.dataset.experimentEditor, el.value);
+    experimentResults.delete(el.dataset.experimentEditor);
+    invalidateGrading(el.dataset.experimentEditor);
+    const output = el.closest("[data-experiment-key]").querySelector("[data-experiment-result]");
+    if (output) output.innerHTML = '<p class="muted">代码已修改，请重新运行。</p>';
+  }
+  if (el.id === "editor") {
+    state.editorValue = el.value;
+    state.lastValidation = null;
+    invalidateGrading(mainGradingKey());
+    setResult("提交已修改，请重新验证。", "");
+  }
+  if (el.id === "variation-editor") {
+    variationDrafts.set(state.variationId, el.value);
+    invalidateGrading(variationGradingKey());
+  }
+  if (el.matches("[data-answer]")) invalidateGrading("diagnostic");
 });
 document.addEventListener("click", async event => {
   const review = event.target.closest("[data-review-section]");
   if (review) {
     const sid = review.dataset.reviewSection;
+    cancelGradingRequests();
     state.currentSection = sid;
     if (state.taskId === sid.slice(0,3)) {
       const section = state.task.task.lesson.sections.find(x => x.id === sid);
@@ -408,22 +438,27 @@ document.addEventListener("click", async event => {
   const mode = button.dataset.mode;
   const index = Number(button.dataset.index);
   const content = block.querySelector("textarea").value;
+  const request = beginLocalGrading(key);
+  if (!request) return;
   experimentDrafts.set(key, content);
   button.disabled = true;
   output.innerHTML = '<p role="status">正在运行这份代码…</p>';
   try {
     const result = await api("POST", `/api/tasks/${encodeURIComponent(taskId)}/sections/${encodeURIComponent(sectionId)}/experiment`, {mode,index,content});
+    if (!localGradingCurrent(key, request) || state.taskId !== taskId || state.currentSection !== sectionId) return;
     experimentResults.set(key, result);
     if (output.isConnected) output.innerHTML = renderExperimentResult(result);
+    acceptGradingEvidence(key, content, result);
   } catch (error) {
     if (output.isConnected) output.innerHTML = `<div class="notice warn">${escapeHtml(error.message)}</div>`;
-  } finally { button.disabled = false; }
+  } finally { localGradingPending.delete(key); button.disabled = false; }
 });
 
 function projectArtifactNote(section) {
   const pf = section.practice.project_file;
   if (!pf) return "";
   const base = "learner_workspace/task-manager/";
+  if (section.local_file) return `<div class="notice info project-artifact"><strong>本节真实产物：</strong><code>${escapeHtml(section.local_file)}</code><p class="small muted">${section.practice.continues_file ? "继续修改前一节的同一文件。" : "在编辑器保存后直接验收该文件。"}验证只读取，不覆盖文件。</p></div>`;
   const copy = section.practice.continues_file
     ? `本节是在前一节真实产物 <code class="mono">${escapeHtml(base + pf)}</code> 上继续编辑；本地验证通过后仍会原子落盘回该真实文件。`
     : `本地验证通过后，本节真实产物会原子落盘到工作区文件 <code class="mono">${escapeHtml(base + pf)}</code>。`;
@@ -506,6 +541,123 @@ function renderWorkspacePanel() {
     </div>`;
 }
 
+const gradingRecords = new Map();
+const gradingVersions = new Map();
+const localGradingPending = new Map();
+function mainGradingKey() { return `main:${state.taskId}/${state.currentSection}`; }
+function gradingSlot(key) { return `<div data-grading-key="${escapeHtml(key)}" aria-live="polite">${renderGrading(key)}</div>`; }
+function renderGrading(key) {
+  const r = gradingRecords.get(key);
+  if (!r) return '<p class="small muted">配置 AI Key 后，提交会自动分析错误原因并给出引导。</p>';
+  if (r.status === "pending") return '<p role="status">AI 正在核对当前作业要求、代码和运行证据…</p>';
+  if (r.status === "stale") return '<p class="small muted">提交已修改，请重新运行后判题。</p>';
+  const retry = r.token && r.retryable !== false ? `<button data-grade-retry="${escapeHtml(key)}">${r.status === "unconfigured" ? "配置后重试 AI 判题" : "重试 AI 判题"}</button>` : "";
+  if (r.status !== "done") return `<div class="notice warn">${escapeHtml(r.error || "AI 判题已取消，可重试。")}${retry}</div>`;
+  const f = r.feedback;
+  if (f.analysis_version !== 2) return `<div class="notice warn">当前服务仍使用旧版判题。完整作业解析需要先保存编辑内容，再重启服务。<p>${escapeHtml(f.summary || "")}</p></div>`;
+  const labels = {met:"已完成", unmet:"未完成", uncertain:"待确认"};
+  const evidence = items => (items || []).map(e => `<details class="grading-evidence"><summary>${escapeHtml(e.kind === "code" ? `${e.path} 第 ${e.line} 行` : `运行/文件证据：${e.id}`)}</summary><pre>${escapeHtml(e.text)}</pre></details>`).join("");
+  const requirements = (f.requirements || []).map(item => `<li data-requirement-status="${escapeHtml(item.status)}"><strong>${escapeHtml(labels[item.status] || "待确认")}：</strong>${escapeHtml(item.requirement)}<p class="small">${escapeHtml(item.explanation)}</p>${evidence(item.evidence)}</li>`).join("");
+  const issues = (f.issues || []).map((issue, index) => `<div class="grading-issue"><p><strong>原因 ${index+1}：</strong>${escapeHtml(issue.cause)}</p><p class="small muted">${escapeHtml(issue.basis)}</p>${evidence(issue.evidence)}<p><strong>提示 ${f.hint_level}/3：</strong>${escapeHtml(issue.hint)}</p></div>`).join("");
+  const limits = (f.limitations || []).map(text => `<li>${escapeHtml(text)}</li>`).join("");
+  return `<div class="notice info ai-grading" data-analysis-version="2"><strong>AI 当前作业解析</strong><p class="small">${escapeHtml(f.title || "当前提交")}</p><p>${escapeHtml(f.summary)}</p>${f.evidence ? `<p class="small">${escapeHtml(f.evidence)}</p>` : ""}
+    ${f.conflict ? '<p class="small">AI 与本地结果存在差异，以本地验证为准。</p>' : ""}
+    <details class="grading-requirements" ${f.local_passed === true ? "" : "open"}><summary>题目要求核对（${f.requirements.length} 项）</summary><ul>${requirements}</ul></details>
+    ${issues}${issues && f.hint_level < 3 ? `<button data-grade-hint="${escapeHtml(key)}">再给一点提示</button>` : ""}
+    ${limits ? `<details class="grading-limitations" open><summary>分析边界</summary><ul>${limits}</ul></details>` : ""}</div>`;
+}
+function paintGrading(key) {
+  document.querySelectorAll("[data-grading-key]").forEach(box => {
+    if (box.dataset.gradingKey === key) box.innerHTML = renderGrading(key);
+  });
+}
+function invalidateGrading(key) {
+  gradingVersions.set(key, (gradingVersions.get(key) || 0) + 1);
+  const previous = gradingRecords.get(key);
+  previous?.controller?.abort();
+  gradingRecords.set(key, {status:"stale"});
+  paintGrading(key);
+}
+function cancelGradingRequests() {
+  for (const [key, record] of gradingRecords) {
+    if (record.controller) {
+      record.controller.abort();
+      record.controller = null;
+      record.status = "cancelled";
+      record.error = "已取消接收本次 AI 结果，可重新判题。";
+    }
+  }
+  // Also invalidate local responses when leaving and returning to the same lesson.
+  for (const key of localGradingPending.keys()) gradingVersions.set(key, (gradingVersions.get(key) || 0) + 1);
+  if (variationController) {
+    variationGeneration++;
+    variationController.abort();
+    variationController = null;
+  }
+}
+function beginLocalGrading(key) {
+  if (localGradingPending.has(key)) return null;
+  invalidateGrading(key);
+  const request = gradingVersions.get(key);
+  localGradingPending.set(key, request);
+  return request;
+}
+function localGradingCurrent(key, request) { return gradingVersions.get(key) === request; }
+function acceptGradingEvidence(key, content, result) {
+  const record = {token:result.grading_token, content, status:"ready", feedback:null, level:1};
+  gradingRecords.set(key, record);
+  if (!state.aiStatus?.configured) {
+    record.status = "unconfigured";
+    record.error = "AI 未配置，本地结果已保留。请在 AI 助教中设置本次 Key 后重试。";
+    paintGrading(key);
+    return;
+  }
+  void requestGrading(key);
+}
+async function requestGrading(key, level) {
+  const record = gradingRecords.get(key);
+  if (!record?.token || record.controller) return;
+  const controller = new AbortController();
+  record.controller = controller;
+  record.status = "pending";
+  record.level = level || record.level || 1;
+  paintGrading(key);
+  let timedOut = false;
+  const timeout = setTimeout(() => { timedOut = true; controller.abort(); }, 65000);
+  try {
+    const data = await api("POST", "/api/ai/grade", {grading_token:record.token, hint_level:record.level}, {signal:controller.signal});
+    if (!data.ok) {
+      const error = new Error(data.error || "AI 判题失败");
+      error.retryable = data.retryable !== false;
+      error.code = data.error_code;
+      error.diagnosticId = data.diagnostic_id;
+      throw error;
+    }
+    if (gradingRecords.get(key) !== record || controller.signal.aborted) return;
+    record.feedback = data.feedback;
+    record.status = "done";
+  } catch (error) {
+    if (gradingRecords.get(key) !== record || (controller.signal.aborted && !timedOut)) return;
+    record.status = "failed";
+    record.retryable = timedOut || error.retryable !== false;
+    record.error = timedOut ? "AI 判题超时，本地结果已保留；可重试。" : `AI 判题未完成：${error.message}${error.code ? `（故障码：${error.code}）` : ""}${error.diagnosticId ? `（诊断编号：${error.diagnosticId}）` : ""}`;
+  } finally {
+    clearTimeout(timeout);
+    if (record.controller === controller) record.controller = null;
+    if (gradingRecords.get(key) === record) paintGrading(key);
+  }
+}
+document.addEventListener("click", async event => {
+  const retry = event.target.closest("[data-grade-retry]");
+  const hint = event.target.closest("[data-grade-hint]");
+  if (retry) { await loadAiStatus(); await requestGrading(retry.dataset.gradeRetry); }
+  if (hint) {
+    const key = hint.dataset.gradeHint, record = gradingRecords.get(key);
+    await requestGrading(key, Math.min(3, (record?.feedback?.hint_level || 1) + 1));
+  }
+  if (event.target.closest("#variation-submit")) await submitVariation();
+});
+
 // ---------------------------------------------------------------- AI 助教
 
 function renderAiDrawer(section) {
@@ -524,7 +676,7 @@ function renderAiDrawer(section) {
         <button type="button" id="ai-tutor-close" class="ghost" aria-label="关闭 AI 助教">✕</button>
       </div>
       <div class="ai-tutor-drawer-body">
-        <p class="small muted">本地验证不会对外发送；只有点击下方 DeepSeek 按钮，才会把当前练习内容发往模型。Key 只保存在本次服务内存，不写磁盘、不进日志。</p>
+        <p class="small muted">配置 Key 后，点击作业验证或练习运行会将本题、提交与本次结果发送给 DeepSeek 判题。AI 只给错误原因和提示。Key 仅保存在服务内存，不写磁盘。</p>
         <p id="ai-review-target" class="small"><strong>当前批改对象：</strong>${target}</p>
         <div id="ai-status">${status ? renderAiStatus(status) : '<span class="muted">读取状态…</span>'}</div>
         <div id="ai-actions" style="margin-top:10px">
@@ -535,7 +687,7 @@ function renderAiDrawer(section) {
           </div>
           <div class="row" style="margin-top:8px">
             <button id="ai-generate">生成变式练习</button>
-            <button id="ai-review">评审我的练习</button>
+            <button id="ai-review">判当前正式作业</button>
           </div>
         </div>
         <div class="ai-chat" style="margin-top:14px">
@@ -546,7 +698,7 @@ function renderAiDrawer(section) {
           <div class="row" style="margin-top:8px"><button id="ai-chat-send" class="primary" ${currentAiChatBusy() ? "disabled" : ""}>${currentAiChatBusy() ? "正在回答…" : "发送问题"}</button><span class="small muted">联网调用 DeepSeek；不会改变本节完成状态。</span></div>
           <div id="ai-chat-error"></div>
         </div>
-        <div id="ai-result"></div>
+        <div id="ai-result">${renderStoredVariation()}</div>
       </div>
     </aside>`;
 }
@@ -673,7 +825,7 @@ async function renderDiagnostic() {
     <p class="small muted">诊断不是主线前置。D0 会在隔离临时目录创建一次 venv 以检查环境。</p>
     ${answerInputs}
     <div class="row" style="margin-top:12px"><button id="diagnostic-run" class="primary">运行诊断</button></div>
-    <div id="diagnostic-result"></div>`;
+    <div id="diagnostic-result"></div>${gradingSlot("diagnostic")}`;
 }
 
 // ---------------------------------------------------------------- 事件
@@ -697,6 +849,7 @@ document.addEventListener("click", async (event) => {
   }
   const sectionBtn = event.target.closest("[data-section]");
   if (sectionBtn) {
+    cancelGradingRequests();
     state.currentSection = sectionBtn.dataset.section;
     const section = state.task.task.lesson.sections.find((s) => s.id === state.currentSection);
     state.editorValue = initialContent(section);
@@ -709,6 +862,7 @@ document.addEventListener("click", async (event) => {
   const prevBtn = event.target.closest("#prev-section");
   const nextBtn = event.target.closest("#next-section");
   if (prevBtn || nextBtn) {
+    cancelGradingRequests();
     const sections = state.task.task.lesson.sections;
     const index = sections.findIndex((s) => s.id === state.currentSection);
     const next = prevBtn ? index - 1 : index + 1;
@@ -743,6 +897,11 @@ document.addEventListener("click", async (event) => {
     } else {
       await runEnvAction(action);
     }
+    return;
+  }
+  const prepareLocal = event.target.closest("[data-prepare-local]");
+  if (prepareLocal) {
+    await prepareLocalFile();
     return;
   }
   const saveDraft = event.target.closest("[data-save-draft]");
@@ -865,37 +1024,53 @@ async function saveDraftSection() {
   setResult(`<span class="muted">草稿已保存（${escapeHtml(result.updated_at)}）</span>`, "passed");
 }
 
+async function prepareLocalFile() {
+  try {
+    const result = await api("POST", `/api/tasks/${encodeURIComponent(state.taskId)}/sections/${encodeURIComponent(state.currentSection)}/local-file`, {});
+    setResult(`${result.created ? "已准备" : "已保留现有"}文件：${escapeHtml(result.path)}。请在本地编辑器中打开并保存。`, "passed");
+  } catch (error) {
+    setResult(escapeHtml(error.message), "failed");
+  }
+}
+
 async function validateSection() {
   const taskId = state.taskId;
   const section = state.task.task.lesson.sections.find((s) => s.id === state.currentSection);
-  const kind = section.practice.kind;
-  const content = readEditor();
+  if (section.practice.kind === "env_action") return runEnvAction(section.practice.action);
+  let content = readEditor();
+  const key = mainGradingKey();
+  const request = beginLocalGrading(key);
+  if (!request) return;
   const button = $("[data-validate]");
-  if (button?.disabled) return;
   if (button) button.disabled = true;
-  const resultBox = $("#validation-result");
-  if (resultBox) resultBox.innerHTML = '<p role="status">正在验证本节作业…</p>';
+  setResult("正在验证本节作业…", "");
   try {
-    const result = kind === "env_action"
-      ? await api("POST", "/api/env/action", { action: section.practice.action })
-      : await api("POST", `/api/tasks/${encodeURIComponent(taskId)}/sections/${encodeURIComponent(section.id)}/validate`, { content });
-    // Do not show a slow result in a different lesson after navigation.
-    if (state.taskId !== taskId || state.currentSection !== section.id) { state.bootstrap = null; return; }
+    const result = await api("POST", `/api/tasks/${encodeURIComponent(taskId)}/sections/${encodeURIComponent(section.id)}/validate`, section.local_file ? { source: "local_file" } : { content });
+    if (section.local_file) content = result.content;
+    if (!localGradingCurrent(key, request) || state.taskId !== taskId || state.currentSection !== section.id) { state.bootstrap = null; return; }
     state.lastValidation = { section_id: section.id, ...result };
-    setValidationResult(state.lastValidation, kind);
+    setValidationResult(state.lastValidation, section.practice.kind);
     if (result.passed) {
       await refreshTaskState();
+      if (!localGradingCurrent(key, request) || state.taskId !== taskId || state.currentSection !== section.id) return;
       state.editorValue = content;
-      await renderTask(state.taskId);
+      await renderTask(taskId);
     }
+    acceptGradingEvidence(key, content, result);
   } catch (error) {
-    if (state.taskId === taskId && state.currentSection === section.id) {
-      setResult(escapeHtml(error.message), "failed");
-    }
-  } finally { if (button?.isConnected) button.disabled = false; }
+    if (localGradingCurrent(key, request) && state.taskId === taskId && state.currentSection === section.id) setResult(escapeHtml(error.message), "failed");
+  } finally {
+    localGradingPending.delete(key);
+    const current = $("[data-validate]");
+    if (state.taskId === taskId && state.currentSection === section.id && current) current.disabled = Boolean(section.locked);
+    if (button?.isConnected) button.disabled = false;
+  }
 }
 
 function resetContent() {
+  invalidateGrading(mainGradingKey());
+  state.lastValidation = null;
+  setResult("已重置，请重新验证。", "");
   const section = state.task.task.lesson.sections.find((s) => s.id === state.currentSection);
   state.editorValue = section.practice.starter_content || "";
   const editor = $("#editor");
@@ -915,18 +1090,30 @@ async function setTaskStatus(status, evidence) {
 }
 
 async function runEnvAction(action, extra) {
-  const box = $("#validation-result");
-  if (box) box.innerHTML = '<span class="muted">正在执行固定动作…</span>';
+  const taskId = state.taskId, sectionId = state.currentSection, key = mainGradingKey();
+  const request = beginLocalGrading(key);
+  if (!request) return;
+  const button = $("[data-env-action]");
+  if (button) button.disabled = true;
+  setResult("正在执行固定动作…", "");
   try {
     const result = await api("POST", "/api/env/action", { action, ...(extra || {}) });
-    state.lastValidation = { section_id: state.currentSection, ...result };
+    if (!localGradingCurrent(key, request) || state.taskId !== taskId || state.currentSection !== sectionId) { state.bootstrap = null; return; }
+    state.lastValidation = { section_id: sectionId, ...result };
     setValidationResult(state.lastValidation, "env_action");
     if (result.passed) {
       await refreshTaskState();
-      await renderTask(state.taskId);
+      if (!localGradingCurrent(key, request) || state.taskId !== taskId || state.currentSection !== sectionId) return;
+      await renderTask(taskId);
     }
+    acceptGradingEvidence(key, "", result);
   } catch (error) {
-    setResult(`<span class="muted">${escapeHtml(error.message)}</span>`, "failed");
+    if (localGradingCurrent(key, request) && state.taskId === taskId && state.currentSection === sectionId) setResult(escapeHtml(error.message), "failed");
+  } finally {
+    localGradingPending.delete(key);
+    if (button?.isConnected) button.disabled = false;
+    const current = $("[data-env-action]");
+    if (state.taskId === taskId && state.currentSection === sectionId && current) current.disabled = false;
   }
 }
 
@@ -1032,69 +1219,75 @@ async function testAi() {
   }
 }
 
+const variations = new Map();
+const variationDrafts = new Map();
+let variationGeneration = 0;
+let variationController = null;
+
+function variationGradingKey() { return `variation:${state.variationId}`; }
+function renderStoredVariation() {
+  const entry = variations.get(aiChatKey());
+  if (!entry) return "";
+  state.variationId = entry.variation_id;
+  const v = entry.variation;
+  return `<div class="result-box"><h3>变式练习（独立编辑器）</h3><p>${escapeHtml(v.title)}</p><p>${escapeHtml(v.scenario)}</p><p>${escapeHtml(v.instructions)}</p><p class="small">${escapeHtml(v.review_rubric)}</p>
+    <label for="variation-editor">你的变式提交</label><textarea class="mono" id="variation-editor" spellcheck="false">${escapeHtml(variationDrafts.get(entry.variation_id) ?? v.starter_content)}</textarea>
+    <button id="variation-submit">提交变式并 AI 判题</button><p class="small muted">只作语法检查和 AI 指导；无行为测试，不计入课程完成。</p>${gradingSlot(variationGradingKey())}</div>`;
+}
+
 async function generateVariation() {
-  const section = state.task.task.lesson.sections.find((s) => s.id === state.currentSection);
+  if (variationController) return;
+  const taskId = state.taskId, sectionId = state.currentSection, key = aiChatKey();
+  const generation = ++variationGeneration;
+  const controller = new AbortController();
+  variationController = controller;
+  const timeout = setTimeout(() => controller.abort(), 65000);
   const result = $("#ai-result");
-  if (result) result.innerHTML = '<span class="muted">正在生成变式练习（联网）…</span>';
+  if (result) result.innerHTML = '<p role="status">正在生成变式练习（联网）…</p>';
   try {
-    // 完成状态由服务端从当前进度派生，客户端不再发送 completed
-    const data = await api("POST", "/api/ai/generate", {
-      task_id: state.taskId,
-      section_id: section.id,
-    });
-    const v = data.variation;
-    // 变式题 id 只由服务端权威保存；前端只保留对当前小节的绑定，评审时仅回传 id
+    const data = await api("POST", "/api/ai/generate", { task_id: taskId, section_id: sectionId }, {signal: controller.signal});
+    if (!data.ok) throw new Error(data.error || "生成失败");
+    if (generation !== variationGeneration || aiChatKey() !== key) return;
+    variations.set(key, data);
     state.variationId = data.variation_id;
-    const targetBox = $("#ai-review-target");
-    if (targetBox) targetBox.innerHTML = "<strong>当前批改对象：</strong>生成的变式题";
-    const html = `<div class="result-box passed">
-      <h3>🧩 变式练习（独立编辑器，不影响本节完成）</h3>
-      <p><strong>${escapeHtml(v.title)}</strong></p>
-      <p><strong>场景：</strong>${escapeHtml(v.scenario)}</p>
-      <p><strong>要求：</strong>${escapeHtml(v.instructions)}</p>
-      <p class="small muted"><strong>起始内容：</strong></p>
-      <pre>${escapeHtml(v.starter_content)}</pre>
-      <p class="small muted"><strong>评审标准：</strong>${escapeHtml(v.review_rubric)}</p>
-      <p class="small muted">本变式题已保存在本次服务内存；点击“评审我的练习”将按该变式题评审。</p>
-      <p class="small muted">索引标题仅代表知识范围，不代表视频正文。</p>
-    </div>`;
-    if (result) result.innerHTML = html;
+    const box = $("#ai-result");
+    if (box) box.innerHTML = renderStoredVariation();
   } catch (error) {
-    if (result) result.innerHTML = `<div class="result-box failed">${escapeHtml(error.message)}</div>`;
+    if (generation === variationGeneration && aiChatKey() === key) {
+      const box = $("#ai-result");
+      if (box) box.innerHTML = `<p class="notice warn">${escapeHtml(error.name === "AbortError" ? "生成超时，请重试。" : error.message)}</p>`;
+    }
+  } finally {
+    clearTimeout(timeout);
+    if (variationController === controller) variationController = null;
   }
 }
 
-async function reviewSubmission() {
-  const section = state.task.task.lesson.sections.find((s) => s.id === state.currentSection);
-  const content = readEditor();
-  const result = $("#ai-result");
-  if (result) result.innerHTML = '<span class="muted">正在评审（联网）…</span>';
-  const summary = summarizeValidation();
-  const variation_id = state.variationId;
-  const target = variation_id ? "变式练习" : "原始课程练习";
+async function submitVariation() {
+  const taskId = state.taskId, sectionId = state.currentSection, variationId = state.variationId;
+  const key = variationGradingKey(), content = $("#variation-editor")?.value || "";
+  const request = beginLocalGrading(key);
+  if (!request) return;
+  const button = $("#variation-submit");
+  if (button) button.disabled = true;
   try {
-    const body = {
-      task_id: state.taskId,
-      section_id: section.id,
-      content,
-      validation_summary: summary,
-    };
-    if (variation_id) body.variation_id = variation_id;
-    const data = await api("POST", "/api/ai/review", body);
-    const r = data.review;
-    const html = `<div class="result-box passed">
-      <h3>📋 评审结果</h3>
-      <p class="small"><strong>评审对象：</strong>${target}</p>
-      <p><strong>总结：</strong>${escapeHtml(r.summary)}</p>
-      <p><strong>优点：</strong>${Array.isArray(r.strengths) ? r.strengths.map((s) => escapeHtml(s)).join("；") : escapeHtml(r.strengths)}</p>
-      <p><strong>问题：</strong>${Array.isArray(r.issues) ? r.issues.map((s) => escapeHtml(s)).join("；") : escapeHtml(r.issues)}</p>
-      <p><strong>下一步：</strong>${Array.isArray(r.next_steps) ? r.next_steps.map((s) => escapeHtml(s)).join("；") : escapeHtml(r.next_steps)}</p>
-      <p class="small muted">评审只用于指导；本地验证通过才是完成本节的唯一依据。</p>
-    </div>`;
-    if (result) result.innerHTML = html;
+    const result = await api("POST", "/api/ai/variation-submit", {task_id:taskId, section_id:sectionId, variation_id:variationId, content});
+    if (localGradingCurrent(key, request) && state.taskId === taskId && state.currentSection === sectionId && state.variationId === variationId) acceptGradingEvidence(key, content, result);
   } catch (error) {
-    if (result) result.innerHTML = `<div class="result-box failed">${escapeHtml(error.message)}</div>`;
-  }
+    if (localGradingCurrent(key, request)) {
+      gradingRecords.set(key, {status:"failed", error:error.message});
+      paintGrading(key);
+    }
+  } finally { localGradingPending.delete(key); if (button?.isConnected) button.disabled = false; }
+}
+
+async function reviewSubmission() {
+  const key = mainGradingKey();
+  const section = state.task.task.lesson.sections.find(s => s.id === state.currentSection);
+  // 外部编辑器的保存不会触发网页输入事件，批改前重新读取并验收。
+  if (!section.local_file && gradingRecords.get(key)?.token) return requestGrading(key);
+  closeAiTutorDrawer();
+  await validateSection();
 }
 
 async function sendTutorQuestion() {
@@ -1116,15 +1309,22 @@ async function sendTutorQuestion() {
   setCurrentAiChatControlsBusy(true);
   if (errorBox) errorBox.innerHTML = '<span class="muted">正在向 DeepSeek 请教当前小节…</span>';
   try {
+    const section = state.task.task.lesson.sections.find(s => s.id === requestSectionId);
+    const learnerContext = {
+      validation_summary: state.lastValidation?.section_id === requestSectionId ? summarizeValidation() : "",
+    };
+    if (section.local_file) {
+      const file = await api("GET", `/api/tasks/${encodeURIComponent(requestTaskId)}/sections/${encodeURIComponent(requestSectionId)}/local-file`);
+      if (file.exists) learnerContext.content = file.content.slice(0, 8000);
+    } else {
+      learnerContext.content = readEditor().slice(0, 8000);
+    }
     const data = await api("POST", "/api/ai/chat", {
       task_id: requestTaskId,
       section_id: requestSectionId,
       question,
       history,
-      learner_context: {
-        content: readEditor().slice(0, 8000),
-        validation_summary: state.lastValidation?.section_id === requestSectionId ? summarizeValidation() : "",
-      },
+      learner_context: learnerContext,
     });
     if (!data.ok) throw new Error(data.error || "AI 助教回答失败");
     if (state.aiChatGenerations[key] !== requestGeneration) return;
@@ -1165,6 +1365,8 @@ function summarizeValidation() {
 }
 
 async function runDiagnostic() {
+  const request = beginLocalGrading("diagnostic");
+  if (!request) return;
   const answers = {};
   document.querySelectorAll("[data-answer]").forEach((input) => {
     const [d, c] = input.dataset.answer.split(":");
@@ -1177,13 +1379,15 @@ async function runDiagnostic() {
   if (box) box.innerHTML = '<span class="muted">运行诊断中…（D0 会创建一次临时 venv）</span>';
   try {
     const report = await api("POST", "/api/diagnostic/run", { answers });
+    if (!localGradingCurrent("diagnostic", request) || state.route !== "#/diagnostic") return;
+    acceptGradingEvidence("diagnostic", JSON.stringify(answers), report);
     const rows = report.diagnostics
       .map((d) => `<tr><td>${escapeHtml(d.id)}</td><td>${d.score}%</td><td>${d.critical_passed ? "是" : "否"}</td><td>${escapeHtml(d.level)}</td></tr>`)
       .join("");
     if (box) box.innerHTML = `<table><thead><tr><th>诊断</th><th>得分</th><th>关键用例</th><th>结论</th></tr></thead><tbody>${rows}</tbody></table>`;
   } catch (error) {
-    if (box) box.innerHTML = `<div class="result-box failed">${escapeHtml(error.message)}</div>`;
-  }
+    if (box?.isConnected && localGradingCurrent("diagnostic", request)) box.innerHTML = `<div class="result-box failed">${escapeHtml(error.message)}</div>`;
+  } finally { localGradingPending.delete("diagnostic"); }
 }
 
 // ---------------------------------------------------------------- 启动

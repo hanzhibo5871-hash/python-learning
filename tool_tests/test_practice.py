@@ -17,6 +17,7 @@ from learnctl.practice import (
     validate_code,
 )
 from learnctl.workflow import assert_section_unlocked, complete_section
+from tool_tests.test_project_checks import TEST_DB as _TEST_DB, GOOD_CONTRACT as _GOOD_CONTRACT
 
 
 def _curriculum() -> dict:
@@ -80,8 +81,8 @@ def test_representative_validators_succeed(curriculum_data: dict, tmp_path: Path
     cases = {
         "D03-for": "def sum_even(numbers):\n    return sum(number for number in numbers if number % 2 == 0)\n",
         "D08-json-read": "import json\ndef read_task(text):\n    data=json.loads(text)\n    if not isinstance(data,dict) or not isinstance(data.get('title'),str) or not data['title'].strip(): raise ValueError('bad task')\n    return data\n",
-        "D17-coroutine": "import asyncio\nasync def fetch_value(value):\n    await asyncio.sleep(0)\n    return value\n",
-        "D19-config": "import os\nfrom pathlib import Path\n\ndef get_db_path():\n    return Path(os.environ.get('TASKPROJ_DB', 'taskproj.db'))\n\ndef get_int_env(name, default):\n    try:\n        return int(os.environ.get(name))\n    except (TypeError, ValueError):\n        return default\n",
+        "D17-coroutine": 'import asyncio\nasync def fetch_value(value):\n    await asyncio.sleep(0)\n    return value\nasync def wrapper(value):\n    return await fetch_value(value)\n',
+        "D19-config": "import os\nfrom pathlib import Path\n\ndef get_db_path():\n    return Path((os.environ.get('TASKPROJ_DB') or 'taskproj.db'))\n\ndef get_int_env(name, default):\n    try:\n        return int(os.environ.get(name))\n    except (TypeError, ValueError):\n        return default\n",
     }
     for section_id, solution in cases.items():
         section = _section(curriculum, _task_id_of(curriculum_data, section_id), section_id)
@@ -506,7 +507,7 @@ def test_project_artifact_written_on_validation_pass(curriculum_data: dict, tmp_
     solution = (
         "import os\nfrom pathlib import Path\n\n"
         "def get_db_path():\n"
-        "    return Path(os.environ.get('TASKPROJ_DB', 'taskproj.db'))\n\n"
+        "    return Path((os.environ.get('TASKPROJ_DB') or 'taskproj.db'))\n\n"
         "def get_int_env(name, default):\n"
         "    try:\n"
         "        return int(os.environ.get(name))\n"
@@ -570,12 +571,14 @@ def test_d24_project_acceptance_bad_api_fails(tmp_path: Path) -> None:
 
     ws = _workspace_dir(tmp_path)
     _write_full_project(ws)
-    # 换成只做 CRUD、没有 GET / 与 /health 的 api.py → TestClient 检查必须失败
-    (ws / "taskproj/api.py").write_text(_GOOD_API, encoding="utf-8")
+    # Preserve working CRUD/page and make the health endpoint return a bad status.
+    bad_api = _GOOD_API_FULL.replace("@app.get('/health')", "@app.get('/health', status_code=503)", 1)
+    assert bad_api != _GOOD_API_FULL, "负例必须实际改变健康端点"
+    (ws / "taskproj/api.py").write_text(bad_api, encoding="utf-8")
 
     result = validate_project_acceptance(tmp_path)
     assert result["passed"] is False
-    assert any("GET /health" in c["name"] and c["passed"] is False for c in result["checks"])
+    assert any("GET /health" in check["name"] and not check["passed"] for check in result["checks"])
 
 
 def test_d24_project_acceptance_bad_cli_fails(tmp_path: Path) -> None:
@@ -645,141 +648,15 @@ def test_d19_pyproject_toml_validator_rejects_incomplete(tmp_path: Path) -> None
 # D. workspace_deps 真实文件进入校验器 + D22-api/D23-cli 回归
 # ---------------------------------------------------------------------------
 
-_GOOD_CONFIG = (
-    "import os\nfrom pathlib import Path\n\n"
-    "def get_db_path():\n    return Path(os.environ.get('TASKPROJ_DB', 'taskproj.db'))\n"
-)
+_GOOD_CONFIG = "import os\nfrom pathlib import Path\ndef get_db_path(): return Path(os.getenv('TASKPROJ_DB') or 'taskproj.db')\n"
 
-_GOOD_DB = (
-    "import sqlite3\n\n"
-    "def create_connection(path):\n    conn = sqlite3.connect(str(path))\n    init_db(conn)\n    return conn\n\n"
-    "def init_db(conn):\n"
-    "    conn.execute('CREATE TABLE IF NOT EXISTS tasks (id INTEGER PRIMARY KEY AUTOINCREMENT, title TEXT NOT NULL, done INTEGER NOT NULL DEFAULT 0)')\n"
-    "    conn.commit()\n\n"
-    "def add_task(conn, title):\n"
-    "    if not title.strip(): raise ValueError('标题为空')\n"
-    "    cur = conn.execute('INSERT INTO tasks (title) VALUES (?)', (title,))\n"
-    "    conn.commit()\n"
-    "    return cur.lastrowid\n\n"
-    "def list_tasks(conn):\n"
-    "    rows = conn.execute('SELECT id, title, done FROM tasks ORDER BY id').fetchall()\n"
-    "    return [{'id': r[0], 'title': r[1], 'done': bool(r[2])} for r in rows]\n\n"
-    "def complete_task(conn, task_id):\n"
-    "    conn.execute('UPDATE tasks SET done = 1 WHERE id = ?', (task_id,))\n"
-    "    conn.commit()\n\n"
-    "def delete_task(conn, task_id):\n"
-    "    conn.execute('DELETE FROM tasks WHERE id = ?', (task_id,))\n"
-    "    conn.commit()\n"
-)
+_GOOD_DB = "import sqlite3\n\ndef create_connection(path=':memory:'):\n    conn=sqlite3.connect(path,check_same_thread=False)\n    conn.row_factory=sqlite3.Row\n    return conn\n\ndef init_db(conn):\n    conn.execute('CREATE TABLE IF NOT EXISTS tasks (id INTEGER PRIMARY KEY AUTOINCREMENT, title TEXT NOT NULL, done INTEGER NOT NULL DEFAULT 0)')\n    conn.commit()\n\ndef add_task(conn,title):\n    title=title.strip()\n    if not title: raise ValueError('标题不能为空')\n    result=conn.execute('INSERT INTO tasks(title) VALUES (?)',(title,))\n    conn.commit()\n    return result.lastrowid\n\ndef list_tasks(conn):\n    rows=conn.execute('SELECT id,title,done FROM tasks ORDER BY id').fetchall()\n    return [{**dict(row),'done':bool(row['done'])} for row in rows]\n\ndef complete_task(conn,task_id):\n    result=conn.execute('UPDATE tasks SET done=1 WHERE id=?',(task_id,))\n    conn.commit()\n    return result.rowcount>0\n\ndef delete_task(conn,task_id):\n    result=conn.execute('DELETE FROM tasks WHERE id=?',(task_id,))\n    conn.commit()\n    return result.rowcount>0\n"
 
-_GOOD_API = (
-    "from fastapi import FastAPI, HTTPException\n"
-    "from pydantic import BaseModel\n"
-    "from taskproj.db import add_task, complete_task, create_connection, delete_task, list_tasks\n"
-    "from taskproj.config import get_db_path\n\n"
-    "class TaskIn(BaseModel):\n"
-    "    title: str\n\n"
-    "class Task(BaseModel):\n"
-    "    id: int\n"
-    "    title: str\n"
-    "    done: bool\n\n"
-    "app = FastAPI()\n\n"
-    "def _conn():\n"
-    "    return create_connection(get_db_path())\n\n"
-    "def _get_task_or_404(task_id: int):\n"
-    "    conn = _conn()\n"
-    "    rows = conn.execute('SELECT id FROM tasks WHERE id = ?', (task_id,)).fetchall()\n"
-    "    if not rows:\n"
-    "        raise HTTPException(status_code=404, detail='任务不存在')\n"
-    "    return conn\n\n"
-    "@app.get('/api/tasks')\n"
-    "def read_tasks():\n"
-    "    return list_tasks(_conn())\n\n"
-    "@app.post('/api/tasks')\n"
-    "def create_task(task: TaskIn):\n"
-    "    if not task.title.strip():\n"
-    "        raise HTTPException(status_code=422, detail='标题不能为空')\n"
-    "    conn = _conn()\n"
-    "    tid = add_task(conn, task.title)\n"
-    "    return next(t for t in list_tasks(conn) if t['id'] == tid)\n\n"
-    "@app.patch('/api/tasks/{task_id}/done')\n"
-    "def complete(task_id: int):\n"
-    "    conn = _get_task_or_404(task_id)\n"
-    "    complete_task(conn, task_id)\n"
-    "    return next(t for t in list_tasks(conn) if t['id'] == task_id)\n\n"
-    "@app.delete('/api/tasks/{task_id}')\n"
-    "def remove(task_id: int):\n"
-    "    conn = _get_task_or_404(task_id)\n"
-    "    delete_task(conn, task_id)\n"
-    "    return {'ok': True}\n"
-)
+_GOOD_API = "from contextlib import asynccontextmanager\nfrom fastapi import FastAPI, Depends, HTTPException\nfrom fastapi.responses import FileResponse\nfrom pydantic import BaseModel, field_validator\nfrom pathlib import Path\nfrom taskproj.db import create_connection, init_db, add_task, list_tasks, complete_task, delete_task\nfrom taskproj.config import get_db_path\n\n@asynccontextmanager\nasync def lifespan(app):\n    conn=create_connection(get_db_path())\n    try: init_db(conn)\n    finally: conn.close()\n    yield\n\ndef get_db():\n    conn=create_connection(get_db_path())\n    try: yield conn\n    finally: conn.close()\n\napp=FastAPI(lifespan=lifespan)\n@app.get('/health')\ndef health(): return {'status':'ok'}\n\nclass TaskIn(BaseModel):\n    title:str\n    @field_validator('title')\n    @classmethod\n    def nonempty(cls,value):\n        if not value.strip(): raise ValueError('标题不能为空')\n        return value.strip()\n\nclass Task(BaseModel):\n    id:int\n    title:str\n    done:bool\n\n@app.get('/api/tasks',response_model=list[Task])\ndef tasks(conn=Depends(get_db)):\n    return list_tasks(conn)\n\n@app.post('/api/tasks',status_code=201,response_model=Task)\ndef create(body:TaskIn,conn=Depends(get_db)):\n    task_id=add_task(conn,body.title)\n    return next(row for row in list_tasks(conn) if row['id']==task_id)\n\n@app.patch('/api/tasks/{task_id}/done',response_model=Task)\ndef complete(task_id:int,conn=Depends(get_db)):\n    if not complete_task(conn,task_id): raise HTTPException(404,'任务不存在')\n    return next(row for row in list_tasks(conn) if row['id']==task_id)\n\n@app.delete('/api/tasks/{task_id}')\ndef remove(task_id:int,conn=Depends(get_db)):\n    if not delete_task(conn,task_id): raise HTTPException(404,'任务不存在')\n    return {'ok':True}\n"
 
-_GOOD_CLI = (
-    "import argparse\n"
-    "from taskproj.db import add_task, complete_task, create_connection, delete_task, init_db, list_tasks\n"
-    "from taskproj.config import get_db_path\n\n"
-    "def build_parser():\n"
-    "    parser = argparse.ArgumentParser()\n"
-    "    sub = parser.add_subparsers(dest='command', required=True)\n"
-    "    add = sub.add_parser('add')\n"
-    "    add.add_argument('title')\n"
-    "    sub.add_parser('list')\n"
-    "    done = sub.add_parser('done')\n"
-    "    done.add_argument('task_id', type=int)\n"
-    "    rm = sub.add_parser('rm')\n"
-    "    rm.add_argument('task_id', type=int)\n"
-    "    return parser\n\n"
-    "def main(argv=None):\n"
-    "    args = build_parser().parse_args(argv)\n"
-    "    conn = create_connection(get_db_path())\n"
-    "    if args.command == 'add':\n"
-    "        add_task(conn, args.title)\n"
-    "    elif args.command == 'list':\n"
-    "        for t in list_tasks(conn):\n"
-    "            done_flag = '[done]' if t['done'] else '[]'\n"
-    "            print(f\"{t['id']}. {t['title']} {done_flag}\")\n"
-    "    elif args.command == 'done':\n"
-    "        complete_task(conn, args.task_id)\n"
-    "    elif args.command == 'rm':\n"
-    "        delete_task(conn, args.task_id)\n"
-    "    return 0\n\n"
-    "if __name__ == '__main__':\n"
-    "    raise SystemExit(main())\n"
-)
+_GOOD_CLI = 'import argparse\nimport sys\nfrom taskproj.db import add_task, complete_task, create_connection, delete_task, init_db, list_tasks\nfrom taskproj.config import get_db_path\n\ndef build_parser():\n    parser=argparse.ArgumentParser()\n    sub=parser.add_subparsers(dest=\'command\',required=True)\n    add=sub.add_parser(\'add\')\n    add.add_argument(\'title\')\n    sub.add_parser(\'list\')\n    done=sub.add_parser(\'done\')\n    done.add_argument(\'task_id\',type=int)\n    rm=sub.add_parser(\'rm\')\n    rm.add_argument(\'task_id\',type=int)\n    return parser\n\ndef main(argv=None):\n    args=build_parser().parse_args(argv)\n    conn=create_connection(get_db_path())\n    try:\n        init_db(conn)\n        if args.command==\'add\':\n            add_task(conn,args.title)\n        elif args.command==\'list\':\n            for task in list_tasks(conn):\n                flag=\'[done]\' if task[\'done\'] else \'[]\'\n                print(f"{task[\'id\']}. {task[\'title\']} {flag}")\n        elif args.command==\'done\':\n            if not complete_task(conn,args.task_id):\n                print(\'任务不存在\',file=sys.stderr)\n                return 2\n        elif args.command==\'rm\':\n            if not delete_task(conn,args.task_id):\n                print(\'任务不存在\',file=sys.stderr)\n                return 2\n        return 0\n    except ValueError:\n        print(\'标题不能为空\',file=sys.stderr)\n        return 2\n    finally:\n        conn.close()\n\nif __name__==\'__main__\':\n    raise SystemExit(main())\n'
 
-_TEST_API = (
-    "import os\n"
-    "from fastapi.testclient import TestClient\n"
-    "from taskproj.api import app\n\n"
-    "client = TestClient(app)\n\n"
-    "def test_health(tmp_path):\n"
-    "    os.environ['TASKPROJ_DB'] = str(tmp_path / 't.db')\n"
-    "    resp = client.get('/api/tasks')\n"
-    "    assert resp.status_code == 200\n"
-    "    assert resp.json() == []\n\n"
-    "def test_crud(tmp_path):\n"
-    "    os.environ['TASKPROJ_DB'] = str(tmp_path / 't.db')\n"
-    "    resp = client.post('/api/tasks', json={'title': '买牛奶'})\n"
-    "    assert resp.status_code == 200\n"
-    "    task = resp.json()\n"
-    "    assert task['title'] == '买牛奶'\n"
-    "    assert task['done'] is False\n"
-    "    tid = task['id']\n"
-    "    assert any(t['id'] == tid for t in client.get('/api/tasks').json())\n"
-    "    resp = client.patch(f'/api/tasks/{tid}/done')\n"
-    "    assert resp.status_code == 200\n"
-    "    assert client.get('/api/tasks').json()[0]['done'] is True\n"
-    "    resp = client.delete(f'/api/tasks/{tid}')\n"
-    "    assert resp.status_code == 200\n"
-    "    assert client.get('/api/tasks').json() == []\n\n"
-    "def test_404(tmp_path):\n"
-    "    os.environ['TASKPROJ_DB'] = str(tmp_path / 't.db')\n"
-    "    assert client.patch('/api/tasks/999999/done').status_code == 404\n"
-    "    assert client.delete('/api/tasks/999999').status_code == 404\n\n"
-    "def test_422(tmp_path):\n"
-    "    os.environ['TASKPROJ_DB'] = str(tmp_path / 't.db')\n"
-    "    assert client.post('/api/tasks', json={'title': ''}).status_code == 422\n"
-)
+_TEST_API = 'import pytest\nfrom fastapi.testclient import TestClient\nfrom taskproj.api import app\n\n@pytest.fixture\ndef client(tmp_path,monkeypatch):\n    monkeypatch.setenv(\'TASKPROJ_DB\',str(tmp_path/\'api.db\'))\n    with TestClient(app) as client:\n        yield client\n\ndef test_flow(client):\n    assert client.get(\'/health\').status_code==200\n    assert client.get(\'/api/tasks\').json()==[]\n    created=client.post(\'/api/tasks\',json={\'title\':\'散步\'})\n    assert created.status_code==201\n    task=created.json()\n    assert type(task[\'id\']) is int\n    assert task[\'title\']==\'散步\'\n    assert task[\'done\'] is False\n    tid=task[\'id\']\n    assert client.get(\'/api/tasks\').json()==[task]\n    assert client.patch(f\'/api/tasks/{tid}/done\').status_code==200\n    assert client.get(\'/api/tasks\').json()[0][\'done\'] is True\n    deleted=client.delete(f\'/api/tasks/{tid}\')\n    assert deleted.status_code==200\n    assert deleted.json()=={\'ok\':True}\n    assert client.get(\'/api/tasks\').json()==[]\n\ndef test_errors(client):\n    before=client.get(\'/api/tasks\').json()\n    for body in ({},{\'title\':\'\'},{\'title\':\'  \'}):\n        response=client.post(\'/api/tasks\',json=body)\n        assert response.status_code==422\n        assert response.json()[\'detail\']\n        assert \'Traceback\' not in response.text\n    assert client.get(\'/api/tasks\').json()==before\n    for response in (client.patch(\'/api/tasks/999999/done\'),client.delete(\'/api/tasks/999999\')):\n        assert response.status_code==404\n        assert response.json()[\'detail\']\n        assert \'Traceback\' not in response.text\n    task=client.post(\'/api/tasks\',json={\'title\':\'可删除\'}).json()\n    assert client.delete(f"/api/tasks/{task[\'id\']}").status_code==200\n    assert client.delete(f"/api/tasks/{task[\'id\']}").status_code==404\n'
 
 
 def _write_workspace_project(
@@ -800,41 +677,7 @@ def _write_workspace_project(
         (ws / "taskproj/api.py").write_text(api, encoding="utf-8")
 
 
-_GOOD_API_FULL = (
-    "from fastapi import FastAPI, HTTPException\n"
-    "from fastapi.responses import FileResponse\n"
-    "from pydantic import BaseModel\n"
-    "from pathlib import Path\n"
-    "from taskproj.db import add_task, complete_task, create_connection, delete_task, list_tasks\n"
-    "from taskproj.config import get_db_path\n\n"
-    "class TaskIn(BaseModel):\n    title: str\n\n"
-    "class Task(BaseModel):\n    id: int\n    title: str\n    done: bool\n\n"
-    "app = FastAPI()\n\n"
-    "def _conn():\n    return create_connection(get_db_path())\n\n"
-    "def _get_task_or_404(task_id: int):\n"
-    "    conn = _conn()\n"
-    "    rows = conn.execute('SELECT id FROM tasks WHERE id = ?', (task_id,)).fetchall()\n"
-    "    if not rows:\n"
-    "        raise HTTPException(status_code=404, detail='任务不存在')\n"
-    "    return conn\n\n"
-    "@app.get('/health')\ndef health():\n    return {'status': 'ok'}\n\n"
-    "@app.get('/')\ndef index():\n    return FileResponse(Path('taskproj/static/index.html'))\n\n"
-    "@app.get('/api/tasks')\ndef read_tasks():\n    return list_tasks(_conn())\n\n"
-    "@app.post('/api/tasks')\ndef create_task(task: TaskIn):\n"
-    "    if not task.title.strip():\n"
-    "        raise HTTPException(status_code=422, detail='标题不能为空')\n"
-    "    conn = _conn()\n"
-    "    tid = add_task(conn, task.title)\n"
-    "    return next(t for t in list_tasks(conn) if t['id'] == tid)\n\n"
-    "@app.patch('/api/tasks/{task_id}/done')\ndef complete(task_id: int):\n"
-    "    conn = _get_task_or_404(task_id)\n"
-    "    complete_task(conn, task_id)\n"
-    "    return next(t for t in list_tasks(conn) if t['id'] == task_id)\n\n"
-    "@app.delete('/api/tasks/{task_id}')\ndef remove(task_id: int):\n"
-    "    conn = _get_task_or_404(task_id)\n"
-    "    delete_task(conn, task_id)\n"
-    "    return {'ok': True}\n"
-)
+_GOOD_API_FULL = "from contextlib import asynccontextmanager\nfrom fastapi import FastAPI, Depends, HTTPException\nfrom fastapi.responses import FileResponse\nfrom pydantic import BaseModel, field_validator\nfrom pathlib import Path\nfrom taskproj.db import create_connection, init_db, add_task, list_tasks, complete_task, delete_task\nfrom taskproj.config import get_db_path\n\n@asynccontextmanager\nasync def lifespan(app):\n    conn=create_connection(get_db_path())\n    try: init_db(conn)\n    finally: conn.close()\n    yield\n\ndef get_db():\n    conn=create_connection(get_db_path())\n    try: yield conn\n    finally: conn.close()\n\napp=FastAPI(lifespan=lifespan)\n@app.get('/health')\ndef health(): return {'status':'ok'}\n\nclass TaskIn(BaseModel):\n    title:str\n    @field_validator('title')\n    @classmethod\n    def nonempty(cls,value):\n        if not value.strip(): raise ValueError('标题不能为空')\n        return value.strip()\n\nclass Task(BaseModel):\n    id:int\n    title:str\n    done:bool\n\n@app.get('/api/tasks',response_model=list[Task])\ndef tasks(conn=Depends(get_db)):\n    return list_tasks(conn)\n\n@app.post('/api/tasks',status_code=201,response_model=Task)\ndef create(body:TaskIn,conn=Depends(get_db)):\n    task_id=add_task(conn,body.title)\n    return next(row for row in list_tasks(conn) if row['id']==task_id)\n\n@app.patch('/api/tasks/{task_id}/done',response_model=Task)\ndef complete(task_id:int,conn=Depends(get_db)):\n    if not complete_task(conn,task_id): raise HTTPException(404,'任务不存在')\n    return next(row for row in list_tasks(conn) if row['id']==task_id)\n\n@app.delete('/api/tasks/{task_id}')\ndef remove(task_id:int,conn=Depends(get_db)):\n    if not delete_task(conn,task_id): raise HTTPException(404,'任务不存在')\n    return {'ok':True}\n\n@app.get('/')\ndef index():\n    return FileResponse(Path(__file__).parent/'static'/'index.html')\n"
 
 _GOOD_INDEX_HTML = (
     "<!doctype html>\n<html><body>\n"
@@ -852,7 +695,7 @@ _GOOD_PYPROJECT = (
 
 _FULL_PROJECT: dict[str, str] = {
     "README.md": "# Task Manager\n",
-    "contract.json": '{"task": {"id": 1, "title": "test", "done": false}, "endpoints": []}\n',
+    "contract.json": _GOOD_CONTRACT,
     "pyproject.toml": (
         '[build-system]\nrequires = ["setuptools"]\nbuild-backend = "setuptools.build_meta"\n\n'
         '[project]\nname = "task-manager"\nversion = "0.1.0"\nrequires-python = ">=3.11"\n'
@@ -860,7 +703,7 @@ _FULL_PROJECT: dict[str, str] = {
     "docs/requirements.md": "## 需求\n\n实现一个任务管理 CLI 与 Web API。\n",
     "docs/runbook.md": "## 运行手册\n\npython -m taskproj.cli add 买牛奶\n",
     "docs/review.md": "## 复盘\n\n本次任务完成 CLI 与 API 的 CRUD。\n",
-    "taskproj/__init__.py": "",
+    "taskproj/__init__.py": '__version__ = "0.1.0"\n',
     "taskproj/config.py": _GOOD_CONFIG,
     "taskproj/main.py": (
         "def main(argv=None):\n    print('任务管理项目已启动')\n    return 0\n\n"
@@ -872,29 +715,10 @@ _FULL_PROJECT: dict[str, str] = {
     "taskproj/static/index.html": _GOOD_INDEX_HTML,
     "tests/__init__.py": "",
     "tests/test_project.py": (
-        "import sqlite3\nfrom taskproj.db import init_db, add_task, list_tasks, complete_task, delete_task\n\n"
-        "def test_crud(tmp_path):\n"
-        "    conn = sqlite3.connect(str(tmp_path / 't.db'))\n"
-        "    init_db(conn)\n"
-        "    tid = add_task(conn, 'test')\n"
-        "    assert list_tasks(conn)[0]['title'] == 'test'\n"
-        "    complete_task(conn, tid)\n"
-        "    assert list_tasks(conn)[0]['done'] is True\n"
-        "    delete_task(conn, tid)\n"
-        "    assert len(list_tasks(conn)) == 0\n"
+        _TEST_DB
     ),
     "tests/test_api.py": (
-        "from fastapi.testclient import TestClient\n"
-        "from taskproj.api import app\n\n"
-        "def test_health():\n"
-        "    resp = TestClient(app).get('/api/tasks')\n"
-        "    assert resp.status_code == 200\n\n"
-        "def test_crud():\n"
-        "    client = TestClient(app)\n"
-        "    assert client.post('/api/tasks', json={'title': 'x'}).json()['id'] == 1\n"
-        "    assert client.get('/api/tasks').status_code == 200\n"
-        "    assert client.patch('/api/tasks/1/done').json()['done'] is True\n"
-        "    assert client.delete('/api/tasks/1').status_code == 200\n"
+        _TEST_API
     ),
 }
 
@@ -1013,11 +837,13 @@ def test_beginner_goal_and_first_functions_use_actual_contract(tmp_path: Path) -
 
 def test_d20_create_list_does_not_require_update_delete(tmp_path: Path) -> None:
     section = _section(_curriculum(), "D20", "D20-create-list")
-    _write_workspace_project(tmp_path, db="")
-    code = (
-        "import sqlite3\n"
+    # The submitted file continues connection/schema from the previous section.
+    previous = _GOOD_DB.split("def add_task", 1)[0]
+    _write_workspace_project(tmp_path, db=previous)
+    code = previous + (
         "def add_task(conn, title):\n"
-        "    if not title.strip(): raise ValueError('标题为空')\n"
+        "    title = title.strip()\n"
+        "    if not title: raise ValueError('标题为空')\n"
         "    cur = conn.execute('INSERT INTO tasks(title) VALUES (?)', (title,))\n"
         "    conn.commit()\n"
         "    return cur.lastrowid\n"
@@ -1025,6 +851,8 @@ def test_d20_create_list_does_not_require_update_delete(tmp_path: Path) -> None:
         "    rows = conn.execute('SELECT id, title, done FROM tasks ORDER BY id').fetchall()\n"
         "    return [{'id': row[0], 'title': row[1], 'done': bool(row[2])} for row in rows]\n"
     )
+    assert "def create_connection" in code and "def init_db" in code
+    assert "def complete_task" not in code and "def delete_task" not in code
     assert validate_code(section, code, tmp_path)["passed"]
     later = _section(_curriculum(), "D20", "D20-update-delete")
     assert not validate_code(later, code, tmp_path)["passed"]
@@ -1035,7 +863,7 @@ def test_d23_parser_only_requires_add_and_list(tmp_path: Path) -> None:
     _write_workspace_project(tmp_path, db=_GOOD_DB, config=_GOOD_CONFIG)
     code = (
         "import argparse\n"
-        "from taskproj.db import add_task, create_connection, list_tasks\n"
+        "from taskproj.db import add_task, create_connection, init_db, list_tasks\n"
         "from taskproj.config import get_db_path\n"
         "def build_parser():\n"
         "    parser = argparse.ArgumentParser()\n"
@@ -1047,9 +875,11 @@ def test_d23_parser_only_requires_add_and_list(tmp_path: Path) -> None:
         "def main(argv=None):\n"
         "    args = build_parser().parse_args(argv)\n"
         "    conn = create_connection(get_db_path())\n"
+        "    init_db(conn)\n"
         "    if args.command == 'add': add_task(conn, args.title)\n"
         "    if args.command == 'list':\n"
         "        for item in list_tasks(conn): print(item['title'])\n"
+        "    conn.close()\n"
         "    return 0\n"
         "if __name__ == '__main__': raise SystemExit(main())\n"
     )
