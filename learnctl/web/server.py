@@ -15,14 +15,15 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path, PurePosixPath, PureWindowsPath
 from typing import Any
 
-from .. import ai
+from .. import ai, grading
 from ..ai import AiError, AiSession
 from ..curriculum import load_curriculum, parse_test_command
-from ..diagnostic import QUESTIONS, collect_answers, persist_diagnostic, run_diagnostics, validate_answers_data
+from ..diagnostic import QUESTIONS, _normalize, collect_answers, persist_diagnostic, run_diagnostics, validate_answers_data
 from ..envcheck import run_action
 from ..errors import BlockedError, DataError, LearnctlError, UsageError
-from ..experiments import run_experiment
+from ..experiments import run_experiment, MAX_CODE_BYTES
 from ..practice import find_section, load_draft, run_validation, save_draft
+from ..local_practice import check_practice, practice_path, prepare_practice
 from ..progress import load_progress
 from ..test_runner import run_exercise_capture
 from ..workflow import (
@@ -126,6 +127,7 @@ class LearnctlServer(ThreadingHTTPServer):
         self.running_exercises: set[str] = set()
         self.running_sections: set[str] = set()
         self.ai_session = AiSession()
+        self.grading = grading.GradingStore()
         # 变式题只保存在当前服务进程内存（按生成顺序淘汰），不落盘、不跨服务共享。
         self.variations: "OrderedDict[str, dict[str, Any]]" = OrderedDict()
         self.variations_lock = threading.RLock()
@@ -205,6 +207,10 @@ class LearnctlRequestHandler(BaseHTTPRequestHandler):
             self._send_static(path)
         except LearnctlError as exc:
             self._send_json(_status_for_error(exc), _json_error(str(exc), exc.exit_code))
+        except (BrokenPipeError, ConnectionResetError, ConnectionAbortedError):
+            # Navigation/edit cancellation closes the client; do not log a traceback.
+            self.close_connection = True
+            return
         except (OSError, ValueError) as exc:
             self._send_json(HTTPStatus.INTERNAL_SERVER_ERROR, _json_error(f"本地操作失败：{exc}"))
 
@@ -282,6 +288,9 @@ class LearnctlRequestHandler(BaseHTTPRequestHandler):
             return self._env_action()
         if path == "/api/ai/status" and method == "GET":
             return self._ai_status()
+        if path == "/api/ai/grading-diagnostics" and method == "GET":
+            return {"ok": True, "validation_revision": grading.VALIDATION_REVISION,
+                    "diagnostics": self.app_server.grading.diagnostic_snapshot()}
         if path == "/api/ai/session-key" and method == "POST":
             return self._ai_session_key()
         if path == "/api/ai/test" and method == "POST":
@@ -290,8 +299,10 @@ class LearnctlRequestHandler(BaseHTTPRequestHandler):
             return self._ai_chat()
         if path == "/api/ai/generate" and method == "POST":
             return self._ai_generate()
-        if path == "/api/ai/review" and method == "POST":
-            return self._ai_review()
+        if path in {"/api/ai/grade", "/api/ai/review"} and method == "POST":
+            return self._ai_grade()
+        if path == "/api/ai/variation-submit" and method == "POST":
+            return self._ai_variation_submit()
         task_status_match = re.fullmatch(r"/api/tasks/([^/]+)/status", path)
         if task_status_match and method == "POST":
             return self._task_status(urllib.parse.unquote(task_status_match.group(1)))
@@ -308,10 +319,35 @@ class LearnctlRequestHandler(BaseHTTPRequestHandler):
         if experiment_match and method == "POST":
             body = self._read_json()
             curriculum, _, _, _, _ = self._context()
-            _, section = find_section(curriculum, urllib.parse.unquote(experiment_match.group(1)),
+            task, section = find_section(curriculum, urllib.parse.unquote(experiment_match.group(1)),
                                      urllib.parse.unquote(experiment_match.group(2)))
             with self.app_server.experiment_lock:
-                return run_experiment(section, body)
+                result = run_experiment(section, body)
+            mode, index = result["mode"], result["index"]
+            items = section.get("examples", []) if mode == "example" else section["practice_first"][mode + "s"]
+            item = items[index]
+            content = body.get("content", item.get("code", item.get("starter", "")))
+            target = {k: item.get(k, "") for k in ("title", "instructions", "rule", "starter", "output")}
+            target.update(mode=mode, index=index, kind="code",
+                          title=item.get("title") or f"{section['title']} · 当前{mode}",
+                          instructions=item.get("instructions") or item.get("rule") or item.get("explanation", ""),
+                          expected_behavior="运行当前片段并核对本次标准输出，不替代本节正式作业。")
+            result["grading_token"] = self.app_server.grading.add(grading.lesson_context(task, section, target), content, result)
+            return result
+        local_file_match = re.fullmatch(r"/api/tasks/([^/]+)/sections/([^/]+)/local-file", path)
+        if local_file_match and method in {"GET", "POST"}:
+            task_id, section_id = map(urllib.parse.unquote, local_file_match.groups())
+            with self.app_server.state_lock:
+                curriculum, progress, _, _, _ = self._context()
+                if method == "POST":
+                    self._read_json()
+                    return prepare_practice(curriculum, progress, task_id, section_id, self.app_server.project_root)
+                task, section = find_section(curriculum, task_id, section_id)
+                relative = practice_path(task, section).as_posix()
+                target = resolve_under_root(self.app_server.project_root, relative)
+                if not target.exists():
+                    return {"path": relative, "exists": False}
+                return {"path": relative, "exists": True, "content": read_utf8(target)}
         section_validate_match = re.fullmatch(r"/api/tasks/([^/]+)/sections/([^/]+)/validate", path)
         if section_validate_match and method == "POST":
             return self._section_validate(
@@ -430,6 +466,7 @@ class LearnctlRequestHandler(BaseHTTPRequestHandler):
             files.append({**item, "exists": file_path.is_file()})
         payload["editable_files"] = files
         payload["note_path"] = f".learn/notes/{task_id}.md"
+        payload["project_root"] = str(self.app_server.project_root)
         return payload
 
     def _lesson_position(self, task_id: str) -> dict[str, Any]:
@@ -455,7 +492,8 @@ class LearnctlRequestHandler(BaseHTTPRequestHandler):
     def _section_validate(self, task_id: str, section_id: str) -> dict[str, Any]:
         body = self._read_json()
         content = body.get("content")
-        if not isinstance(content, str):
+        local_file = body.get("source") == "local_file"
+        if not local_file and not isinstance(content, str):
             raise UsageError("验证需要字符串 content")
         run_key = f"lesson:{task_id}/{section_id}"
         with self.app_server.running_lock:
@@ -466,13 +504,22 @@ class LearnctlRequestHandler(BaseHTTPRequestHandler):
             # 执行、真实产物和完成证据属于一次操作，其他页面写入须等待它结束。
             with self.app_server.state_lock:
                 curriculum, progress, _, progress_path, _ = self._context()
-                task, _ = find_section(curriculum, task_id, section_id)
+                task, section = find_section(curriculum, task_id, section_id)
                 assert_section_unlocked(curriculum, progress, task, section_id)
-                result = run_validation(curriculum, task_id, section_id, content, self.app_server.project_root)
-                save_draft(self.app_server.project_root, task_id, section_id, content)
-                if result.get("passed"):
-                    complete_section(curriculum, progress, progress_path, task_id, section_id)
+                grading_context = grading.lesson_context(task, section, project_root=self.app_server.project_root)
+                if local_file:
+                    result = check_practice(curriculum, progress, progress_path, task_id, section_id, self.app_server.project_root)
+                    content = result["content"]
+                else:
+                    result = run_validation(curriculum, task_id, section_id, content, self.app_server.project_root)
+                from ..practice import WORKSPACE_ROOT
+                grading.check_snapshot(grading_context, self.app_server.project_root / WORKSPACE_ROOT)
+                if not local_file:
+                    save_draft(self.app_server.project_root, task_id, section_id, content)
+                    if result.get("passed"):
+                        complete_section(curriculum, progress, progress_path, task_id, section_id)
                 result["completed"] = bool(result.get("passed"))
+                result["grading_token"] = self.app_server.grading.add(grading_context, content, result)
                 return result
         finally:
             with self.app_server.running_lock:
@@ -509,6 +556,9 @@ class LearnctlRequestHandler(BaseHTTPRequestHandler):
                                 complete_section(curriculum, progress, progress_path, task["id"], section["id"])
                                 completed = True
             result["completed"] = completed
+            if gated_sections:
+                task, section = gated_sections[0]
+                result["grading_token"] = self.app_server.grading.add(grading.lesson_context(task, section), "", result)
             return result
 
     def _catalog(self, query: dict[str, list[str]]) -> dict[str, Any]:
@@ -654,6 +704,12 @@ class LearnctlRequestHandler(BaseHTTPRequestHandler):
             collected = collect_answers(curriculum, answers, prompt_stream=io.StringIO(), input_stream=io.StringIO())
             report = run_diagnostics(curriculum, collected, progress["options"])
             persist_diagnostic(report, curriculum, progress, report_path, progress_path)
+        target = {"kind": "diagnostic", "questions": {did: {cid: item[0] for cid, item in cases.items()}
+                                                      for did, cases in QUESTIONS.items()}}
+        evidence = {**report, "checks": [{"name": f"{did}/{cid}",
+            "passed": _normalize(collected[did][cid]) == _normalize(item[1])}
+            for did, cases in QUESTIONS.items() for cid, item in cases.items()]}
+        report["grading_token"] = self.app_server.grading.add(target, json.dumps(collected, ensure_ascii=False), evidence)
         return report
 
     def _exercise_run(self, exercise_id: str) -> dict[str, Any]:
@@ -667,7 +723,12 @@ class LearnctlRequestHandler(BaseHTTPRequestHandler):
                 exercise = curriculum["_index"]["exercises"].get(exercise_id)
                 if exercise is None:
                     raise UsageError(f"练习 ID 不存在：{exercise_id}")
-                return run_exercise_capture(exercise, self.app_server.project_root, progress, progress_path)
+                context = grading.exercise_context(curriculum, exercise, self.app_server.project_root)
+                result = run_exercise_capture(exercise, self.app_server.project_root, progress, progress_path)
+                grading.check_snapshot(context, self.app_server.project_root)
+                evidence = {**result, "passed": result["exit_code"] == 0}
+                result["grading_token"] = self.app_server.grading.add(context, "", evidence)
+                return result
         finally:
             with self.app_server.running_lock:
                 self.app_server.running_exercises.discard(exercise_id)
@@ -689,6 +750,8 @@ class LearnctlRequestHandler(BaseHTTPRequestHandler):
             "base_url": ai.BASE_URL,
             "configured": session.configured(),
             "key_source": source,
+            "grading_analysis_version": grading.ANALYSIS_VERSION,
+            "grading_validation_revision": grading.VALIDATION_REVISION,
         }
 
     def _ai_session_key(self) -> dict[str, Any]:
@@ -771,45 +834,61 @@ class LearnctlRequestHandler(BaseHTTPRequestHandler):
                 raise UsageError("变式题与当前任务/小节不匹配")
             return record["variation"]
 
-    def _ai_review(self) -> dict[str, Any]:
+    def _ai_grade(self) -> dict[str, Any]:
         body = self._read_json()
-        task_id = body.get("task_id")
-        section_id = body.get("section_id")
-        content = body.get("content")
-        if not isinstance(task_id, str) or not isinstance(section_id, str) or not isinstance(content, str):
-            raise UsageError("review 需要 task_id、section_id 与字符串 content")
-        validation_summary = body.get("validation_summary", "")
-        if not isinstance(validation_summary, str):
-            validation_summary = ""
-        has_variation_id = "variation_id" in body
-        variation_id = body.get("variation_id")
-        if has_variation_id and (not isinstance(variation_id, str) or not variation_id.strip()):
-            raise UsageError("review 需要非空字符串 variation_id")
-        curriculum, _, _, _, _ = self._context()
+        token = body.get("grading_token")
+        # Backward-compatible variation review uses the authoritative stored task,
+        # then returns the same safe feedback as grade (never client summaries).
+        if not token and "variation_id" in body:
+            token = self._ai_variation_submit(body)["grading_token"]
+        level = body.get("hint_level", 1)
+        if not isinstance(token, str) or not token or len(token) > 100:
+            raise UsageError("AI 判题需要本地运行返回的 grading_token；请先运行当前提交，变式题请使用 variation-submit")
+        if isinstance(level, bool) or not isinstance(level, int) or level not in {1, 2, 3}:
+            raise UsageError("hint_level 必须是 1、2 或 3")
         try:
-            if has_variation_id:
-                variation = self._variation_lookup(variation_id, task_id, section_id)
-                data = ai.review_variation(
-                    self.app_server.ai_session,
-                    curriculum,
-                    task_id,
-                    section_id,
-                    variation,
-                    content,
-                    validation_summary,
-                )
-            else:
-                data = ai.review(
-                    self.app_server.ai_session,
-                    curriculum,
-                    task_id,
-                    section_id,
-                    content,
-                    validation_summary,
-                )
+            feedback = self.app_server.grading.evaluate(token, self.app_server.ai_session, level)
         except AiError as exc:
-            return _json_error(str(exc))
-        return {"ok": True, "review": data}
+            error = _json_error(grading._redact(str(exc), self.app_server.ai_session.get_key()))
+            if isinstance(exc, grading.GradingOutputError):
+                error.update(error_code=exc.code, retryable=False)
+                if getattr(exc, "diagnostic_id", None):
+                    error["diagnostic_id"] = exc.diagnostic_id
+            return error
+        return {"ok": True, "feedback": feedback}
+
+    def _ai_variation_submit(self, body: dict[str, Any] | None = None) -> dict[str, Any]:
+        if body is None:
+            body = self._read_json()
+        task_id, section_id = body.get("task_id"), body.get("section_id")
+        variation_id, content = body.get("variation_id"), body.get("content")
+        if not all(isinstance(item, str) and item for item in (task_id, section_id, variation_id, content)):
+            raise UsageError("变式提交需要 task_id、section_id、variation_id 与非空 content")
+        if len(content.encode("utf-8")) > MAX_CODE_BYTES:
+            raise UsageError("变式提交超过 32 KiB 限制")
+        curriculum, _, _, _, _ = self._context()
+        task, section = find_section(curriculum, task_id, section_id)
+        variation = self._variation_lookup(variation_id, task_id, section_id)
+        kind = section["practice"]["kind"]
+        result: dict[str, Any] = {"passed": None, "completed": False, "message": "暂无本地行为测试；AI 判断仅作指导。"}
+        # Generated tasks have no trusted behavior oracle. Check syntax only; never
+        # execute arbitrary generated commands or treat process success as correctness.
+        if kind == "code" and section["practice"].get("file_name", "").endswith(".py"):
+            try:
+                compile(content, "variation.py", "exec")
+            except (SyntaxError, ValueError) as exc:
+                result.update(passed=False, stderr=f"{type(exc).__name__}: {exc}")
+            else:
+                result["message"] = "Python 语法检查通过；暂无本地行为测试，不计入课程完成。"
+        elif kind == "json":
+            try:
+                json.loads(content)
+            except json.JSONDecodeError as exc:
+                result.update(passed=False, stderr=f"JSONDecodeError: {exc}")
+            else:
+                result["message"] = "JSON 解析通过；暂无本地字段与行为测试，不计入课程完成。"
+        result["grading_token"] = self.app_server.grading.add(grading.lesson_context(task, section, variation), content, result)
+        return result
 
     # ------------------------------------------------------------------
     # 工作区（workspace）文件树

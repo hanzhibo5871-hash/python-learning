@@ -14,6 +14,21 @@ import pytest
 REPOSITORY = Path(__file__).resolve().parents[1]
 
 
+@pytest.fixture(autouse=True)
+def isolate_live_ai_configuration(monkeypatch):
+    """Never inherit user credentials; real provider transport requires a mock."""
+    import urllib.parse
+    import urllib.request
+    monkeypatch.delenv("DEEPSEEK_API_KEY", raising=False)
+    original = urllib.request.urlopen
+    def guarded_urlopen(target, *args, **kwargs):
+        url = target.full_url if isinstance(target, urllib.request.Request) else str(target)
+        if urllib.parse.urlsplit(url).hostname == "api.deepseek.com":
+            raise RuntimeError("测试禁止真实 DeepSeek 请求，请 mock AI 传输")
+        return original(target, *args, **kwargs)
+    monkeypatch.setattr(urllib.request, "urlopen", guarded_urlopen)
+
+
 @pytest.fixture
 def project(tmp_path: Path) -> Path:
     data_dir = tmp_path / "data"
@@ -81,3 +96,21 @@ def request(server: Any, method: str, path: str, body: dict[str, Any] | None = N
     output = (response.status, result, dict(response.getheaders()))
     connection.close()
     return output
+
+
+def grading_reply(payload, verdict='needs_work'):
+    """Mock the new protocol from the authoritative request, never real API."""
+    data = json.loads(payload['messages'][-1]['content'])
+    lines = data['submission'].splitlines()
+    refs = [f'submission:{min(2,len(lines))}'] if lines else ['stdout'] if 'stdout' in data['evidence'] else ['run']
+    local = data['local_evidence'].get('passed')
+    status = 'met' if verdict == 'passed' else 'unmet' if local is False else 'uncertain'
+    name = data['lesson'].get('title', '当前题目')
+    items = [{'id': r['id'], 'requirement':f"{name}：核对当前要求第{i+1}项", 'status': status, 'explanation': f'{name}：已按当前证据逐项核对这一要求。', 'evidence': refs} for i,r in enumerate(data['requirements'])]
+    issues = [] if verdict == 'passed' else [{'requirement_ids': [r['id'] for r in data['requirements']],
+        'cause': f'{name}：当前提交的结果没有随输入变化，需要核对本题规定的数据流。',
+        'evidence': refs, 'hints': ['比较本题两组不同输入时，实际结果是否跟着变化？',
+        '追踪输入进入当前函数后，在哪一步停止影响结果？', '对照本题要求，返回位置是否使用了当前输入而非固定值？']}]
+    if local is True and issues:
+        issues[0]['cause'] = f'{name}：本地测试已经通过，但额外边界尚需复查，不能撤销完成记录。'
+    return {'judgement': verdict, 'requirements': items, 'issues': issues, 'limitations': []}

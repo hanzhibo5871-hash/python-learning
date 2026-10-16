@@ -67,6 +67,9 @@ def build_parser() -> argparse.ArgumentParser:
     today = commands.add_parser("today", help="查看当前主线任务")
     today.add_argument("--json", action="store_true", help="仅输出 JSON")
 
+    catalog = commands.add_parser("catalog", help="查看全部课程目录与权威学习进度")
+    catalog.add_argument("--json", action="store_true", help="仅输出 JSON")
+
     lesson = commands.add_parser("lesson", help="查看任务知识卡")
     lesson.add_argument("task_id", nargs="?", metavar="TASK", help="任务 ID，省略时使用今日任务")
     lesson.add_argument("--json", action="store_true", help="仅输出 JSON")
@@ -92,6 +95,33 @@ def build_parser() -> argparse.ArgumentParser:
     test = commands.add_parser("test", help="运行课程中指定的 pytest 练习")
     test.add_argument("exercise_id", metavar="EXERCISE")
     test.add_argument("--verbose", action="store_true", help="直接显示 pytest 输出")
+    test.add_argument("--ai", action="store_true", help="测试后使用已配置 DeepSeek 分析原因（联网，不给答案）")
+
+    practice = commands.add_parser("practice", help="准备和检查 D07 起的本地编辑器作业")
+    practice_commands = practice.add_subparsers(dest="practice_command", required=True)
+    for operation, help_text in (("prepare", "准备本地作业文件"), ("check", "检查已保存的本地作业")):
+        action = practice_commands.add_parser(operation, help=help_text)
+        action.add_argument("task_id", metavar="TASK")
+        action.add_argument("section_id", metavar="SECTION")
+        action.add_argument("--json", action="store_true", help="仅输出 JSON")
+
+    example = commands.add_parser("example", help="准备可在编辑器中修改运行的教学示例")
+    example_commands = example.add_subparsers(dest="example_command", required=True)
+    prepare = example_commands.add_parser("prepare", help="准备公开的 Python 教学示例文件")
+    prepare.add_argument("task_id", metavar="TASK")
+    prepare.add_argument("section_id", metavar="SECTION")
+    prepare.add_argument("--source", choices=("card", "example"), required=True)
+    prepare.add_argument("--index", type=int, required=True, help="从 0 开始的示例编号")
+    prepare.add_argument("--json", action="store_true", help="仅输出 JSON")
+
+    ai = commands.add_parser("ai", help="通过 stdin JSON 调用编辑器 AI 助教")
+    ai_commands = ai.add_subparsers(dest="ai_command", required=True)
+    for operation, help_text in (("status", "查看 AI 配置状态"), ("test", "测试一次 AI 连接"), ("ask", "针对当前课时提问")):
+        action = ai_commands.add_parser(operation, help=help_text)
+        if operation == "ask":
+            action.add_argument("task_id", metavar="TASK")
+            action.add_argument("section_id", metavar="SECTION")
+        action.add_argument("--json", action="store_true", help="仅输出 JSON")
 
     serve = commands.add_parser("serve", help="启动本地可视化学习工作台")
     serve.add_argument("--host", default="127.0.0.1")
@@ -145,6 +175,29 @@ _missing_stage_prerequisites = missing_stage_prerequisites
 _module_status = module_status
 _task_payload = task_payload
 _today_payload = today_payload
+
+
+def _catalog_payload(curriculum: dict[str, Any], progress: dict[str, Any]) -> dict[str, Any]:
+    stages = []
+    for stage in curriculum["stages"]:
+        stages.append({
+            "id": stage["id"], "title": stage["title"], "task_ids": stage["task_ids"],
+            "done_count": sum(task_status(progress, task_id) == "done" for task_id in stage["task_ids"]),
+            "total_count": len(stage["task_ids"]),
+        })
+    tasks = []
+    for task in curriculum["tasks"]:
+        missing = missing_prerequisites(task, progress) + missing_stage_prerequisites(curriculum, task, progress)
+        total_sections = len(required_sections(task))
+        tasks.append({
+            "id": task["id"], "stage_id": task["stage_id"], "title": task["title"],
+            "status": task_status(progress, task["id"]), "blocked": bool(missing),
+            "missing_prerequisites": missing,
+            "required_completed": total_sections - len(missing_required_sections(progress, task)),
+            "required_sections": total_sections,
+        })
+    return {"stages": stages, "tasks": tasks, "total_tasks": len(tasks),
+            "done_tasks": sum(task["status"] == "done" for task in tasks)}
 
 
 def _print_today(payload: dict[str, Any]) -> None:
@@ -251,8 +304,43 @@ def main(argv: list[str] | None = None) -> int:
             from .web.server import serve as serve_web
 
             return serve_web(Path.cwd(), args.host, args.port, args.open)
+        if args.command == "ai":
+            from .editor_ai import read_request, run_command
+
+            body = read_request(sys.stdin)
+            result = run_command(args.ai_command, body, Path.cwd(),
+                                 getattr(args, "task_id", None), getattr(args, "section_id", None))
+            if json_output:
+                print(json.dumps(result, ensure_ascii=False))
+            elif args.ai_command == "ask":
+                print(result["answer"])
+            elif args.ai_command == "test":
+                print(result["content"])
+            else:
+                print(f"{result['provider']} / {result['model']}：{'已配置' if result['configured'] else '未配置'}")
+            return 0
         curriculum = load_curriculum(curriculum_path)
+        if args.command == "example":
+            from .teaching_examples import prepare_example
+
+            result = prepare_example(curriculum, args.task_id, args.section_id, args.source, args.index, Path.cwd())
+            if json_output:
+                print(json.dumps(result, ensure_ascii=False))
+            else:
+                print(f"教学示例{'已创建' if result['created'] else '已存在'}：{result['path']}")
+            return 0
         progress = load_progress(progress_path, curriculum)
+        if args.command == "catalog":
+            result = _catalog_payload(curriculum, progress)
+            if json_output:
+                print(json.dumps(result, ensure_ascii=False))
+            else:
+                print(f"课程目录：已完成 {result['done_tasks']}/{result['total_tasks']} 个任务")
+                for stage in result["stages"]:
+                    print(f"  {stage['id']} {stage['title']}：{stage['done_count']}/{stage['total_count']}")
+                for task in result["tasks"]:
+                    print(f"  {task['id']} [{task['status']}] {task['title']}：{task['required_completed']}/{task['required_sections']}")
+            return 0
         if args.command == "diagnose":
             return _diagnose_command(curriculum, progress, progress_path, report_path, json_output, args.answers)
         if args.command == "today":
@@ -285,10 +373,62 @@ def main(argv: list[str] | None = None) -> int:
                 return _set_option(curriculum, progress, progress_path, args)
             _print_progress(curriculum, progress)
             return 0
+        if args.command == "practice":
+            from .local_practice import check_practice, prepare_practice
+
+            if args.practice_command == "prepare":
+                result = prepare_practice(curriculum, progress, args.task_id, args.section_id, Path.cwd())
+                if json_output:
+                    print(json.dumps(result, ensure_ascii=False))
+                else:
+                    print(f"本地作业{'已创建' if result['created'] else '已存在'}：{result['path']}")
+                    for fixture in result["fixtures"]:
+                        print(f"教学文件：{fixture['path']}")
+                return 0
+            result = check_practice(curriculum, progress, progress_path, args.task_id, args.section_id, Path.cwd())
+            if json_output:
+                print(json.dumps(result, ensure_ascii=False))
+            else:
+                print(f"本地作业：{result['path']}")
+                for check in result["checks"]:
+                    print(f"{'通过' if check['passed'] else '未通过'}：{check['name']} {check.get('detail', '')}")
+                for stream in ("stdout", "stderr"):
+                    if result.get(stream):
+                        print(result[stream], end="" if result[stream].endswith("\n") else "\n")
+                if result.get("passed"):
+                    print("本节已通过验证并登记完成。")
+                elif result.get("learning_feedback"):
+                    print(result["learning_feedback"])
+            return 0 if result.get("passed") else 1
         if args.command == "test":
             exercise = curriculum["_index"]["exercises"].get(args.exercise_id)
             if exercise is None:
                 raise UsageError(f"练习 ID 不存在：{args.exercise_id}")
+            if args.ai:
+                from . import ai, grading
+                from .test_runner import run_exercise_capture
+                grading_context = grading.exercise_context(curriculum, exercise, Path.cwd())
+                result = run_exercise_capture(exercise, Path.cwd(), progress, progress_path)
+                grading.check_snapshot(grading_context, Path.cwd())
+                if result["stdout"]:
+                    print(result["stdout"], end="")
+                if result["stderr"]:
+                    print(result["stderr"], end="", file=sys.stderr)
+                try:
+                    feedback = grading.present_feedback(grading.grade(ai.AiSession(), grading_context, "", {**result, "passed": result["exit_code"] == 0}), 1)
+                    print(feedback["summary"])
+                    for item in feedback["requirements"]:
+                        label = {"met": "已完成", "unmet": "未完成", "uncertain": "待确认"}[item["status"]]
+                        print(f"{label}：{item['requirement']}\n说明：{item['explanation']}")
+                    for issue in feedback["issues"]:
+                        print(f"原因：{issue['cause']}\n提示：{issue['hint']}")
+                        for evidence in issue["evidence"]:
+                            print(f"证据：{evidence.get('path') or evidence['id']} {evidence.get('line', '')} {evidence['text']}")
+                    for limitation in feedback["limitations"]:
+                        print(f"分析边界：{limitation}")
+                except ai.AiError as exc:
+                    print(f"AI 判题未完成：{grading._redact(str(exc), ai.AiSession().get_key())}", file=sys.stderr)
+                return result["exit_code"]
             return run_exercise(exercise, Path.cwd(), progress, progress_path, verbose=args.verbose)
         raise UsageError(f"未知命令：{args.command}")
     except LearnctlError as exc:

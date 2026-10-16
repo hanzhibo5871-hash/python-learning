@@ -12,7 +12,11 @@
     const selected = app.querySelector(".section-nav [data-section].active");
     if (!body || !selected || enhanced.has(body)) return false;
     const sectionId = selected.dataset.section;
-    const teaching = LESSON_TEACHING[sectionId];
+    const section = state.task?.task?.lesson?.sections?.find(item => item.id === sectionId);
+    const catalog = LESSON_TEACHING[sectionId];
+    const teaching = section?.teaching_intro || (catalog
+      ? [catalog[0], catalog[1], section?.syntax || catalog[2]]
+      : section ? [section.objective, section.practice.scenario, section.syntax] : null);
     const practice = body.querySelector(".practice-grid");
     if (!teaching || !practice) return false;
     enhanced.add(body);
@@ -35,6 +39,9 @@
     });
     const brief = body.querySelector(".brief-rules");
     body.insertBefore(intro, brief || practice);
+
+    // 编辑器阶段以本地作业为主，复习练习保留折叠状态。
+    if (section.local_file) return true;
 
     // Demonstration comes BEFORE tasks, with one complete example visible.
     // Move original nodes rather than cloning them: experiment IDs, draft values,

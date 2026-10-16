@@ -92,6 +92,8 @@ def task_payload(curriculum: dict[str, Any], progress: dict[str, Any], task: dic
 
 
 def lesson_payload(curriculum: dict[str, Any], task: dict[str, Any], progress: dict[str, Any]) -> dict[str, Any]:
+    from .local_practice import practice_path
+
     progress_record = lesson_progress_for(progress, task)
     completed = set(progress_record["completed_sections"])
     req_ids = set(required_sections(task))
@@ -104,6 +106,8 @@ def lesson_payload(curriculum: dict[str, Any], task: dict[str, Any], progress: d
         public_practice.pop("starter_policy", None)
         public_practice.pop("input_identifiers", None)
         public_section["practice"] = public_practice
+        if int(task["id"][1:]) >= 7:
+            public_section["local_file"] = practice_path(task, section).as_posix()
         if "practice_first" in public_section:
             brief = dict(public_section["practice_first"])
             brief["drills"] = [{k: v for k, v in drill.items() if k != "reference"}
