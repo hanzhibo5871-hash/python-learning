@@ -14,6 +14,7 @@ if not (REPOSITORY/'learnctl/practice.py').is_file():
 if str(REPOSITORY) not in sys.path:
     sys.path.insert(0,str(REPOSITORY))
 from learnctl.practice import _CODE_VALIDATORS, validate_code
+from scripts.d09_course import BUILD_PARSER, PARSE_ERROR, ENTRY
 DATA=json.loads((REPOSITORY/'data/curriculum.json').read_text(encoding='utf-8'))
 SECTIONS={s['id']:s for t in DATA['tasks'] for s in t['lesson']}
 
@@ -39,34 +40,9 @@ def write_report(rows,path):
     report={'total':len(rows),'done':done,'pending':len(rows)-done}
     Path(path).write_text(json.dumps(report,ensure_ascii=False,indent=2,sort_keys=True),encoding='utf-8')
 ''',
-'D09-errors':'''import argparse
-def parse_or_error(argv):
-    parser=argparse.ArgumentParser()
-    parser.add_argument('title')
-    parser.add_argument('--limit',type=int,default=10)
-    return parser.parse_args(argv)
-''',
-'D09-subcommands':'''import argparse
-def handle_list(args): return 0
-def handle_add(args): return 0
-def build_parser():
-    parser=argparse.ArgumentParser()
-    sub=parser.add_subparsers(dest='command',required=True)
-    listing=sub.add_parser('list'); listing.set_defaults(func=handle_list)
-    adding=sub.add_parser('add'); adding.add_argument('title'); adding.set_defaults(func=handle_add)
-    return parser
-''',
-'D09-entry':'''import argparse
-def main(argv=None):
-    parser=argparse.ArgumentParser()
-    parser.add_argument('--limit',type=int,default=10)
-    parser.add_argument('--verbose',action='store_true')
-    try: args=parser.parse_args(argv)
-    except SystemExit as error: return error.code
-    print(args.limit)
-    return 0
-if __name__ == '__main__': raise SystemExit(main())
-''',
+'D09-errors':PARSE_ERROR,
+'D09-subcommands':BUILD_PARSER,
+'D09-entry':ENTRY,
 'D10-config':'''from dataclasses import dataclass
 @dataclass
 class Settings:
@@ -132,14 +108,14 @@ WRONG=[
 ('D07-inheritance','fixed-title',GOOD['D07-inheritance'].replace('return self.title',"return '固定标题'")),
 ('D08-json-report','fake-counts',GOOD['D08-json-report'].replace("done=sum(row['done'] for row in rows)",'done=1')),
 ('D08-json-report','no-write',"import json\ndef write_report(rows,path): return json.dumps({'total':3,'done':1,'pending':2})"),
-('D09-errors','title-optional',GOOD['D09-errors'].replace("parser.add_argument('title')","parser.add_argument('title',nargs='?',default='x')")),
+('D09-errors','title-optional',GOOD['D09-errors'].replace('parser.add_argument("title")','parser.add_argument("title",nargs="?",default="x")')),
 ('D09-errors','limit-text',GOOD['D09-errors'].replace('type=int,','')),
 ('D09-errors','swallow-error',GOOD['D09-errors'].replace('    return parser.parse_args(argv)',"    try: return parser.parse_args(argv)\n    except SystemExit: return argparse.Namespace(title='x',limit=10)")),
 ('D09-errors','unnecessary-positive-limit',GOOD['D09-errors'].replace('    return parser.parse_args(argv)',"    args=parser.parse_args(argv)\n    if args.limit<0: parser.error('positive only')\n    return args")),
 ('D09-subcommands','no-dispatch',GOOD['D09-subcommands'].replace('listing.set_defaults(func=handle_list)','listing.set_defaults(func=None)')),
 ('D09-subcommands','same-handler',GOOD['D09-subcommands'].replace('func=handle_add','func=handle_list')),
-('D09-entry','ignore-argv',GOOD['D09-entry'].replace('parser.parse_args(argv)','parser.parse_args([])')),
-('D09-entry','script-drops-code',GOOD['D09-entry'].replace('raise SystemExit(main())','main()')),
+('D09-entry','ignore-argv',GOOD['D09-entry'].replace('args = adjustment_options(argv)','args = adjustment_options([])')),
+('D09-entry','script-swallows-error-code',GOOD['D09-entry'].replace('raise SystemExit(main())','try:\n        main()\n    except SystemExit:\n        pass')),
 ('D10-config','false-truthy',GOOD['D10-config'].replace('debug=False','debug=True')),
 ('D10-config','no-port-boundary',GOOD['D10-config'].replace("        if not 1<=port<=65535: raise ValueError('invalid PORT')",'')),
 ('D10-config','blank-debug-default',GOOD['D10-config'].replace("env.get('DEBUG','false').strip().lower()","(env.get('DEBUG') or 'false').strip().lower()")),
@@ -166,8 +142,9 @@ def test_ready_contract_rejects_observable_fault(sid,label,code,tmp_path):
 def test_parse_errors_preserves_actual_code_and_default(tmp_path):
     result=validate_code(SECTIONS['D09-errors'],GOOD['D09-errors'],tmp_path)
     assert result['passed']
-    assert result['cases'][0]['actual']=="('买书', 10, None, '', False)"
-    assert result['cases'][3]['actual']=="(None, None, 2, '', True)"
+    assert result['cases'][0]['actual']=="('盘点', 10)"
+    error=next(case for case in result['cases'] if "abc" in case['input'])
+    assert error['actual']=="{'退出码': 2, '普通输出': False, '错误输出': True}"
 
 
 def test_import_noise_has_its_actual_stdout(tmp_path):
@@ -186,16 +163,20 @@ def test_unedited_readiness_starter_is_not_accepted(sid,tmp_path):
     assert not result['passed'],(sid,result)
 
 
-def test_subcommands_print_handlers_may_return_none(tmp_path):
-    code=GOOD['D09-subcommands'].replace("def handle_list(args): return 0","def handle_list(args): print('list')").replace("def handle_add(args): return 0","def handle_add(args): print(args.title)")
-    assert validate_code(SECTIONS['D09-subcommands'],code,tmp_path)['passed']
-
-
-def test_subcommands_same_local_handler_is_not_different_dispatch(tmp_path):
-    code=GOOD['D09-subcommands'].replace('    parser=argparse.ArgumentParser()',"    def local_handler(args): return None\n    parser=argparse.ArgumentParser()").replace('func=handle_list','func=local_handler').replace('func=handle_add','func=local_handler')
+def test_subcommands_handlers_return_declared_business_result(tmp_path):
+    code=GOOD['D09-subcommands'].replace('return "查看库存"','print("查看库存")').replace('return f"登记：{args.title}"','print(f"登记：{args.title}")')
+    assert code != GOOD['D09-subcommands']
     result=validate_code(SECTIONS['D09-subcommands'],code,tmp_path)
     assert not result['passed']
-    assert any(c['name']=='两个子命令绑定不同函数' and not c['passed'] for c in result['cases'])
+    assert any(not case['passed'] and 'None' in case['actual'] for case in result['cases'])
+
+
+def test_subcommands_shared_handler_does_not_implement_add(tmp_path):
+    code=GOOD['D09-subcommands'].replace('    parser = argparse.ArgumentParser', "    def local_handler(args): return '查看库存'\n    parser = argparse.ArgumentParser").replace('func=handle_list','func=local_handler').replace('func=handle_add','func=local_handler')
+    result=validate_code(SECTIONS['D09-subcommands'],code,tmp_path)
+    assert not result['passed']
+    assert any(c['name']=='list 绑定并调用查看函数' and c['passed'] for c in result['cases'])
+    assert any(c['name']=='add 绑定并接收完整参数' and not c['passed'] for c in result['cases'])
 
 
 def test_logger_allows_real_stream_handler(tmp_path):
@@ -204,5 +185,7 @@ def test_logger_allows_real_stream_handler(tmp_path):
 
 
 def test_entry_private_parser_helper_signature_is_unrestricted(tmp_path):
-    code=GOOD['D09-entry'].replace('def main(argv=None):',"def build_parser(prog):\n    return argparse.ArgumentParser(prog=prog)\ndef main(argv=None):").replace('parser=argparse.ArgumentParser()',"parser=build_parser('local')")
+    helper = 'def build_parser(prog):\n    return argparse.ArgumentParser(prog=prog)\n'
+    code=GOOD['D09-entry'].replace('import argparse\n','import argparse\n'+helper).replace('argparse.ArgumentParser(prog="stock_adjust")',"build_parser('local')")
+    assert code != GOOD['D09-entry']
     assert validate_code(SECTIONS['D09-entry'],code,tmp_path)['passed']
