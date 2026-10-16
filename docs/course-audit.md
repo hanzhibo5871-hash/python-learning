@@ -1,10 +1,10 @@
 # D05–D29 课程审核与本地验收
 
-本轮逐节检查 D05–D28 的 112 节，覆盖题意、例子、补全、独立实验、签名与行为验收；追加 D29 的 3 节系统教学。当前共 29 任务、149 小节、120 张知识卡、217 道补全练习。
+本轮逐节检查 D05–D28 的 119 节，覆盖题意、例子、补全、独立实验、签名与行为验收；追加 D29 的 3 节系统教学。当前共 29 任务、156 小节、115 张知识卡、230 道补全练习。
 
 ## 旧→新映射
 
-- D01–D28 的任务 ID、146 个小节 ID 和既有学习记录保持不变。D18–D24 的 15 个最终产物路径保持不变。
+- D01–D28 的任务 ID、原有146个小节 ID 和既有学习记录保持不变；D09 追加7个递进小节。D18–D24 的 15 个最终产物路径保持不变。
 - D05 的 len、比较、raise ValueError 和 tuple 就地教学；函数边界与签名对齐，不添加无关类型校验。
 - D06–D28 在当前小节补短卡/不同题局部例，并修正对应行为验收；基础示例和补全不写完成记录。
 - D29-tools → agentlab/tools.py；D29-loop → agentlab/runner.py；D29-delivery → tests/test_agentlab.py。三个新节从未完成开始，D29 依赖 D28，不把工具循环暗藏进旧练习。
@@ -52,10 +52,17 @@
 | D08-read-lines | 读取、splitlines、strip、循环过滤 | 补D08-utf8短卡后此前覆盖；本节说明空行规则。 |
 | D08-json-total | JSON列表读取、amount求和、空输入、解析错误 | D07/D08读取及解析、D04-varargs的sum、循环已教。 |
 | D08-json-report-drill | len、构造字典、UTF8写JSON、不转义 | 修复D08-json-report后覆盖；本节明确文件内容。 |
-| D09-parser | ArgumentParser/add_argument/parse_args、int/default、开关 | 本节两个运行例有类型/默认/位置参数。 |
-| D09-subcommands | 子parser、required、set_defaults与args.func | 本节运行例只教选择子命令和TITLE。 |
-| D09-errors | SystemExit(2)、stderr、参数错误 | 本节文字解释精确退出码，例捕获SystemExit。 |
-| D09-entry | main(argv=None)、guard、退出码、subprocess回归 | 本节短卡SystemExit；D07-main已教守卫。 |
+| D09-argv | argv 是自选变量名，列表里的 '-3' 仍是字符串。；本节只观察输入，不转整数、不修改库存。 | D09 递进教程：两份示例、两道补全；前置关系见 scripts/d09_course.py。 |
+| D09-position | 固定方法名不用背实现；parser、args、product 都是本例自选名字。；先登记规则，再解析输入；本节不加入 --delta。 | D09 递进教程：两份示例、两道补全；前置关系见 scripts/d09_course.py。 |
+| D09-options | --delta 的结果字段默认叫 delta，不带两个横线。；type=int 只检查整数形式，default=0 只负责省略时的值。 | D09 递进教程：两份示例、两道补全；前置关系见 scripts/d09_course.py。 |
+| D09-stock | 先解析成功，再修改 STOCK；本例商品明确已经存在。；Namespace 用点号取属性，库存字典用方括号读写。；本题返回新库存；只打印而不 return 仍会返回 None。 | D09 递进教程：两份示例、两道补全；前置关系见 scripts/d09_course.py。 |
+| D09-parser | 带值选项：--limit 3；布尔开关：--verbose，后面不加 True。；type、default、action 是库的配置项，不是需要自己实现的方法。 | D09 递进教程：两份示例、两道补全；前置关系见 scripts/d09_course.py。 |
+| D09-command-name | dest 决定结果属性叫什么，add_parser 决定有哪些命令。；show 没有 product；只在 adjust 的结果中读取商品和调整量。 | D09 递进教程：两份示例、两道补全；前置关系见 scripts/d09_course.py。 |
+| D09-if-dispatch | 解析是整理输入；分派是根据命令选择代码。；先判断命令，再读取那个命令专有的参数。 | D09 递进教程：两份示例、两道补全；前置关系见 scripts/d09_course.py。 |
+| D09-function-value | 函数名不带括号：保存或传递函数；带括号：立即调用。；调用之后要 return 结果；print 不能代替返回。 | D09 递进教程：两份示例、两道补全；前置关系见 scripts/d09_course.py。 |
+| D09-subcommands | dest='command' 存命令名字；set_defaults(func=...) 存处理函数，二者不是一回事。；func 是自选字段名；set_defaults 不会自动执行函数。；绑定时不要加括号，解析后才 args.func(args)。 | D09 递进教程：两份示例、两道补全；前置关系见 scripts/d09_course.py。 |
+| D09-errors | 默认解析错误：stderr + SystemExit(2)；--help：stdout + SystemExit(0)。；错误不应伪装成成功；正负范围要由题目另行规定。 | D09 递进教程：两份示例、两道补全；前置关系见 scripts/d09_course.py。 |
+| D09-entry | None = 读取真实命令行；[] = 明确传入空参数；不能用 argv or [] 混在一起。；真实入口调用 main()；写死列表会忽略终端新输入。；导入不执行，成功返回0；每次新进程的库存从初始值开始。 | D09 递进教程：两份示例、两道补全；前置关系见 scripts/d09_course.py。 |
 | D09-greet-cli | required选项、help、参数输出 | D09-parser已教，当前解释required及help。 |
 | D09-repeat-cli | int与范围校验、parser.error、循环输出 | 类型/比较/循环已教，本节文字点明parser.error。 |
 | D09-square-cli | 整数位置参数、平方、可导入函数、守卫 | D09-parser/entry及D07-main覆盖。 |

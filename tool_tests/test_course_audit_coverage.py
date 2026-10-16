@@ -14,7 +14,7 @@ def test_authored_audit_matches_all_current_exercise_sections():
     for sid,entry in entries.items():
         assert entry.get('requires',entry.get('required',entry.get('formal'))),sid
         assert entry.get('evidence'),sid
-    assert len(expected)==112
+    assert len(expected)==119
 
 def test_new_agent_task_is_separate_from_the_retained_project():
     course=json.loads((ROOT/'data/curriculum.json').read_text(encoding='utf-8'))

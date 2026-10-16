@@ -188,35 +188,27 @@
     },
     {
       "section": "D09-parser",
-      "requires": "ArgumentParser/add_argument/parse_args、int/default、开关",
-      "evidence": "本节两个运行例有类型/默认/位置参数。",
-      "gaps": [
-        "store_true在长文字有写法，补短运行对比易于先练。"
-      ]
+      "requires": "带值选项：--limit 3；布尔开关：--verbose，后面不加 True。；type、default、action 是库的配置项，不是需要自己实现的方法。",
+      "evidence": "scripts/d09_course.py 提供本节两份示例、两道补全和明确的前置小节；先观察输入与结果，再独立实现。",
+      "gaps": []
     },
     {
       "section": "D09-subcommands",
-      "requires": "子parser、required、set_defaults与args.func",
-      "evidence": "本节运行例只教选择子命令和TITLE。",
-      "gaps": [
-        "没有实际绑定和调用函数例，必须补；函数返回形式不强制。"
-      ]
+      "requires": "dest='command' 存命令名字；set_defaults(func=...) 存处理函数，二者不是一回事。；func 是自选字段名；set_defaults 不会自动执行函数。；绑定时不要加括号，解析后才 args.func(args)。",
+      "evidence": "scripts/d09_course.py 提供本节两份示例、两道补全和明确的前置小节；先观察输入与结果，再独立实现。",
+      "gaps": []
     },
     {
       "section": "D09-errors",
-      "requires": "SystemExit(2)、stderr、参数错误",
-      "evidence": "本节文字解释精确退出码，例捕获SystemExit。",
-      "gaps": [
-        "生效旧CLI验收与当前parse_or_error/TITLE/--limit不匹配；例2未注册--count。"
-      ]
+      "requires": "默认解析错误：stderr + SystemExit(2)；--help：stdout + SystemExit(0)。；错误不应伪装成成功；正负范围要由题目另行规定。",
+      "evidence": "scripts/d09_course.py 提供本节两份示例、两道补全和明确的前置小节；先观察输入与结果，再独立实现。",
+      "gaps": []
     },
     {
       "section": "D09-entry",
-      "requires": "main(argv=None)、guard、退出码、subprocess回归",
-      "evidence": "本节短卡SystemExit；D07-main已教守卫。",
-      "gaps": [
-        "subprocess.run/sys.executable未教；主作业argv和stdout协议未定义。"
-      ]
+      "requires": "None = 读取真实命令行；[] = 明确传入空参数；不能用 argv or [] 混在一起。；真实入口调用 main()；写死列表会忽略终端新输入。；导入不执行，成功返回0；每次新进程的库存从初始值开始。",
+      "evidence": "scripts/d09_course.py 提供本节两份示例、两道补全和明确的前置小节；先观察输入与结果，再独立实现。",
+      "gaps": []
     },
     {
       "section": "D09-greet-cli",
@@ -1051,6 +1043,48 @@
       "section": "D05-cart",
       "requires": "取字段、乘法、sum与generator expression",
       "evidence": "本节sum小例和补全；D02数值与本节组合。",
+      "gaps": []
+    },
+    {
+      "section": "D09-argv",
+      "requires": "argv 是自选变量名，列表里的 '-3' 仍是字符串。；本节只观察输入，不转整数、不修改库存。",
+      "evidence": "scripts/d09_course.py 提供本节两份示例、两道补全和明确的前置小节；先观察输入与结果，再独立实现。",
+      "gaps": []
+    },
+    {
+      "section": "D09-position",
+      "requires": "固定方法名不用背实现；parser、args、product 都是本例自选名字。；先登记规则，再解析输入；本节不加入 --delta。",
+      "evidence": "scripts/d09_course.py 提供本节两份示例、两道补全和明确的前置小节；先观察输入与结果，再独立实现。",
+      "gaps": []
+    },
+    {
+      "section": "D09-options",
+      "requires": "--delta 的结果字段默认叫 delta，不带两个横线。；type=int 只检查整数形式，default=0 只负责省略时的值。",
+      "evidence": "scripts/d09_course.py 提供本节两份示例、两道补全和明确的前置小节；先观察输入与结果，再独立实现。",
+      "gaps": []
+    },
+    {
+      "section": "D09-stock",
+      "requires": "先解析成功，再修改 STOCK；本例商品明确已经存在。；Namespace 用点号取属性，库存字典用方括号读写。；本题返回新库存；只打印而不 return 仍会返回 None。",
+      "evidence": "scripts/d09_course.py 提供本节两份示例、两道补全和明确的前置小节；先观察输入与结果，再独立实现。",
+      "gaps": []
+    },
+    {
+      "section": "D09-command-name",
+      "requires": "dest 决定结果属性叫什么，add_parser 决定有哪些命令。；show 没有 product；只在 adjust 的结果中读取商品和调整量。",
+      "evidence": "scripts/d09_course.py 提供本节两份示例、两道补全和明确的前置小节；先观察输入与结果，再独立实现。",
+      "gaps": []
+    },
+    {
+      "section": "D09-if-dispatch",
+      "requires": "解析是整理输入；分派是根据命令选择代码。；先判断命令，再读取那个命令专有的参数。",
+      "evidence": "scripts/d09_course.py 提供本节两份示例、两道补全和明确的前置小节；先观察输入与结果，再独立实现。",
+      "gaps": []
+    },
+    {
+      "section": "D09-function-value",
+      "requires": "函数名不带括号：保存或传递函数；带括号：立即调用。；调用之后要 return 结果；print 不能代替返回。",
+      "evidence": "scripts/d09_course.py 提供本节两份示例、两道补全和明确的前置小节；先观察输入与结果，再独立实现。",
       "gaps": []
     }
   ],

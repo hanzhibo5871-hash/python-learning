@@ -175,7 +175,9 @@ def main() -> None:
                     expect(page.locator('.drill-section [data-run-experiment]')).to_have_count(2)
                     assert page.evaluate('() => document.documentElement.scrollWidth <= window.innerWidth + 2')
                 page.locator('[data-section="D09-command-name"]').click()
+                page.locator('.examples-reference > summary').click()
                 demo = page.locator('.examples-reference .mini-example').first
+                demo.locator('summary').first.click()
                 demo.locator('[data-run-experiment]').click()
                 expect(demo.locator('[data-experiment-result]')).to_contain_text('输出符合预期', timeout=30000)
                 if args.screenshots:
